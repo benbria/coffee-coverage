@@ -1,0 +1,28 @@
+{
+  "name":              "coffee-coverage",
+  "description":       "JSCoverage-style instrumentation for CoffeeScript files.",
+  "keywords":          ["javascript", "coffeescript", "coverage", "code coverage", "test"],
+  "version":           "0.0.1",
+  "author":            "Benbria (http://www.benbria.com/)",
+  "contributors": [
+      "Jason Walton <dev@lucid.thedreaming.org> (https://github.com/jwalton)"
+  ],
+  "licenses": [{
+    "type":            "MIT",
+    "url":             "https://raw.github.com/benbria/coffee-coverage/master/LICENSE"
+  }],
+  "main":              "./lib/coffeeCoverage",
+  "bin": {
+    "coffeeCoverage":  "./bin/coffeecoverage"
+  },
+  "directories" : {
+    "lib":             "./lib"
+  },
+  "dependencies": {
+    "pkginfo":         ">=0.2.3",
+    "argparse":        ">=0.1.7"
+  },
+  "engines": {
+    "node":            ">=0.6.19"
+  }
+}
