@@ -11,6 +11,7 @@ Contents
 *   [What it Does](#what-it-does)
 *   [How it Works](#how-it-works)
 *   [Using with Mocha and Node.js](#using-with-mocha-and-nodejs)
+*   [Some Weirdness with Line Numbers](#some-weirdness-with-line-numbers)
 *   [Detailed Usage](#detailed-usage)
 
 
@@ -86,6 +87,30 @@ won't show up in the mocha report.
 Next we run our tests:
 
     mocha --reporter html-cov --compilers coffee:coffee-script test/*Test.coffee
+
+Some Weirdness with Line Numbers
+--------------------------------
+
+This snippet of CoffeeScript:
+
+    if x then y() \
+         else z()
+
+gets compile to this snippet of JavaScript:
+
+    if (x) {
+      y();
+    } else {
+      z();
+    }
+
+We have three statements we could annotate here; the "if" itself, the call to y, and the call to z.
+The problem is that both the "if" an the call to "y()" are on the same line of CoffeeScript source.
+If we annotate both the "if" and the "y()", then if `x` is true, we will count two executions of the
+first line of the CoffeeScript, even though we've only run this chunk of CoffeeScript once.
+
+CoffeeCoverage tries to work around this by only instrumenting the first statement it finds on a
+line, so in the above example, we'd annotate the "if" and the "z()", but not the "y()".
 
 Detailed Usage
 --------------
