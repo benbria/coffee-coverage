@@ -62,7 +62,7 @@ exports.abbreviatedPath = (pathName) ->
     for pathElement in splitPath
         if pathElement.length == 0
             answer += ""
-        if pathElement is ".."
+        else if pathElement is ".."
             answer += pathElement
         else if exports.startsWith pathElement, "."
             answer += pathElement[0..1]

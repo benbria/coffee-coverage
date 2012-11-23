@@ -9,3 +9,7 @@
 ### v0.0.3
 
   -Fix bug which stopped -i option from working.
+
+### v0.0.4
+
+  -Fix bug in "abbr" paths when path is absolute (starts with "/").
