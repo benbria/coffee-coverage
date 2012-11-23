@@ -90,8 +90,8 @@ exports.main = (args) ->
 
 
         # Change initFile into a output stream
-        if options.initFile
-            options.initFileStream = fs.createWriteStream options.initFile
+        if options.initfile
+            options.initFileStream = fs.createWriteStream options.initfile
 
         result = coverageInstrumentor.instrument options.src, options.dest, options
 
