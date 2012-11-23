@@ -10,6 +10,6 @@
 
   -Fix bug which stopped -i option from working.
 
-### v0.0.4
+### v0.0.5
 
   -Fix bug in "abbr" paths when path is absolute (starts with "/").
