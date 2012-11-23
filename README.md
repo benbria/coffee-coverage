@@ -71,13 +71,15 @@ Using with Mocha and Node.js
 At Benbria, we use CoffeeCoverage to find out how much coverage we get from our unit tests.  Our
 process works like this; first we make a copy of our code base:
 
-    cp -r project project-coverage
-    cd project-coverage
+    cd project
+    mkdir /tmp/coverage
+    tar -cf - . | (cd /tmp/coverage && tar -xf -)
+    cd /tmp/coverage
 
 Then we instrument it in-place.  We exclude the "test" directory, since we don't want coverage of
 our actual test code:
 
-    coffeecoverage --exclude node_modules,.git,test --path abbr . .
+    coffeecoverage --initfile init.js --exclude node_modules,.git,test --path abbr . .
 
 We don't have to delete the .coffee files, since when we `require 'foo'`, node will preferentially
 load the foo.js file over the foo.coffee file.  coffeecoverage nicely gives us the number of lines
@@ -86,7 +88,7 @@ won't show up in the mocha report.
 
 Next we run our tests:
 
-    mocha --reporter html-cov --compilers coffee:coffee-script test/*Test.coffee
+    mocha --require init.js --reporter html-cov --compilers coffee:coffee-script test/*Test.coffee
 
 Some Weirdness with Line Numbers
 --------------------------------
@@ -115,7 +117,7 @@ line, so in the above example, we'd annotate the "if" and the "z()", but not the
 Detailed Usage
 --------------
 
-Usage: `coffeecoverage [-h] [-v] [-c name] [-e filenames] [--path pathtype] src dest`
+Usage: `coffeecoverage [-h] [-v] [-c name] [-e filenames] [-i initfile] [--path pathtype] src dest`
 
 `src` and `dest` are the source file or directory and destination file or directory, respectively.
 If `src` is a .coffee file, then coffeecoverage will instrument the file and write the result to
@@ -130,6 +132,12 @@ any subdirectories in `dest` as required.  If `src` and `dest` are the same dire
 
 By default, coffeecoverage will instrument source files with the global variable "_$jscoverage".
 This is done to mimic JSCoverage.  You can rename this variable by using this option.
+
+#### -i, --initfile
+
+Specifies an "initfile" which all global initalization is written to.  This is handy for testing
+with mocha.  If you `require` the initfile, then mocha reports will show coverage of all files in
+your project, even files which were never required anywhere.
 
 #### -e, --exclude
 

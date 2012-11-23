@@ -40,6 +40,10 @@ parseArgs = (args) ->
         metavar: "filenames"
         defaultValue: excludeDefault
 
+    parser.addArgument [ '-i', '--initfile' ],
+        help: """Write all global initialization out to 'file'."""
+        metavar: "file"
+
     parser.addArgument [ '--path' ],
         help: """Specify how to show the path for each filename in the instrumented output.  If
           'pathtype' is 'relative', then the relative path will be written to each file.  If
@@ -66,7 +70,6 @@ parseArgs = (args) ->
     else
         options.exclude = []
 
-
     return options
 
 exports.main = (args) ->
@@ -86,7 +89,14 @@ exports.main = (args) ->
                 console.log "    Skipping: #{stripLeadingDot file}"
 
 
+        # Change initFile into a output stream
+        if options.initFile
+            options.initFileStream = fs.createWriteStream options.initFile
+
         result = coverageInstrumentor.instrument options.src, options.dest, options
+
+        options.initFileStream?.end()
+
         console.log "Annotated #{result.lines} lines."
 
     catch err

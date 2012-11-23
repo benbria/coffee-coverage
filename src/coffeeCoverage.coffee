@@ -221,6 +221,9 @@ class exports.CoverageInstrumentor extends events.EventEmitter
     #    name of the file to usedFileNames.  If the name of the file is already in usedFileNames
     #    then this method will generate a unique name.
     #
+    #  - If `options.initFileStream` is present, then all global initialization will be written
+    #    to `initFileStream.write()`, in addition to each instrumented source file.
+    #
     # Throws CoverageError if there is a problem with the `sourceFile` or `outFile` parameters.
     instrumentFile: (sourceFile, outFile, options) ->
         @emit "instrumentingFile", sourceFile, outFile
@@ -242,8 +245,10 @@ class exports.CoverageInstrumentor extends events.EventEmitter
         data = fs.readFileSync sourceFile, 'utf8'
         answer = @instrumentCoffee filename, data
 
+        options.initFileStream?.write answer.init
+
         if outFile
-            writeToFile outFile, answer.js
+            writeToFile outFile, (answer.init + answer.js)
 
         return answer
 
@@ -266,6 +271,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
     # `fileData` is the contents of the coffee file.
     #
     # Returns an object consisting of:
+    #  - `init` - the intialization JavaScript code.
     #  - `js` - the compiled JavaScript, instrumented to collect coverage data.
     #  - `lines` - the total number of instrumented lines.
     #
@@ -333,7 +339,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
         instrumentTree(ast)
 
         # Write out top-level initalization
-        out = """
+        init = """
             if (typeof #{options.coverageVar} === 'undefined') #{options.coverageVar} = {};
             if ((typeof global !== 'undefined') && (typeof global.#{options.coverageVar} === 'undefined')) {
                 global.#{options.coverageVar} = #{options.coverageVar}
@@ -344,22 +350,23 @@ class exports.CoverageInstrumentor extends events.EventEmitter
                 #{options.coverageVar}[#{quotedFilename}] = [];\n"""
 
         for lineNumber in instrumentedLines
-            out += "    #{options.coverageVar}[#{quotedFilename}][#{lineNumber}] = 0;\n"
+            init += "    #{options.coverageVar}[#{quotedFilename}][#{lineNumber}] = 0;\n"
 
-        out += "}\n\n"
+        init += "}\n\n"
 
         # Write the original source code into the ".source" array.
-        out += "#{options.coverageVar}[#{quotedFilename}].source = ["
+        init += "#{options.coverageVar}[#{quotedFilename}].source = ["
         fileToInstrumentLines = fileToLines fileData
         for line, index in fileToInstrumentLines
-            if !!index then out += ", "
-            out += toQuotedString(line)
-        out += "];\n\n"
+            if !!index then init += ", "
+            init += toQuotedString(line)
+        init += "];\n\n"
 
         # Compile the instrumented CoffeeScript and write it to the JS file.
-        out += ast.compile {}
+        js = ast.compile {}
 
         return {
-            js: out
+            init: init
+            js: js
             lines: instrumentedLines.length
         }
