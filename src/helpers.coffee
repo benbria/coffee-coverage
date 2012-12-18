@@ -1,3 +1,4 @@
+fs = require 'fs'
 path = require 'path'
 path.sep = path.sep || "/" # Assume "/" on older versions of node, where this is missing.
 
@@ -21,6 +22,20 @@ exports.defaults = (dest, src) ->
     return dest
 
 exports.stripLeadingDot = (pathName) -> pathName.replace /^\.\//, ""
+
+# Get details about a file.  Returns a fs.Stats object, or null if the file does not exist.
+exports.statFile = statFile = (file) ->
+    try
+        answer = fs.statSync(file)
+    catch err
+        if 'code' of err and err.code is 'ENOENT'
+            # File does not exist
+            answer = null
+        else
+            # Some other weird error - throw it.
+            throw err
+
+    return answer
 
 # Creates the directory supplied by `dirPath`, creating any intermediate directories as
 # required.  For example, `mkdirs('a/b/c')` might create the directory 'a', then 'a/b', then
