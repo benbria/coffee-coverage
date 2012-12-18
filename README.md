@@ -1,5 +1,5 @@
-CoffeeCoverage
-==============
+Benbria CoffeeCoverage
+======================
 
 Compiles .coffee files to .js files, and adds [JSCoverage](http://siliconforks.com/jscoverage/)
 style instrumnetation for the original coffee script source.
@@ -18,7 +18,7 @@ Contents
 What it Does
 ------------
 
-CoffeeCoverage takes a collection of .coffee files, and produces .js files which have been
+Benbria CoffeeCoverage takes a collection of .coffee files, and produces .js files which have been
 instrumented to record how many times each line is executed.  Given a file "hello.coffee":
 
     console.log "Hello World"

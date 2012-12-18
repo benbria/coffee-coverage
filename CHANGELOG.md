@@ -13,3 +13,7 @@
 ### v0.0.5
 
   -Fix bug in "abbr" paths when path is absolute (starts with "/").
+
+### v0.0.6
+
+  -Bug fix from [dstokes](https://github.com/dstokes) for recursively creating directories.
