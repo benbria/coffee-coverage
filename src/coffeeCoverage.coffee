@@ -17,7 +17,7 @@ util = require 'util'
 path = require 'path'
 path.sep = path.sep || "/" # Assume "/" on older versions of node, where this is missing.
 
-{endsWith, defaults, abbreviatedPath, mkdirs, stripLeadingDot} = require './helpers'
+{endsWith, defaults, abbreviatedPath, mkdirs, stripLeadingDot, statFile} = require './helpers'
 
 
 COFFEE_EXTENSION = ".coffee"
@@ -70,20 +70,6 @@ class exports.CoverageInstrumentor extends events.EventEmitter
     writeToFile = (outFile, contect) ->
         outStream = fs.createWriteStream outFile
         outStream.end(contect)
-
-    # Get details about a file.  Returns a fs.Stats object, or null if the file does not exist.
-    statFile = (file) ->
-        try
-            answer = fs.statSync(file)
-        catch err
-            if 'code' of err and err.code is 'ENOENT'
-                # File does not exist
-                answer = null
-            else
-                # Some other weird error - throw it.
-                throw err
-
-        return answer
 
     # Some basic valication of source and out files.
     validateSrcDest = (source, out) ->
