@@ -68,8 +68,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
 
     # Write a string to a file.
     writeToFile = (outFile, contect) ->
-        outStream = fs.createWriteStream outFile
-        outStream.end(contect)
+        fs.writeFileSync outFile, contect
 
     # Some basic valication of source and out files.
     validateSrcDest = (source, out) ->
