@@ -6,10 +6,7 @@
 # By Jason Walton, Benbria
 #
 
-# Temporarily use our own private version of coffee-script.
-coffeeScript = require '../dep/coffee-script/coffee-script'
-
-pkginfo = require('pkginfo') module, 'version', 'author', 'contributors'
+coffeeScript = require 'coffee-script'
 
 events = require 'events'
 fs = require 'fs'
@@ -18,6 +15,9 @@ path = require 'path'
 path.sep = path.sep || "/" # Assume "/" on older versions of node, where this is missing.
 
 {endsWith, defaults, abbreviatedPath, mkdirs, stripLeadingDot, statFile} = require './helpers'
+
+# Add 'version', 'author', and 'contributors' to our exports
+pkginfo = require('pkginfo') module, 'version', 'author', 'contributors'
 
 
 COFFEE_EXTENSION = ".coffee"
@@ -67,8 +67,8 @@ class exports.CoverageInstrumentor extends events.EventEmitter
         return node.constructor.name
 
     # Write a string to a file.
-    writeToFile = (outFile, contect) ->
-        fs.writeFileSync outFile, contect
+    writeToFile = (outFile, content) ->
+        fs.writeFileSync outFile, content
 
     # Some basic valication of source and out files.
     validateSrcDest = (source, out) ->
