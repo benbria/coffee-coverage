@@ -1,5 +1,15 @@
 # coffee-coverage Changelog
 
+### v0.1.1
+
+  -Ran into a strange bug in Coffee-Script 1.5.0 that's fixed in git, so I switched the dependency
+   to the latest Coffee-Script for now.  Basically this:
+
+        done null, _.extend
+          myObj: "foo"
+
+   doesn't compile the way you would expect it to.
+
 ### v0.1.0
 
   -Switch over to official Coffee-Script (v.1.5.0 or higher)
