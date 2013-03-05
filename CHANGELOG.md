@@ -1,5 +1,9 @@
 # coffee-coverage Changelog
 
+### v0.1.2
+
+  - Update to Coffee-Script 1.6.1.
+
 ### v0.1.1
 
   -Ran into a strange bug in Coffee-Script 1.5.0 that's fixed in git, so I switched the dependency
