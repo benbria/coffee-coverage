@@ -1,5 +1,9 @@
 # coffee-coverage Changelog
 
+### v0.1.3
+
+  - Update to Coffee-Script >=1.6.2.
+
 ### v0.1.2
 
   - Update to Coffee-Script 1.6.1.
