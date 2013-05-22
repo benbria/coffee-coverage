@@ -34,6 +34,7 @@ defaultOptions =
     coverageVar: '_$jscoverage'
     exclude: []
     recursive: true
+    bare: false
 
 #### CoverageInstrumentor
 #
@@ -348,7 +349,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
         init += "];\n\n"
 
         # Compile the instrumented CoffeeScript and write it to the JS file.
-        js = ast.compile {}
+        js = ast.compile {bare: options.bare}
 
         return {
             init: init

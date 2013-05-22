@@ -25,6 +25,11 @@ parseArgs = (args) ->
         help: "Verbose output"
         nargs: 0
 
+    parser.addArgument [ '-b', '--bare' ],
+        help: "compile without a top-level function wrapper"
+        metavar: "bare"
+        nargs: 0
+
     coverageVarDefault = '_$jscoverage'
     parser.addArgument [ '-c', '--coverageVar' ],
         help: """Set the name to use in the instrumented code for the coverage variable.  Defaults to
@@ -76,7 +81,10 @@ exports.main = (args) ->
     try
         options = parseArgs(args[2..])
 
-        coverageInstrumentor = new CoverageInstrumentor()
+        if options.bare
+            options.bare = true
+
+        coverageInstrumentor = new CoverageInstrumentor(bare: options.bare)
 
         if options.verbose
             coverageInstrumentor.on "instrumentingFile", (sourceFile, outFile) ->
