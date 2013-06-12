@@ -1,5 +1,9 @@
 # coffee-coverage Changelog
 
+### v0.1.4
+
+  - Add '--bare' option (thanks [effata](https://github.com/effata)!)
+
 ### v0.1.3
 
   - Update to Coffee-Script >=1.6.2.
