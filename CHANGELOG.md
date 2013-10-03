@@ -1,5 +1,10 @@
 # coffee-coverage Changelog
 
+### v0.2.0
+
+  - Force coffee-script to disable chaining of if/else if statements during compile.  This
+    fix is required for coffee-script 1.6.3 and higher.
+
 ### v0.1.4
 
   - Add '--bare' option (thanks [effata](https://github.com/effata)!)

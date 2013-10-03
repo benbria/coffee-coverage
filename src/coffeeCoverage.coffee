@@ -19,6 +19,7 @@ path.sep = path.sep || "/" # Assume "/" on older versions of node, where this is
 # Add 'version', 'author', and 'contributors' to our exports
 pkginfo = require('pkginfo') module, 'version', 'author', 'contributors'
 
+debug = -> # Do nothing.
 
 COFFEE_EXTENSION = ".coffee"
 JS_EXTENSION     = ".js"
@@ -65,7 +66,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
 
     # Return the type of an AST node.
     nodeType = (node) ->
-        return node.constructor.name
+        return node?.constructor?.name or null
 
     # Write a string to a file.
     writeToFile = (outFile, content) ->
@@ -270,12 +271,24 @@ class exports.CoverageInstrumentor extends events.EventEmitter
 
         # Add coverage instrumentation nodes throughout the tree.
         instrumentedLines = []
-        instrumentTree = (node) ->
-            # If this is a block, then instrument all the lines in the block.
+        instrumentTree = (node, parent=null, depth=0) ->
+            debug "Examining  l:#{node.locationData.first_line + 1} d:#{depth} #{nodeType(node)}"
+
             if nodeType(node) != "Block"
-                node.eachChild (child) -> instrumentTree(child)
+                if nodeType(node) is "If" and node.isChain
+                    # Chaining is where coffee compiles something into `... else if ...`
+                    # instead of '... else {if ...}`.  Chaining produces nicer looking coder
+                    # with fewer indents, but it also produces code that's harder to instrument,
+                    # so we turn it off.
+                    #
+                    debug "  Disabling chaining for if statement"
+                    node.isChain = false
+
+                # Recurse into child nodes
+                node.eachChild (child) -> instrumentTree(child, node, depth + 1)
 
             else
+                # If this is a block, then instrument all the lines in the block.
                 children = node.expressions
                 childIndex = 0
                 while childIndex < children.length
@@ -303,9 +316,12 @@ class exports.CoverageInstrumentor extends events.EventEmitter
                         #
                         # Because here we're going to instrument the inside of the "else" block,
                         # but not the inside of the "if" block, which is OK, but a bit weird.
+                        debug "Skipping   l:#{line} d:#{depth + 1} #{nodeType(expression)}"
                         doAnnotation = false
 
                     if doAnnotation
+                        debug "Annotating l:#{line} d:#{depth + 1} #{nodeType(expression)}"
+
                         instrumentedLines.push line
 
                         instrumentedLine = coffeeScript.nodes(
@@ -319,7 +335,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
 
                     # Annotate child expressions here, so we don't waste time instrumenting
                     # our instrumentedLines.
-                    instrumentTree(expression)
+                    instrumentTree(expression, node, depth + 1)
                     childIndex++
 
         instrumentTree(ast)
