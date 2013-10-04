@@ -21,7 +21,7 @@ exports.defaults = (dest, src) ->
 
     return dest
 
-exports.stripLeadingDot = (pathName) -> pathName.replace /^\.\//, ""
+exports.stripLeadingDotOrSlash = (pathName) -> pathName.replace(/^\//, "").replace(/^\.\//, "")
 
 # Get details about a file.  Returns a fs.Stats object, or null if the file does not exist.
 exports.statFile = statFile = (file) ->

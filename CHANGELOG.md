@@ -1,5 +1,11 @@
 # coffee-coverage Changelog
 
+### v0.3.0
+
+  - Add support for dynamically compiling .coffee and ._coffee files on the fly.  (Special thanks
+    to [sivad77](https://github.com/sivad77) for the suggestion.)
+  - Experimental support for [streamlinejs](https://github.com/Sage/streamlinejs).
+
 ### v0.2.0
 
   - Force coffee-script to disable chaining of if/else if statements during compile.  This

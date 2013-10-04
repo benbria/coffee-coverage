@@ -68,27 +68,52 @@ See the [Design](https://github.com/benbria/coffee-coverage/wiki/Design) page on
 Using with Mocha and Node.js
 ----------------------------
 
-At Benbria, we use coffeeCoverage to find out how much coverage we get from our unit tests.  Our
-process works like this; first we make a copy of our code base:
+### Dynamic Compilation
 
-    cd project
-    mkdir /tmp/coverage
-    tar -cf - . | (cd /tmp/coverage && tar -xf -)
-    cd /tmp/coverage
+There are two ways to use coffeeCoverage as part of your unit tests.  First, if you run your
+tests directly on your .coffee files, you can register coffeeCoverage to dynamically compile
+.coffee (and even ._coffee if you're using [streamlinejs](https://github.com/Sage/streamlinejs))
+files.  For example, create a "register-handlers.js":
 
-Then we instrument it in-place.  We exclude the "test" directory, since we don't want coverage of
-our actual test code:
+    # If you're using with streamline, you *must* register streamline first:
+    require('streamline').register({})
 
-    coffeeCoverage --initfile init.js --exclude node_modules,.git,test --path abbr . .
+    #  Register coffee-coverage if coverage is enabled.
+    if(process.env.COVERAGE) {
+        require('coffee-coverage').register({
+            path: 'abbr',
+            basePath: __dirname + "/..",
+            exclude: ['test', 'node_modules'],
+            streamlinejs: true
+        })
+    }
 
-We don't have to delete the .coffee files, since when we `require 'foo'`, node will preferentially
-load the foo.js file over the foo.coffee file.  coffeeCoverage nicely gives us the number of lines
-it instrumented - this is handy, because if we never `require` a given file from our tests, it
-won't show up in the mocha report.
+Note we set the "basePath" to the root of our project.  This can be a path which is relative to
+`__dirname` (e.g. `__dirname + "/.."`).
 
-Next we run our tests:
+Note that streamline support is "experimental" right now (i.e. it might break at any moment
+because we're using undocumented features in streamlinejs) so to turn it on, you have to
+explicitly pass 'streamlinejs: true' as an option.
 
-    mocha --require init.js --reporter html-cov --compilers coffee:coffee-script test/*Test.coffee
+Then, run your tests:
+
+    COVERAGE=true mocha --require register-handlers.js --reporter html-cov ...
+
+### Static Compilation
+
+Alternatively, you can use coffeeCoverage to statically compile your code with instrumentation:
+
+    # Compile everything except the test directory with coffeeCoverage
+    coffeeCoverage --initfile ./lib/init.js --exclude test --path abbr ./src ./lib
+    # Compile the test directory with regular coffee-script
+    coffee -o ./lib/test ./src/test
+
+This also writes an "lib/init.js" which initializes all the execution counts to 0.  This is handy,
+because otherwise if we never `require` a given module, that module's counts won't show up at all
+in the code coverage report, which might overly inflate our code coverage percentage.  Next we run
+our tests:
+
+    mocha --require ./lib/init.js --reporter html-cov ./lib/test/*
 
 Some Weirdness with Line Numbers
 --------------------------------
@@ -113,6 +138,34 @@ first line of the CoffeeScript, even though we've only run this chunk of CoffeeS
 
 CoffeeCoverage tries to work around this by only instrumenting the first statement it finds on a
 line, so in the above example, we'd annotate the "if" and the "z()", but not the "y()".
+
+Also, it's worth noting a minor difference in the way coffee-coverage compiles statements.  The
+following coffee code:
+
+    if x
+      a()
+    else if y
+      b()
+
+Would normally compile to:
+
+    if(x) {
+      a();
+    } else if(y) {
+      b();
+    }
+
+coffeeCoverage will instead compile this to:
+
+    if(x) {
+      a();
+    } else {
+      if(y) {
+        b();
+      }
+    }
+
+because otherwise it would be unable to annotate the `if(y)` statement.
 
 Detailed Usage
 --------------

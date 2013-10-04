@@ -7,7 +7,7 @@ path = require 'path'
 path.sep = path.sep || "/" # Assume "/" on older versions of node, where this is missing.
 
 {CoverageInstrumentor, version} = require './coffeeCoverage'
-{stripLeadingDot} = require './helpers'
+{stripLeadingDotOrSlash, mkdirs} = require './helpers'
 
 printHelp = () ->
     console.log usageString
@@ -88,17 +88,18 @@ exports.main = (args) ->
 
         if options.verbose
             coverageInstrumentor.on "instrumentingFile", (sourceFile, outFile) ->
-                console.log "    #{stripLeadingDot sourceFile} to #{stripLeadingDot outFile}"
+                console.log "    #{stripLeadingDotOrSlash sourceFile} to #{stripLeadingDotOrSlash outFile}"
 
             coverageInstrumentor.on "instrumentingDirectory", (sourceDir, outDir) ->
-                console.log "Instrumenting directory: #{stripLeadingDot sourceDir} to #{stripLeadingDot outDir}"
+                console.log "Instrumenting directory: #{stripLeadingDotOrSlash sourceDir} to #{stripLeadingDotOrSlash outDir}"
 
             coverageInstrumentor.on "skip", (file) ->
-                console.log "    Skipping: #{stripLeadingDot file}"
+                console.log "    Skipping: #{stripLeadingDotOrSlash file}"
 
 
         # Change initFile into a output stream
         if options.initfile
+            mkdirs path.dirname options.initfile
             options.initFileStream = fs.createWriteStream options.initfile
 
         result = coverageInstrumentor.instrument options.src, options.dest, options

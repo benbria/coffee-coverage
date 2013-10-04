@@ -14,15 +14,17 @@ util = require 'util'
 path = require 'path'
 path.sep = path.sep || "/" # Assume "/" on older versions of node, where this is missing.
 
-{endsWith, defaults, abbreviatedPath, mkdirs, stripLeadingDot, statFile} = require './helpers'
+{startsWith, endsWith, defaults, abbreviatedPath, mkdirs, stripLeadingDotOrSlash, statFile} = require './helpers'
 
 # Add 'version', 'author', and 'contributors' to our exports
 pkginfo = require('pkginfo') module, 'version', 'author', 'contributors'
 
 debug = -> # Do nothing.
 
-COFFEE_EXTENSION = ".coffee"
-JS_EXTENSION     = ".js"
+EXTENSIONS = {
+    ".coffee":  {js_extension: ".js"}
+    "._coffee": {js_extension: "._js"}
+}
 
 class CoverageError extends Error
     constructor: (@message) ->
@@ -36,6 +38,97 @@ defaultOptions =
     exclude: []
     recursive: true
     bare: false
+
+
+# Register coffeeCoverage to automatically process '.coffee' and '._coffee' files.
+#
+# Note if you're using this in conjunction with
+# [streamlinejs](https://github.com/Sage/streamlinejs), you *must* call this function
+# after calling `streamline.register()`, otherwise by the time we get the source the
+# file will already have been compiled.
+#
+# Parameters:
+# * `options.coverageVar` gives the name of the global variable to use to store coverage data in.
+#   This defaults to '_$jscoverage' to be compatible with JSCoverage.
+# * `options.basePath` is the root folder of your project.  This path will be stripped from
+#   file names.
+# * `options.path` should be one of:
+#     * 'relative' - File names will be used as the file name in the instrumented sources.
+#     * 'abbr' - an abbreviated file name will be constructed, with each parent in the path
+#        replaced by the first character in its name.
+#     * null - Path names will be omitted.  Only the base file name will be used.
+# * `options.exclude` is an array of files to ignore.  instrumentDirectory will not instrument
+#   a file if it is in this list, nor will it recursively traverse into a directory if it is
+#   in this list.  This defaults to [] if not explicitly passed.  Note that this option
+#   will only work if `options.basePath` is provided.
+# * `options.streamlinejs` - Enable experimental support for streamlinejs.  This option will
+#   be removed in a future version of coffeeCoverage.
+#
+# e.g. `coffeeCoverage.register {path: 'abbr', basePath: "#{__dirname}/.." }`
+#
+exports.register = (options) ->
+    coverage = new exports.CoverageInstrumentor options
+    module = require('module');
+
+    if options.basePath
+        basePath = path.resolve options.basePath
+
+    # Return the relative path for the file from the basePath.  Returnes filename
+    # if the file is not relative to basePath.
+    getRelativeFilename = (basePath, filename) ->
+        coverageFileName = path.resolve filename
+        if basePath? and startsWith(coverageFileName, basePath)
+            coverageFileName = coverageFileName[basePath.length..]
+        return coverageFileName
+
+    # Return true if we should exclude a file
+    excludeFile = (filename) ->
+        excluded = false
+        if basePath
+            relativeFilename = getRelativeFilename basePath, filename
+            if relativeFilename == filename
+                # Only instrument files that are inside the project.
+                excluded = true
+
+        if not path.extname(filename) in Object.keys(EXTENSIONS)
+            excluded = true
+
+        for excludePath in (options.exclude or [])
+            if startsWith filename, excludePath
+                excluded = true
+
+        return excluded
+
+    instrumentFile = (filename) ->
+        content = fs.readFileSync filename, 'utf8'
+        coverageFileName = getRelativeFilename basePath, filename
+        instrumented = coverage.instrumentCoffee coverageFileName, content, options
+        return instrumented.init + instrumented.js
+
+    origCoffeeHandler = require.extensions[".coffee"]
+    require.extensions[".coffee"] = (module, filename) ->
+        if excludeFile filename
+            return origCoffeeHandler.call this, module, filename
+        module._compile instrumentFile(filename), filename
+
+    if options.streamlinejs
+        # TODO: This is pretty fragile, as we rely on some undocumented parts of streamline_js.
+        # Would be better to do this via some programatic interface to streamline.  Need to make a
+        # pull request.
+        streamline_js = require.extensions["._js"]
+        if streamline_js
+            origStreamineCoffeeHandler = require.extensions["._coffee"]
+            require.extensions["._coffee"] = (module, filename) ->
+                if excludeFile filename
+                    return origStreamineCoffeeHandler.call this, module, filename
+
+                compiled = instrumentFile(filename)
+                # TODO: Pass a sourcemap here?
+                streamline_js module, filename, compiled, null
+
+    # TODO: Would be nice if there was an init option which found all the .coffee and ._coffee
+    # files in the basepath (minus excluded files) and added the automagically to
+    # the
 
 #### CoverageInstrumentor
 #
@@ -114,6 +207,21 @@ class exports.CoverageInstrumentor extends events.EventEmitter
         else
             throw new CoverageError("Can't instrument #{source}.")
 
+    # Return the output file name for a given input file name.
+    #
+    # e.g. `getOutputFileName('foo.coffee') # => 'foo.js'`
+    #
+    getOutputFileName: (fileName) ->
+        outFile = fileName
+
+        for coffee_extension, ext of EXTENSIONS
+            if endsWith(fileName.toLowerCase(), coffee_extension)
+                outFile = fileName[..-(coffee_extension.length+1)] + ext.js_extension
+                break
+
+        return outFile
+
+
     #### Instrument a directory.
     #
     # This finds all .coffee files in the specified `sourceDirectory`, and writes instrumented
@@ -173,20 +281,27 @@ class exports.CoverageInstrumentor extends events.EventEmitter
 
             sourceStat = statFile sourceFile
 
-            if endsWith(file.toLowerCase(), COFFEE_EXTENSION) and sourceStat.isFile()
-                # lazy-create the output directory.
-                if !outputDirectoryExists
-                    mkdirs outDirectory, sourceDirectoryMode
-                    outputDirectoryExists = true
-
-                # Replace the ".coffee" extension with a ".js" extension
-                outFile = outFile[..-(COFFEE_EXTENSION.length+1)] + JS_EXTENSION
-                inst = @instrumentFile sourceFile, outFile, options
-                answer.lines += inst.lines
-
-            else if options.recursive and sourceStat.isDirectory()
+            if options.recursive and sourceStat.isDirectory()
                 inst = @instrumentDirectory sourceFile, outFile, options
                 answer.lines += inst.lines
+            else
+                processed = false
+                for coffee_extension of EXTENSIONS
+                    # TODO: Make this work for streamline files.
+                    if coffee_extension is '._coffee' then continue
+
+                    if endsWith(file.toLowerCase(), coffee_extension) and sourceStat.isFile()
+                        # lazy-create the output directory.
+                        if !outputDirectoryExists
+                            mkdirs outDirectory, sourceDirectoryMode
+                            outputDirectoryExists = true
+
+                        # Replace the ".coffee" extension with a ".js" extension
+                        outFile = @getOutputFileName outFile
+                        inst = @instrumentFile sourceFile, outFile, options
+                        answer.lines += inst.lines
+                        processed = true
+                        break
 
         return answer
 
@@ -197,42 +312,19 @@ class exports.CoverageInstrumentor extends events.EventEmitter
     #
     # Emits an "instrumentingFile" event with the name of the input and output file.
     #
-    #  - `outFile` is optional; if present then the compiled JavaScript will be written out to this
-    #    file.
-    #  - If `options.path` is 'relative', then `sourceFile` will be used as the file name in
-    #    the instrumented sources.  If this value is 'abbr' then an abbreviated filename will be
-    #    constructed, with each parent in the path being replaced by the first character in its
-    #    name.  If this option has any other value, path names will be omitted.
+    # * `outFile` is optional; if present then the compiled JavaScript will be written out to this
+    #   file.
     #
-    #  - If `options.usedFileNames` is present, it must be an array.  This method will add the
-    #    name of the file to usedFileNames.  If the name of the file is already in usedFileNames
-    #    then this method will generate a unique name.
-    #
-    #  - If `options.initFileStream` is present, then all global initialization will be written
-    #    to `initFileStream.write()`, in addition to each instrumented source file.
+    # For other options, see `@instrumentCoffee`.
     #
     # Throws CoverageError if there is a problem with the `sourceFile` or `outFile` parameters.
-    instrumentFile: (sourceFile, outFile, options) ->
+    instrumentFile: (sourceFile, outFile=null, options={}) ->
         @emit "instrumentingFile", sourceFile, outFile
 
         validateSrcDest sourceFile, outFile
 
-        switch options.path
-            when 'relative' then filename = stripLeadingDot sourceFile
-            when 'abbr' then filename = abbreviatedPath stripLeadingDot sourceFile
-            else filename = path.basename sourceFile
-
-        # Generate a unique filename if required.
-        if options.usedFileNames and filename in options.usedFileNames
-            filename = generateUniqueName options.usedFileNames, filename
-
-        if options.usedFileNames then options.usedFileNames.push filename
-
-
         data = fs.readFileSync sourceFile, 'utf8'
-        answer = @instrumentCoffee filename, data
-
-        options.initFileStream?.write answer.init
+        answer = @instrumentCoffee sourceFile, data
 
         if outFile
             writeToFile outFile, (answer.init + answer.js)
@@ -255,34 +347,69 @@ class exports.CoverageInstrumentor extends events.EventEmitter
 
     #### Instrument a .coffee file.
     #
-    # `fileData` is the contents of the coffee file.
+    # Parameters:
+    #
+    # * `fileData` is the contents of the coffee file.
+    #
+    # * `options.path` should be one of:
+    #     * 'relative' - `fileName` will be used as the file name in the instrumented sources.
+    #     * 'abbr' - an abbreviated file name will be constructed, with each parent in the path
+    #        replaced by the first character in its name.
+    #     * null - Path names will be omitted.  Only the base file name will be used.
+    #
+    # * If `options.usedFileNames` is present, it must be an array.  This method will add the
+    #   name of the file to usedFileNames.  If the name of the file is already in usedFileNames
+    #   then this method will generate a unique name.
+    #
+    # * If `options.initFileStream` is present, then all global initialization will be written
+    #   to `initFileStream.write()`, in addition to being returned.
     #
     # Returns an object consisting of:
-    #  - `init` - the intialization JavaScript code.
-    #  - `js` - the compiled JavaScript, instrumented to collect coverage data.
-    #  - `lines` - the total number of instrumented lines.
+    # * `init` - the intialization JavaScript code.
+    # * `js` - the compiled JavaScript, instrumented to collect coverage data.
+    # * `lines` - the total number of instrumented lines.
     #
-    instrumentCoffee: (fileName, fileData) ->
+    instrumentCoffee: (fileName, fileData, options = {}) ->
         options = @options
 
-        quotedFilename = toQuotedString fileName
+        origFileName = fileName
 
-        ast = coffeeScript.nodes(fileData)
+        switch options.path
+            when 'relative' then fileName = stripLeadingDotOrSlash fileName
+            when 'abbr' then fileName = abbreviatedPath stripLeadingDotOrSlash fileName
+            else fileName = path.basename fileName
+
+        # Generate a unique fileName if required.
+        if options.usedfileNames
+            if fileName in options.usedfileNames
+                fileName = generateUniqueName options.usedfileNames, fileName
+            options.usedfileNames.push fileName
+
+        quotedFileName = toQuotedString fileName
+
+        try
+            ast = coffeeScript.nodes(fileData)
+        catch err
+            throw new CoverageError("Could not parse #{fileName}: #{err.stack}")
 
         # Add coverage instrumentation nodes throughout the tree.
         instrumentedLines = []
         instrumentTree = (node, parent=null, depth=0) ->
             debug "Examining  l:#{node.locationData.first_line + 1} d:#{depth} #{nodeType(node)}"
 
-            if nodeType(node) != "Block"
+            if (nodeType(node) != "Block") or node.coffeeCoverageDoNotInstrument
                 if nodeType(node) is "If" and node.isChain
                     # Chaining is where coffee compiles something into `... else if ...`
                     # instead of '... else {if ...}`.  Chaining produces nicer looking coder
                     # with fewer indents, but it also produces code that's harder to instrument,
                     # so we turn it off.
                     #
+
                     debug "  Disabling chaining for if statement"
                     node.isChain = false
+
+                    # An alternative to to disable instrumentation on the else node.
+                    #node.elseBody.coffeeCoverageDoNotInstrument = true
 
                 # Recurse into child nodes
                 node.eachChild (child) -> instrumentTree(child, node, depth + 1)
@@ -325,7 +452,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
                         instrumentedLines.push line
 
                         instrumentedLine = coffeeScript.nodes(
-                            "#{options.coverageVar}[#{quotedFilename}][#{line}]++")
+                            "#{options.coverageVar}[#{quotedFileName}][#{line}]++")
 
                         fixLocationData instrumentedLine, line
 
@@ -348,16 +475,16 @@ class exports.CoverageInstrumentor extends events.EventEmitter
             } else if ((typeof window !== 'undefined') && (typeof window.#{options.coverageVar} === 'undefined')) {
                 window.#{options.coverageVar} = #{options.coverageVar}
             }
-            if (! #{options.coverageVar}[#{quotedFilename}]) {
-                #{options.coverageVar}[#{quotedFilename}] = [];\n"""
+            if (! #{options.coverageVar}[#{quotedFileName}]) {
+                #{options.coverageVar}[#{quotedFileName}] = [];\n"""
 
         for lineNumber in instrumentedLines
-            init += "    #{options.coverageVar}[#{quotedFilename}][#{lineNumber}] = 0;\n"
+            init += "    #{options.coverageVar}[#{quotedFileName}][#{lineNumber}] = 0;\n"
 
         init += "}\n\n"
 
         # Write the original source code into the ".source" array.
-        init += "#{options.coverageVar}[#{quotedFilename}].source = ["
+        init += "#{options.coverageVar}[#{quotedFileName}].source = ["
         fileToInstrumentLines = fileToLines fileData
         for line, index in fileToInstrumentLines
             if !!index then init += ", "
@@ -365,10 +492,17 @@ class exports.CoverageInstrumentor extends events.EventEmitter
         init += "];\n\n"
 
         # Compile the instrumented CoffeeScript and write it to the JS file.
-        js = ast.compile {bare: options.bare}
+        try
+            js = ast.compile {bare: options.bare}
+        catch err
+            throw new CoverageError("Could not compile #{fileName} after annotating: #{err.stack}")
 
-        return {
+        options.initFileStream?.write answer.init
+
+        answer = {
             init: init
             js: js
             lines: instrumentedLines.length
         }
+
+        return answer
