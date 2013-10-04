@@ -2,7 +2,7 @@
   "name":              "coffee-coverage",
   "description":       "JSCoverage-style instrumentation for CoffeeScript files.",
   "keywords":          ["javascript", "coffeescript", "coverage", "code coverage", "test"],
-  "version":           "0.2.0",
+  "version":           "0.3.0",
   "author":            "Benbria (http://www.benbria.com/)",
   "contributors": [
       "Jason Walton <dev@lucid.thedreaming.org> (https://github.com/jwalton)",

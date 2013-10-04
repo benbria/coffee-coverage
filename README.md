@@ -76,16 +76,17 @@ tests directly on your .coffee files, you can register coffeeCoverage to dynamic
 files.  For example, create a "register-handlers.js":
 
     # If you're using with streamline, you *must* register streamline first:
-    require('streamline').register({})
+    require('streamline').register({});
 
     #  Register coffee-coverage if coverage is enabled.
     if(process.env.COVERAGE) {
         require('coffee-coverage').register({
             path: 'abbr',
-            basePath: __dirname + "/..",
-            exclude: ['test', 'node_modules'],
+            basePath: __dirname,
+            exclude: ['/test', '/node_modules', '/.git'],
+            initAll: true,
             streamlinejs: true
-        })
+        });
     }
 
 Note we set the "basePath" to the root of our project.  This can be a path which is relative to
@@ -114,6 +115,8 @@ in the code coverage report, which might overly inflate our code coverage percen
 our tests:
 
     mocha --require ./lib/init.js --reporter html-cov ./lib/test/*
+
+Static compilation does not currently support streamline.
 
 Some Weirdness with Line Numbers
 --------------------------------
