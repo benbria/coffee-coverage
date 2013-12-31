@@ -23,6 +23,8 @@ debug = -> # Do nothing.
 
 EXTENSIONS = {
     ".coffee":  {js_extension: ".js"}
+    ".litcoffee":  {js_extension: ".js"}
+    ".coffee.md":  {js_extension: ".js"}
     "._coffee": {js_extension: "._js"}
 }
 
@@ -55,7 +57,7 @@ getRelativeFilename = (basePath, fileName) ->
     return relativeFileName
 
 
-# Register coffeeCoverage to automatically process '.coffee' and '._coffee' files.
+# Register coffeeCoverage to automatically process '.coffee', '.litcoffee', '.coffee.md' and '._coffee' files.
 #
 # Note if you're using this in conjunction with
 # [streamlinejs](https://github.com/Sage/streamlinejs), you *must* call this function
@@ -79,7 +81,7 @@ getRelativeFilename = (basePath, fileName) ->
 # * `options.streamlinejs` - Enable experimental support for streamlinejs.  This option will
 #   be removed in a future version of coffeeCoverage.
 # * `options.initAll` - If true, then coffeeCoverage will recursively walk through all
-#   subdirectories of `options.basePath` and gather line number information for all .coffee files
+#   subdirectories of `options.basePath` and gather line number information for all CoffeeScript files
 #   found.  This way even files which are not `require`d at any point during your test will still
 #   br instrumented and reported on.
 #
@@ -126,11 +128,15 @@ exports.register = (options) ->
         instrumented = coverage.instrumentCoffee coverageFileName, content, options
         return instrumented.init + instrumented.js
 
-    origCoffeeHandler = require.extensions[".coffee"]
-    require.extensions[".coffee"] = (module, fileName) ->
-        if excludeFile fileName
-            return origCoffeeHandler.call this, module, fileName
-        module._compile instrumentFile(fileName), fileName
+    replaceHandler = (extension) ->
+        origCoffeeHandler = require.extensions[extension]
+        require.extensions[extension] = (module, fileName) ->
+            if excludeFile fileName
+                return origCoffeeHandler.call this, module, fileName
+            module._compile instrumentFile(fileName), fileName
+    replaceHandler ".coffee"
+    replaceHandler ".litcoffee"
+    replaceHandler ".coffee.md"
 
     if options.streamlinejs
         # TODO: This is pretty fragile, as we rely on some undocumented parts of streamline_js.
@@ -342,7 +348,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
                             mkdirs outDirectory, sourceDirectoryMode
                             outputDirectoryExists = true
 
-                        # Replace the ".coffee" extension with a ".js" extension
+                        # Replace the ".(lit)coffee(.md)" extension with a ".js" extension
                         outFile = @getOutputFileName outFile
                         instrumentOptions = Object.create options
                         instrumentOptions.fileName = relativePath
@@ -420,6 +426,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
     #
     instrumentCoffee: (fileName, fileData, options = {}) ->
         origFileName = fileName
+        literate = /\.(litcoffee|coffee\.md)$/.test(fileName)
 
         switch options.path
             when 'relative' then fileName = stripLeadingDotOrSlash fileName
@@ -435,7 +442,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
         quotedFileName = toQuotedString fileName
 
         try
-            ast = coffeeScript.nodes(fileData)
+            ast = coffeeScript.nodes(fileData, {literate: literate})
         catch err
             throw new CoverageError("Could not parse #{fileName}: #{err.stack}")
 
@@ -540,7 +547,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
 
         # Compile the instrumented CoffeeScript and write it to the JS file.
         try
-            js = ast.compile {bare: options.bare}
+            js = ast.compile {bare: options.bare, literate: literate}
         catch err
             throw new CoverageError("Could not compile #{fileName} after annotating: #{err.stack}")
 
