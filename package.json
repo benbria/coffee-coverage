@@ -2,13 +2,14 @@
   "name":              "coffee-coverage",
   "description":       "JSCoverage-style instrumentation for CoffeeScript files.",
   "keywords":          ["javascript", "coffeescript", "coverage", "code coverage", "test"],
-  "version":           "0.3.0",
+  "version":           "0.4.0",
   "author":            "Benbria (http://www.benbria.com/)",
   "contributors": [
       "Jason Walton <dev@lucid.thedreaming.org> (https://github.com/jwalton)",
       "Drew Stokes <drew@drewstokes.com> (https://github.com/dstokes)",
       "Vyacheslav Slinko <vyacheslav.slinko@gmail.com> (https://github.com/vslinko)",
-      "David Dahl (https://github.com/effata)"
+      "David Dahl (https://github.com/effata)",
+      "David Kirstein (https://github.com/frozenice-)"
   ],
   "licenses": [{
     "type":            "MIT",

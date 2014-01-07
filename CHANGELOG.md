@@ -1,5 +1,9 @@
 # coffee-coverage Changelog
 
+### v0.4.0
+
+  - Add support for literate CoffeeScript (thanks [frozenice-](https://github.com/frozenice-)).
+
 ### v0.3.0
 
   - Add support for dynamically compiling .coffee and ._coffee files on the fly.  (Special thanks
