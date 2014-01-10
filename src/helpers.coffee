@@ -59,7 +59,7 @@ exports.mkdirs = (dirPath, mode) ->
 
             if not stat
                 # Create the directory
-                fs.mkdir currentPath, mode
+                fs.mkdirSync currentPath, mode
 
 # Converts a path like "./foo/"
 exports.abbreviatedPath = (pathName) ->
