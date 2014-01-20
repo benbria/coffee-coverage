@@ -53,7 +53,7 @@ defaultOptions =
 getRelativeFilename = (basePath, fileName) ->
     relativeFileName = path.resolve fileName
     if basePath? and startsWith(relativeFileName, basePath)
-        relativeFileName = relativeFileName[basePath.length..]
+        relativeFileName = path.relative basePath, fileName
     return relativeFileName
 
 
@@ -106,6 +106,8 @@ exports.register = (options) ->
 
     # Return true if we should exclude a file
     excludeFile = (fileName) ->
+        exclude = options.exclude or []
+
         excluded = false
         if basePath
             relativeFilename = getRelativeFilename basePath, fileName
@@ -113,12 +115,24 @@ exports.register = (options) ->
                 # Only instrument files that are inside the project.
                 excluded = true
 
-        if not path.extname(fileName) in Object.keys(EXTENSIONS)
+            components = relativeFilename.split path.sep
+            for component in components
+                if component in exclude
+                    excluded = true
+
+            if !excluded
+                for excludePath in exclude
+                    if startsWith "/#{relativeFilename}", excludePath
+                        excluded = true
+
+        if !excluded and (not path.extname(fileName) in Object.keys(EXTENSIONS))
             excluded = true
 
-        for excludePath in (options.exclude or [])
-            if startsWith fileName, excludePath
-                excluded = true
+
+        if !excluded
+            for excludePath in exclude
+                if startsWith fileName, excludePath
+                    excluded = true
 
         return excluded
 
@@ -153,9 +167,6 @@ exports.register = (options) ->
                 # TODO: Pass a sourcemap here?
                 streamline_js module, fileName, compiled, null
 
-    # TODO: Would be nice if there was an init option which found all the .coffee and ._coffee
-    # files in the basepath (minus excluded files) and added the automagically to
-    # the
 
 #### CoverageInstrumentor
 #

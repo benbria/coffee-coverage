@@ -1,5 +1,13 @@
 # coffee-coverage Changelog
 
+### v0.4.2
+
+  - Fix exclude bug when dynamically instrumenting files.
+
+### v0.4.1
+
+  - Fix async bug when creating new directories (thanks [can3p](https://github.com/can3p)).
+
 ### v0.4.0
 
   - Add support for literate CoffeeScript (thanks [frozenice-](https://github.com/frozenice-)).
