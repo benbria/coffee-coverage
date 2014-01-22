@@ -4,6 +4,8 @@ Benbria CoffeeCoverage
 Compiles .coffee files to .js files, and adds [JSCoverage](http://siliconforks.com/jscoverage/)
 style instrumnetation for the original coffee script source.
 
+[![NPM](https://nodei.co/npm/coffee-coverage.png?downloads=true&stars=true)](https://npmjs.org/package/coffee-coverage)
+
 Contents
 --------
 
