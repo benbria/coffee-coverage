@@ -58,6 +58,10 @@ parseArgs = (args) ->
         choices: ['none', 'abbr', 'relative']
         defaultValue: "none"
 
+    parser.addArgument [ '--basepath' ],
+        help: """..."""
+        metavar: "basepath"
+
     parser.addArgument ["src"],
         help: "A file or directory to instrument.  If this is a directory, then all .coffee " +
               "files in this directory and all subdirectories will be instrumented."

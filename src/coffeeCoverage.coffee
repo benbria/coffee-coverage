@@ -48,12 +48,12 @@ defaultOptions =
     recursive: true
     bare: false
 
-# Return the relative path for the file from the basePath.  Returns file name
-# if the file is not relative to basePath.
-getRelativeFilename = (basePath, fileName) ->
+# Return the relative path for the file from the basepath.  Returns file name
+# if the file is not relative to basepath.
+getRelativeFilename = (basepath, fileName) ->
     relativeFileName = path.resolve fileName
-    if basePath? and startsWith(relativeFileName, basePath)
-        relativeFileName = path.relative basePath, fileName
+    if basepath? and startsWith(relativeFileName, basepath)
+        relativeFileName = path.relative basepath, fileName
     return relativeFileName
 
 
@@ -67,7 +67,7 @@ getRelativeFilename = (basePath, fileName) ->
 # Parameters:
 # * `options.coverageVar` gives the name of the global variable to use to store coverage data in.
 #   This defaults to '_$jscoverage' to be compatible with JSCoverage.
-# * `options.basePath` is the root folder of your project.  This path will be stripped from
+# * `options.basepath` is the root folder of your project.  This path will be stripped from
 #   file names.
 # * `options.path` should be one of:
 #     * 'relative' - File names will be used as the file name in the instrumented sources.
@@ -77,27 +77,27 @@ getRelativeFilename = (basePath, fileName) ->
 # * `options.exclude` is an array of files to ignore.  instrumentDirectory will not instrument
 #   a file if it is in this list, nor will it recursively traverse into a directory if it is
 #   in this list.  This defaults to [] if not explicitly passed.  Note that this option
-#   will only work if `options.basePath` is provided.
+#   will only work if `options.basepath` is provided.
 # * `options.streamlinejs` - Enable experimental support for streamlinejs.  This option will
 #   be removed in a future version of coffeeCoverage.
 # * `options.initAll` - If true, then coffeeCoverage will recursively walk through all
-#   subdirectories of `options.basePath` and gather line number information for all CoffeeScript files
+#   subdirectories of `options.basepath` and gather line number information for all CoffeeScript files
 #   found.  This way even files which are not `require`d at any point during your test will still
 #   br instrumented and reported on.
 #
-# e.g. `coffeeCoverage.register {path: 'abbr', basePath: "#{__dirname}/.." }`
+# e.g. `coffeeCoverage.register {path: 'abbr', basepath: "#{__dirname}/.." }`
 #
 exports.register = (options) ->
     coverage = new exports.CoverageInstrumentor options
     module = require('module');
 
-    if options.basePath
-        basePath = path.resolve options.basePath
+    if options.basepath
+        basepath = path.resolve options.basepath
 
         if options.initAll
             # Recursively instrument everything in the base path to generate intialization data.
             initStream = new StringStream()
-            coverage.instrumentDirectory options.basePath, null, {
+            coverage.instrumentDirectory options.basepath, null, {
                 exclude: options.exclude
                 recursive: true
                 initFileStream: initStream
@@ -109,8 +109,8 @@ exports.register = (options) ->
         exclude = options.exclude or []
 
         excluded = false
-        if basePath
-            relativeFilename = getRelativeFilename basePath, fileName
+        if basepath
+            relativeFilename = getRelativeFilename basepath, fileName
             if relativeFilename == fileName
                 # Only instrument files that are inside the project.
                 excluded = true
@@ -138,7 +138,7 @@ exports.register = (options) ->
 
     instrumentFile = (fileName) ->
         content = fs.readFileSync fileName, 'utf8'
-        coverageFileName = getRelativeFilename basePath, fileName
+        coverageFileName = getRelativeFilename basepath, fileName
         instrumented = coverage.instrumentCoffee coverageFileName, content, options
         return instrumented.init + instrumented.js
 
@@ -273,10 +273,10 @@ class exports.CoverageInstrumentor extends events.EventEmitter
     #   a file if it is in this list, nor will it recursively traverse into a directory if it is
     #   in this list.  This defaults to [] if not explicitly passed or specified in the
     #   constructor.  Note that this field is case sensitive!
-    # * `options.basePath` if provided, then all excludes will be evaluated relative to this
-    #   base path.  For example, if `options.exclude` is `['a/b']`, and `options.basePath` is
+    # * `options.basepath` if provided, then all excludes will be evaluated relative to this
+    #   base path.  For example, if `options.exclude` is `['a/b']`, and `options.basepath` is
     #   "/Users/jwalton/myproject", then this will prevent coffeeCoverage from traversing
-    #   "/Users/jwalton/myproject/a/b".  `basePath` will also be stripped from the front
+    #   "/Users/jwalton/myproject/a/b".  `basepath` will also be stripped from the front
     #   of any files when generating names.
     # * `options.initFileStream` is a stream to which all global initialization will be
     #   written to via `initFileStream.write(data)`.
@@ -299,8 +299,8 @@ class exports.CoverageInstrumentor extends events.EventEmitter
 
         options = Object.create options
         options.usedFileNames = options.usedFileNames || []
-        options.basePath = if options.basePath
-            path.resolve options.basePath
+        options.basepath = if options.basepath
+            path.resolve options.basepath
         else
             sourceDirectory
 
@@ -331,7 +331,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
                 skip = true
 
             sourceFile = sourceDirectory + file
-            relativePath = getRelativeFilename options.basePath, sourceFile
+            relativePath = getRelativeFilename options.basepath, sourceFile
             if relativePath != sourceFile then for exclude in options.exclude
                 if startsWith relativePath, exclude
                     skip = true
