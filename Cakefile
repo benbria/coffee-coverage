@@ -1,5 +1,7 @@
 {spawn, exec} = require 'child_process'
 
+coffeescript = require 'coffee-script'
+
 launch = (cmd, options=[], done=null) ->
     app = spawn cmd, options
     app.stdout.pipe(process.stdout)
@@ -22,7 +24,10 @@ mocha = (done) ->
 
     options = []
     options.push '--compilers'
-    options.push 'coffee:coffee-script'
+    if coffeescript.register
+        options.push 'coffee:coffee-script/register'
+    else
+        options.push 'coffee:coffee-script'
 
     # Colors!
     options.push '-c'
