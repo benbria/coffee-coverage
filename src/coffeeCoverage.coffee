@@ -535,10 +535,11 @@ class exports.CoverageInstrumentor extends events.EventEmitter
         # Write out top-level initalization
         init = """
             if (typeof #{@options.coverageVar} === 'undefined') #{@options.coverageVar} = {};
-            __export = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : this;
-            if (typeof __export.#{@options.coverageVar} === 'undefined') {
-                __export.#{@options.coverageVar} = #{@options.coverageVar};
-            }
+            (function(export) {
+                if (typeof export.#{@options.coverageVar} === 'undefined') {
+                    export.#{@options.coverageVar} = #{@options.coverageVar};
+                }
+            })(typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : this);
             if (! #{@options.coverageVar}[#{quotedFileName}]) {
                 #{@options.coverageVar}[#{quotedFileName}] = [];\n"""
 
