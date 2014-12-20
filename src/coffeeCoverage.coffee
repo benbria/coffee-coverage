@@ -544,14 +544,14 @@ class exports.CoverageInstrumentor extends events.EventEmitter
 
         # Write out top-level initalization
         init = """
-            if (typeof #{effectiveOptions.coverageVar} === 'undefined') #{effectiveOptions.coverageVar} = {};
-            if ((typeof global !== 'undefined') && (typeof global.#{effectiveOptions.coverageVar} === 'undefined')) {
-                global.#{effectiveOptions.coverageVar} = #{effectiveOptions.coverageVar}
-            } else if ((typeof window !== 'undefined') && (typeof window.#{effectiveOptions.coverageVar} === 'undefined')) {
-                window.#{effectiveOptions.coverageVar} = #{effectiveOptions.coverageVar}
-            }
-            if (! #{effectiveOptions.coverageVar}[#{quotedFileName}]) {
-                #{effectiveOptions.coverageVar}[#{quotedFileName}] = [];\n"""
+            if (typeof #{@effectiveOptions.coverageVar} === 'undefined') #{@effectiveOptions.coverageVar} = {};
+            (function(export) {
+                if (typeof export.#{@effectiveOptions.coverageVar} === 'undefined') {
+                    export.#{@effectiveOptions.coverageVar} = #{@effectiveOptions.coverageVar};
+                }
+            })(typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : this);
+            if (! #{@effectiveOptions.coverageVar}[#{quotedFileName}]) {
+                #{@effectiveOptions.coverageVar}[#{quotedFileName}] = [];\n"""
 
         for lineNumber in instrumentedLines
             init += "    #{effectiveOptions.coverageVar}[#{quotedFileName}][#{lineNumber}] = 0;\n"
