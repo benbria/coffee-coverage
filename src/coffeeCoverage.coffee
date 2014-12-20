@@ -458,6 +458,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
             throw new CoverageError("Could not parse #{fileName}: #{err.stack}")
 
         # Add coverage instrumentation nodes throughout the tree.
+        foundLabelInLine = 0
         instrumentedLines = []
         instrumentTree = (node, parent=null, depth=0) =>
             debug "Examining  l:#{node.locationData.first_line + 1} d:#{depth} #{nodeType(node)}"
@@ -511,6 +512,17 @@ class exports.CoverageInstrumentor extends events.EventEmitter
                         debug "Skipping   l:#{line} d:#{depth + 1} #{nodeType(expression)}"
                         doAnnotation = false
 
+                    if nodeType(expression) is 'Value' and /^[a-z_$A-Z]+[a-z_$A-Z0-9]*:\s*[/][/]\s*$/.test expression.base.value
+                        debug "JS Label   l:#{line} d:#{depth + 1} #{nodeType(expression)} #{expression.base.value}"
+                        # a javascript label, we will not instrument the next line
+                        foundLabelInLine = line
+
+                    if foundLabelInLine + 1 == line
+
+                        debug "Skipping after label  l:#{line} d:#{depth + 1} #{nodeType(expression)}"
+                        doAnnotation = false
+                        foundLabelInLine = 0
+
                     if doAnnotation
                         debug "Annotating l:#{line} d:#{depth + 1} #{nodeType(expression)}"
 
@@ -525,10 +537,22 @@ class exports.CoverageInstrumentor extends events.EventEmitter
                         children.splice(childIndex, 0, instrumentedLine);
                         childIndex++
 
-                    # Annotate child expressions here, so we don't waste time instrumenting
+                        # insert annotation for next line so we do not break the label
+                        if foundLabelInLine == line
+                            instrumentedLine = coffeeScript.nodes(
+                                "#{@options.coverageVar}[#{quotedFileName}][#{line + 1}]++")
+
+                            fixLocationData instrumentedLine, line
+                            # Add the new nodes immediately before the statement we're instrumenting.
+                            children.splice(childIndex, 0, instrumentedLine);
+                            childIndex++
+
                     # our instrumentedLines.
                     instrumentTree(expression, node, depth + 1)
                     childIndex++
+
+            # prevent coffee from generating unwanted return result
+            undefined
 
         instrumentTree(ast)
 
