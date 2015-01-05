@@ -60,6 +60,10 @@ in the "dest" directory.  Note that you can compile in-place with:
 
     coffeeCoverage ./source ./source
 
+To run from Mocha unit tests:
+
+    mocha --require coffee-coverage/register --reporter html-cov > coverage.html
+
 
 How it Works
 ------------
@@ -74,7 +78,13 @@ Using with Mocha and Node.js
 There are two ways to use coffeeCoverage as part of your unit tests.  First, if you run your
 tests directly on your .coffee files, you can register coffeeCoverage to dynamically compile
 .coffee (and even ._coffee if you're using [streamlinejs](https://github.com/Sage/streamlinejs))
-files.  For example, create a "register-handlers.js":
+files.  The simplest way to do this is by requiring `coffee-coverage/register`.  For example, using
+mocha:
+
+    mocha --require coffee-coverage/register --reporter html-cov > coverage.html
+
+This will use some sensible defaults.  If you need more control over the options passed to
+coffee-coverage, create your own "register-handlers.js":
 
     # If you're using with streamline, you *must* register streamline first:
     require('streamline').register({});
@@ -90,16 +100,16 @@ files.  For example, create a "register-handlers.js":
         });
     }
 
+Then, run your tests:
+
+    COVERAGE=true mocha --require register-handlers.js --reporter html-cov ...
+
 Note we set the "basePath" to the root of our project.  This can be a path which is relative to
 `__dirname` (e.g. `__dirname + "/.."`).
 
 Note that streamline support is "experimental" right now (i.e. it might break at any moment
 because we're using undocumented features in streamlinejs) so to turn it on, you have to
 explicitly pass 'streamlinejs: true' as an option.
-
-Then, run your tests:
-
-    COVERAGE=true mocha --require register-handlers.js --reporter html-cov ...
 
 ### Static Compilation
 
