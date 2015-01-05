@@ -1,38 +1,46 @@
 {
-  "name":              "coffee-coverage",
-  "description":       "JSCoverage-style instrumentation for CoffeeScript files.",
-  "keywords":          ["javascript", "coffeescript", "coverage", "code coverage", "test"],
-  "version":           "0.4.2",
-  "author":            "Benbria (http://www.benbria.com/)",
-  "contributors": [
-      "Jason Walton <dev@lucid.thedreaming.org> (https://github.com/jwalton)",
-      "Carsten Klein (https://github.com/silkentrance)",
-      "Drew Stokes <drew@drewstokes.com> (https://github.com/dstokes)",
-      "Vyacheslav Slinko <vyacheslav.slinko@gmail.com> (https://github.com/vslinko)",
-      "David Dahl (https://github.com/effata)",
-      "David Kirstein (https://github.com/frozenice-)",
-      "Dmitry Petrov (https://github.com/can3p)",
-      "Devon Govett (https://github.com/devongovett)"
+  "name": "coffee-coverage",
+  "description": "JSCoverage-style instrumentation for CoffeeScript files.",
+  "keywords": [
+    "javascript",
+    "coffeescript",
+    "coverage",
+    "code coverage",
+    "test"
   ],
-  "licenses": [{
-    "type":            "MIT",
-    "url":             "https://raw.github.com/benbria/coffee-coverage/master/LICENSE"
-  }],
-  "main":              "./lib/coffeeCoverage",
+  "version": "0.4.3",
+  "author": "Benbria (http://www.benbria.com/)",
+  "contributors": [
+    "Jason Walton <dev@lucid.thedreaming.org> (https://github.com/jwalton)",
+    "Carsten Klein (https://github.com/silkentrance)",
+    "Drew Stokes <drew@drewstokes.com> (https://github.com/dstokes)",
+    "Vyacheslav Slinko <vyacheslav.slinko@gmail.com> (https://github.com/vslinko)",
+    "David Dahl (https://github.com/effata)",
+    "David Kirstein (https://github.com/frozenice-)",
+    "Dmitry Petrov (https://github.com/can3p)",
+    "Devon Govett (https://github.com/devongovett)"
+  ],
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://raw.github.com/benbria/coffee-coverage/master/LICENSE"
+    }
+  ],
+  "main": "./lib/coffeeCoverage",
   "repository": {
     "type": "git",
     "url": "https://github.com/benbria/coffee-coverage.git"
   },
   "bin": {
-    "coffeeCoverage":  "./bin/coffeecoverage"
+    "coffeeCoverage": "./bin/coffeecoverage"
   },
-  "directories" : {
-    "lib":             "./lib"
+  "directories": {
+    "lib": "./lib"
   },
   "dependencies": {
-    "coffee-script":   ">=1.6.2",
-    "pkginfo":         ">=0.2.3",
-    "argparse":        ">=0.1.7"
+    "coffee-script": ">=1.6.2",
+    "pkginfo": ">=0.2.3",
+    "argparse": ">=0.1.7"
   },
   "devDependencies": {
     "mocha": "1.15.0"
@@ -43,6 +51,6 @@
     "build": "cake build"
   },
   "engines": {
-    "node":            ">=0.6.19"
+    "node": ">=0.6.19"
   }
 }
