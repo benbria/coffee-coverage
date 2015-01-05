@@ -46,9 +46,8 @@
     "mocha": "^2.1.0"
   },
   "scripts": {
-    "test": "cake test",
-    "prepublish": "cake build",
-    "build": "cake build"
+    "prepublish": "coffee -c -o lib src",
+    "test": "mocha"
   },
   "engines": {
     "node": ">=0.6.19"
