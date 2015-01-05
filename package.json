@@ -38,12 +38,12 @@
     "lib": "./lib"
   },
   "dependencies": {
+    "argparse": "^0.1.16",
     "coffee-script": ">=1.6.2",
-    "pkginfo": ">=0.2.3",
-    "argparse": ">=0.1.7"
+    "pkginfo": ">=0.2.3"
   },
   "devDependencies": {
-    "mocha": "1.15.0"
+    "mocha": "^2.1.0"
   },
   "scripts": {
     "test": "cake test",

@@ -14,19 +14,14 @@ util = require 'util'
 path = require 'path'
 path.sep = path.sep || "/" # Assume "/" on older versions of node, where this is missing.
 
-{startsWith, endsWith, defaults, abbreviatedPath, mkdirs, stripLeadingDotOrSlash, statFile} = require './helpers'
+{endsWith, defaults, abbreviatedPath, mkdirs, stripLeadingDotOrSlash, statFile,
+    getRelativeFilename, excludeFile} = require './helpers'
+{EXTENSIONS} = require './constants'
 
 # Add 'version', 'author', and 'contributors' to our exports
 pkginfo = require('pkginfo') module, 'version', 'author', 'contributors'
 
 debug = -> # Do nothing.
-
-EXTENSIONS = {
-    ".coffee":  {js_extension: ".js"}
-    ".litcoffee":  {js_extension: ".js"}
-    ".coffee.md":  {js_extension: ".js"}
-    "._coffee": {js_extension: "._js"}
-}
 
 class CoverageError extends Error
     constructor: (@message) ->
@@ -47,15 +42,6 @@ defaultOptions =
     exclude: []
     recursive: true
     bare: false
-
-# Return the relative path for the file from the basePath.  Returns file name
-# if the file is not relative to basePath.
-getRelativeFilename = (basePath, fileName) ->
-    relativeFileName = path.resolve fileName
-    if basePath? and startsWith(relativeFileName, basePath)
-        relativeFileName = path.relative basePath, fileName
-    return relativeFileName
-
 
 # Register coffeeCoverage to automatically process '.coffee', '.litcoffee', '.coffee.md' and '._coffee' files.
 #
@@ -104,38 +90,6 @@ exports.register = (options) ->
             }
             eval initStream.data
 
-    # Return true if we should exclude a file
-    excludeFile = (fileName) ->
-        exclude = options.exclude or []
-
-        excluded = false
-        if basePath
-            relativeFilename = getRelativeFilename basePath, fileName
-            if relativeFilename == fileName
-                # Only instrument files that are inside the project.
-                excluded = true
-
-            components = relativeFilename.split path.sep
-            for component in components
-                if component in exclude
-                    excluded = true
-
-            if !excluded
-                for excludePath in exclude
-                    if startsWith "/#{relativeFilename}", excludePath
-                        excluded = true
-
-        if !excluded and (not path.extname(fileName) in Object.keys(EXTENSIONS))
-            excluded = true
-
-
-        if !excluded
-            for excludePath in exclude
-                if startsWith fileName, excludePath
-                    excluded = true
-
-        return excluded
-
     instrumentFile = (fileName) ->
         content = fs.readFileSync fileName, 'utf8'
         coverageFileName = getRelativeFilename basePath, fileName
@@ -145,7 +99,7 @@ exports.register = (options) ->
     replaceHandler = (extension) ->
         origCoffeeHandler = require.extensions[extension]
         require.extensions[extension] = (module, fileName) ->
-            if excludeFile fileName
+            if excludeFile fileName, options
                 return origCoffeeHandler.call this, module, fileName
             module._compile instrumentFile(fileName), fileName
     replaceHandler ".coffee"
@@ -160,7 +114,7 @@ exports.register = (options) ->
         if streamline_js
             origStreamineCoffeeHandler = require.extensions["._coffee"]
             require.extensions["._coffee"] = (module, fileName) ->
-                if excludeFile fileName
+                if excludeFile fileName, options
                     return origStreamineCoffeeHandler.call this, module, fileName
 
                 compiled = instrumentFile(fileName)
@@ -327,16 +281,9 @@ class exports.CoverageInstrumentor extends events.EventEmitter
         # Instrument every file in the directory
         for file in fs.readdirSync(sourceDirectory)
             skip = false
-            if file in options.exclude
-                skip = true
 
             sourceFile = sourceDirectory + file
-            relativePath = getRelativeFilename options.basePath, sourceFile
-            if relativePath != sourceFile then for exclude in options.exclude
-                if startsWith relativePath, exclude
-                    skip = true
-
-            if skip
+            if excludeFile sourceFile, options
                 @emit "skip", sourceDirectory + file
                 continue
 
@@ -362,7 +309,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
                         # Replace the ".(lit)coffee(.md)" extension with a ".js" extension
                         outFile = @getOutputFileName outFile
                         instrumentOptions = Object.create options
-                        instrumentOptions.fileName = relativePath
+                        instrumentOptions.fileName = getRelativeFilename options.basePath, sourceFile
                         inst = @instrumentFile sourceFile, outFile, instrumentOptions
                         answer.lines += inst.lines
                         processed = true
