@@ -6,11 +6,13 @@
   "author":            "Benbria (http://www.benbria.com/)",
   "contributors": [
       "Jason Walton <dev@lucid.thedreaming.org> (https://github.com/jwalton)",
+      "Carsten Klein (https://github.com/silkentrance)",
       "Drew Stokes <drew@drewstokes.com> (https://github.com/dstokes)",
       "Vyacheslav Slinko <vyacheslav.slinko@gmail.com> (https://github.com/vslinko)",
       "David Dahl (https://github.com/effata)",
       "David Kirstein (https://github.com/frozenice-)",
-      "Dmitry Petrov (https://github.com/can3p)"
+      "Dmitry Petrov (https://github.com/can3p)",
+      "Devon Govett (https://github.com/devongovett)"
   ],
   "licenses": [{
     "type":            "MIT",
