@@ -75,6 +75,7 @@ factoryDefaults =
 #
 exports.register = (options) ->
 
+    # Clone options so we don't modify the original.
     actualOptions = defaults {}, options
 
     if actualOptions.basePath
@@ -89,6 +90,7 @@ exports.register = (options) ->
     module = require('module');
 
     if actualOptions.basePath and actualOptions.initAll
+        # Recursively instrument everything in the base path to generate intialization data.
         coverage.instrumentDirectory actualOptions.basePath, null
         eval actualOptions.initFileStream.data
 
