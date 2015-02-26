@@ -3,7 +3,7 @@ Benbria CoffeeCoverage
 
 Instruments CoffeeScript files for code coverage.  Compiles .coffee files to .js files, and adds [JSCoverage](http://siliconforks.com/jscoverage/) style instrumentation for the original coffee script source.
 
-[![NPM](https://nodei.co/npm/coffee-coverage.png?downloads=true&stars=true)](https://npmjs.org/package/coffee-coverage)
+[![NPM](https://nodei.co/npm/coffee-coverage.png?downloads=true&downloadRank=true&stars=true)](https://npmjs.org/package/coffee-coverage)
 
 Contents
 --------
