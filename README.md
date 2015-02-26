@@ -62,8 +62,9 @@ in the "dest" directory.  Note that you can compile in-place with:
 
 To run from Mocha unit tests:
 
-    mocha --require coffee-coverage/register --reporter html-cov > coverage.html
-
+     mocha --require coffee-coverage/register \
+           --compilers coffee:coffee-script/register \
+           -R html-cov --bail test/ > coverage.html
 
 How it Works
 ------------
