@@ -1,5 +1,18 @@
 # coffee-coverage Changelog
 
+### v0.4.5
+
+  - Compatibility fix for coffee-script 1.9.1 (thanks [technogeek00](https://github.com/technogeek00))
+
+### v0.4.4
+
+  - Make the behavior of "skip" be consistent between CLI and dynamic compilation.
+  - Drop use of Cakefile for builds.
+
+### v0.4.3
+
+  - Add coffee-coverage/register for easier mocha testing (thanks [devongovett](https://github.com/devongovett))
+
 ### v0.4.2
 
   - Fix exclude bug when dynamically instrumenting files.
