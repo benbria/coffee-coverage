@@ -60,3 +60,21 @@ describe "Coverage tests", ->
         assert _$jscoverage?, "Code should have been instrumented"
         assert ('a/foo.coffee' of _$jscoverage), "Should instrument a/foo.coffee"
         assert !('b/bar.coffee' of _$jscoverage), "Should not instrument b/bar.coffee"
+
+    it "should handle nested recursion correctly", ->
+        # From https://github.com/benbria/coffee-coverage/pull/37
+        instrumentor = new coffeeCoverage.CoverageInstrumentor()
+        source = """
+            z = 0
+            for i in [0...2]
+                for j in [0...5]
+                    z++
+
+            return z
+        """
+
+        code = instrumentor.instrumentCoffee("example.coffee", source).js
+
+        _$jscoverage = {"example.coffee": {}}
+        z = eval code
+        assert.equal z, 10
