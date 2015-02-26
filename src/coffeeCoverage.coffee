@@ -408,10 +408,22 @@ class exports.CoverageInstrumentor extends events.EventEmitter
 
         quotedFileName = toQuotedString fileName
 
+        coffeeOptions = {
+            bare: effectiveOptions.bare
+            literate: literate
+        }
+
         try
-            ast = coffeeScript.nodes(fileData, {literate: literate})
+            tokens = coffeeScript.tokens fileData, coffeeOptions
+           
+            # collect referenced variables
+            coffeeOptions.referencedVars = (token[1] for token in tokens when token.variable)
+
+            # convert tokens to ast
+            ast = coffeeScript.nodes(tokens)
         catch err
             throw new CoverageError("Could not parse #{fileName}: #{err.stack}")
+
 
         # Add coverage instrumentation nodes throughout the tree.
         instrumentedLines = []
@@ -515,7 +527,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
 
         # Compile the instrumented CoffeeScript and write it to the JS file.
         try
-            js = ast.compile {bare: effectiveOptions.bare, literate: literate}
+            js = ast.compile coffeeOptions
         catch err
             throw new CoverageError("Could not compile #{fileName} after annotating: #{err.stack}")
 
