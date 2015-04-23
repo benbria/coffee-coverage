@@ -58,6 +58,10 @@ parseArgs = (args) ->
         choices: ['none', 'abbr', 'relative']
         defaultValue: "none"
 
+    parser.addArgument ['--basePath' ],
+        help: """Specify the basePath for your project."""
+        metavar: "basePath"
+
     parser.addArgument ["src"],
         help: "A file or directory to instrument.  If this is a directory, then all .coffee " +
               "files in this directory and all subdirectories will be instrumented."
@@ -101,6 +105,9 @@ exports.main = (args) ->
         if options.initfile
             mkdirs path.dirname options.initfile
             options.initFileStream = fs.createWriteStream options.initfile
+
+        options.basePath ?= process.cwd()
+        options.basePath = path.resolve options.basePath
 
         result = coverageInstrumentor.instrument options.src, options.dest, options
 
