@@ -503,10 +503,53 @@ class exports.CoverageInstrumentor extends events.EventEmitter
 
         # Write out top-level initalization
         init = """
+            if (typeof FunctionData === 'undefined') {\n
+                function FunctionData(line, column) {\n
+                    this.line = line;\n
+                    this.column = column;\n
+                    this.visited = 0;\n
+                }\n
+                FunctionData.prototype.visit = function () {\n
+                    this.visited++;\n
+                };\n
+            }\n
+            if (typeof BranchData === 'undefined') {\n
+                function BranchData(line, column, expr) {\n
+                    this.line = line;\n
+                    this.column = column;\n
+                    this.expr = expr;\n
+                    this.visited = 0;\n
+                    this.matched = 0;\n
+                }\n
+                BranchData.prototype.visit = function (result) {\n
+                    this.visited++;\n
+                    if (result) {\n
+                        this.matched++;\n
+                    }\n
+                    return result;\n
+                };\n
+            }\n
+            if (typeof initFunctionData === 'undefined') {\n
+                function initFunctionData(file, name, line, column) {\n
+                    var data = new FunctionData(line, column);\n
+                    #{effectiveOptions.coverageVar}[file].functionData[name] = data;\n
+                    return data.visit;\n
+                }\n
+            }\n
+            if (typeof initBranchData === 'undefined') {\n
+                function initBranchData(file, name, branch, line, column, expr) {\n
+                    var data = new BranchData(line, column, expr);\n
+                    if (!#{effectiveOptions.coverageVar}[file].branchData[name]) {\n
+                        #{effectiveOptions.coverageVar}[file].branchData[name]) = [];\n
+                    }\n
+                    #{effectiveOptions.coverageVar}[file].branchData[name][branch] = data;\n
+                    return data.visit;\n
+                }\n
+            }\n
             if (typeof #{effectiveOptions.coverageVar} === 'undefined') #{effectiveOptions.coverageVar} = {};
-            (function(_export) {
-                if (typeof _export.#{effectiveOptions.coverageVar} === 'undefined') {
-                    _export.#{effectiveOptions.coverageVar} = #{effectiveOptions.coverageVar};
+            (function(export) {
+                if (typeof export.#{effectiveOptions.coverageVar} === 'undefined') {
+                    export.#{effectiveOptions.coverageVar} = #{effectiveOptions.coverageVar};
                 }
             })(typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : this);
             if (! #{effectiveOptions.coverageVar}[#{quotedFileName}]) {
@@ -514,6 +557,16 @@ class exports.CoverageInstrumentor extends events.EventEmitter
 
         for lineNumber in instrumentedLines
             init += "    #{effectiveOptions.coverageVar}[#{quotedFileName}][#{lineNumber}] = 0;\n"
+
+        init += "    if (!#{effectiveOptions.coverageVar}[#{quotedFileName}].functionData) {\n"
+        init += "       #{effectiveOptions.coverageVar}[#{quotedFileName}].functionData = {};\n"
+        init += "    }\n"
+        for instrument in functionInstruments
+            init += "    #{instrument.visitorName} = initFunctionData(#{quotedFileName}, #{instrument.name}, #{instrument.line}, #{instrument.column});\n"
+
+        init += "    #{effectiveOptions.coverageVar}[#{quotedFileName}].branchData = {};\n"
+        for instrument in branchInstruments
+            init += "    #{instrument.visitorName} = initBranchData(#{quotedFileName}, #{instrument.name}, #{instrument.branch}, #{instrument.line}, #{instrument.column}, #{instrument.quotedExpression});\n"
 
         init += "}\n\n"
 
