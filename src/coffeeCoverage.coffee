@@ -12,16 +12,17 @@ events = require 'events'
 fs = require 'fs'
 util = require 'util'
 path = require 'path'
+_ = require 'lodash'
 path.sep = path.sep || "/" # Assume "/" on older versions of node, where this is missing.
 
-{endsWith, defaults, abbreviatedPath, mkdirs, stripLeadingDotOrSlash, statFile,
-    getRelativeFilename, excludeFile} = require './helpers'
+JSCoverageInstrumentor = require './instrumentors/JSCoverage'
+
+{abbreviatedPath, mkdirs, stripLeadingDotOrSlash, statFile, nodeType,
+    getRelativeFilename, excludeFile, fixLocationData} = require './helpers'
 {EXTENSIONS} = require './constants'
 
 # Add 'version', 'author', and 'contributors' to our exports
 pkginfo = require('pkginfo') module, 'version', 'author', 'contributors'
-
-debug = -> # Do nothing.
 
 class CoverageError extends Error
     constructor: (@message) ->
@@ -74,9 +75,8 @@ factoryDefaults =
 # e.g. `coffeeCoverage.register {path: 'abbr', basePath: "#{__dirname}/.." }`
 #
 exports.register = (options) ->
-
     # Clone options so we don't modify the original.
-    actualOptions = defaults {}, options
+    actualOptions = _.clone options
 
     if actualOptions.basePath
         actualOptions.basePath = path.resolve actualOptions.basePath
@@ -103,7 +103,7 @@ exports.register = (options) ->
     replaceHandler = (extension) ->
         origCoffeeHandler = require.extensions[extension]
         require.extensions[extension] = (module, fileName) ->
-            if excludeFile fileName, options
+            if excludeFile fileName, actualOptions
                 return origCoffeeHandler.call this, module, fileName
             module._compile instrumentFile(fileName), fileName
     replaceHandler ".coffee"
@@ -118,7 +118,7 @@ exports.register = (options) ->
         if streamline_js
             origStreamineCoffeeHandler = require.extensions["._coffee"]
             require.extensions["._coffee"] = (module, fileName) ->
-                if excludeFile fileName, options
+                if excludeFile fileName, actualOptions
                     return origStreamineCoffeeHandler.call this, module, fileName
 
                 compiled = instrumentFile fileName
@@ -136,23 +136,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
     # For a list of available options see `@instrument`.
     #
     constructor: (options = {}) ->
-        actualOptions = defaults {}, options
-        @defaultOptions = defaults actualOptions, factoryDefaults
-
-    # Takes in a string, and returns a quoted string with any \s and "s in the string escaped.
-    toQuotedString = (string) ->
-        answer = string.replace /\\/g, '\\\\'
-        return '"' + (answer.replace /"/g, '\\\"') + '"'
-
-    # Takes the contents of a file and returns an array of lines.
-    # `fileData` is a string containing an entire file.
-    fileToLines = (fileData) ->
-        dataWithFixedLfs = fileData.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
-        return dataWithFixedLfs.split("\n")
-
-    # Return the type of an AST node.
-    nodeType = (node) ->
-        return node?.constructor?.name or null
+        @defaultOptions = _.defaults {}, options, factoryDefaults
 
     # Write a string to a file.
     writeToFile = (outFile, content) ->
@@ -205,6 +189,8 @@ class exports.CoverageInstrumentor extends events.EventEmitter
     #   will also be stripped from the front of any files when generating names.
     # * `options.initFileStream` is a stream to which all global initialization will be
     #   written to via `initFileStream.write(data)`.
+    # * `options.log` should be a `{debug(), info(), warn(), error()}` object, where each is a function
+    #   that takes multiple parameters and logs them (similar to `console.log()`.)
     #
     # Throws CoverageError if there is a problem with the `source` or `out` parameters.
     instrument: (source, out, options = {}) ->
@@ -226,15 +212,13 @@ class exports.CoverageInstrumentor extends events.EventEmitter
         outFile = fileName
 
         for coffee_extension, ext of EXTENSIONS
-            if endsWith(fileName.toLowerCase(), coffee_extension)
+            if _.endsWith(fileName.toLowerCase(), coffee_extension)
                 outFile = fileName[..-(coffee_extension.length+1)] + ext.js_extension
                 break
 
         return outFile
 
-    getEffectiveOptions = (options = {}, defaultOptions) ->
-        effectiveOptions = defaults {}, options
-        defaults effectiveOptions, defaultOptions
+    getEffectiveOptions = (options = {}, defaultOptions) -> _.defaults {}, options, defaultOptions
 
     #### Instrument a directory.
     #
@@ -272,12 +256,12 @@ class exports.CoverageInstrumentor extends events.EventEmitter
         validateSrcDest sourceDirectory, outDirectory
 
         # Make sure the directory names end in "/"
-        if !endsWith sourceDirectory, path.sep
+        if !_.endsWith sourceDirectory, path.sep
             sourceDirectory += path.sep
         sourceDirectoryMode = (statFile sourceDirectory).mode
 
         if outDirectory
-            if !endsWith outDirectory, path.sep
+            if !_.endsWith outDirectory, path.sep
                 outDirectory += path.sep
 
             # Check to see if the output directory exists
@@ -305,7 +289,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
                     # TODO: Make this work for streamline files.
                     if coffee_extension is '._coffee' then continue
 
-                    if endsWith(file.toLowerCase(), coffee_extension) and sourceStat.isFile()
+                    if _.endsWith(file.toLowerCase(), coffee_extension) and sourceStat.isFile()
                         # lazy-create the output directory.
                         if outDirectory? and !outputDirectoryExists
                             mkdirs outDirectory, sourceDirectoryMode
@@ -313,8 +297,9 @@ class exports.CoverageInstrumentor extends events.EventEmitter
 
                         # Replace the ".(lit)coffee(.md)" extension with a ".js" extension
                         outFile = @getOutputFileName outFile
-                        instrumentOptions = defaults {}, effectiveOptions
-                        instrumentOptions.fileName = getRelativeFilename options.basePath, sourceFile
+                        instrumentOptions = _.assign {}, effectiveOptions, {
+                            fileName: getRelativeFilename options.basePath, sourceFile
+                        }
                         inst = @instrumentFile sourceFile, outFile, instrumentOptions
                         answer.lines += inst.lines
                         processed = true
@@ -351,20 +336,6 @@ class exports.CoverageInstrumentor extends events.EventEmitter
 
         return answer
 
-    # Fix up location data for each instrumentedLine.  Make these all 0-length,
-    # so we don't have to rewrite the location data for all the non-generated
-    # nodes in the tree.
-    fixLocationData = (instrumentedLine, line) ->
-        doIt = (node) ->
-            node.locationData =
-                first_line: line - 1 # -1 because `line` is 1-based
-                first_column: 0
-                last_line: line - 1
-                last_column: 0
-        doIt instrumentedLine
-        instrumentedLine.eachChild doIt
-
-
     #### Instrument a .coffee file.
     #
     # Parameters:
@@ -395,6 +366,8 @@ class exports.CoverageInstrumentor extends events.EventEmitter
 
         effectiveOptions = getEffectiveOptions options, @defaultOptions
 
+        effectiveOptions.log?.info "Instrumenting #{fileName}"
+
         switch effectiveOptions.path
             when 'relative' then fileName = stripLeadingDotOrSlash fileName
             when 'abbr' then fileName = abbreviatedPath stripLeadingDotOrSlash fileName
@@ -406,16 +379,15 @@ class exports.CoverageInstrumentor extends events.EventEmitter
                 fileName = generateUniqueName effectiveOptions.usedfileNames, fileName
             effectiveOptions.usedfileNames.push fileName
 
-        quotedFileName = toQuotedString fileName
-
-        coffeeOptions = {
-            bare: effectiveOptions.bare
-            literate: literate
-        }
-
+        # Compile coffee to nodes.
         try
+            coffeeOptions = {
+                bare: effectiveOptions.bare
+                literate: literate
+            }
+
             tokens = coffeeScript.tokens fileData, coffeeOptions
-           
+
             # collect referenced variables
             coffeeOptions.referencedVars = (token[1] for token in tokens when token.variable)
 
@@ -424,106 +396,63 @@ class exports.CoverageInstrumentor extends events.EventEmitter
         catch err
             throw new CoverageError("Could not parse #{fileName}: #{err.stack}")
 
+        instrumentor = new JSCoverageInstrumentor(fileName, effectiveOptions)
 
-        # Add coverage instrumentation nodes throughout the tree.
-        instrumentedLines = []
-        instrumentTree = (node, parent=null, depth=0) =>
-            debug "Examining  l:#{node.locationData.first_line + 1} d:#{depth} #{nodeType(node)}"
+        # * `node` is the root node of a tree.
+        # * `nodeData` is a `{parent, childAttr, childIndex, depth}` object which describes where `node` is
+        #   relative to it's parent.
+        instrumentTree = (node, nodeData) =>
+            nodeData ?= {parent: null, childIndex: null, childAttr: null, depth: 0}
+            effectiveOptions.log?.debug "Examining  l:#{node.locationData.first_line + 1} d:#{nodeData.depth} #{nodeType(node)}"
 
-            if (nodeType(node) != "Block") or node.coffeeCoverageDoNotInstrument
+            # Ignore code that we generated.
+            return if node.coffeeCoverage?.generated
 
-                if nodeType(node) is "If" and node.isChain
-                    # Chaining is where coffee compiles something into `... else if ...`
-                    # instead of '... else {if ...}`.  Chaining produces nicer looking coder
-                    # with fewer indents, but it also produces code that's harder to instrument,
-                    # so we turn it off.
-                    #
+            if(
+                nodeType(nodeData.parent) is 'Block' and
+                nodeData.childAttr is 'expressions' and
+                nodeType(node) isnt 'Comment'
+            )
+                # TODO: might need to fix nodeData.childIndex
+                instrumentor["visitStatement"]?(node, nodeData)
 
-                    debug "  Disabling chaining for if statement"
-                    node.isChain = false
+            # Call block-specific visitor function.
+            # TODO: might need to fix nodeData.childIndex
+            instrumentor["visit#{nodeType(node)}"]?(node, nodeData)
 
-                    # An alternative to to disable instrumentation on the else node.
-                    #node.elseBody.coffeeCoverageDoNotInstrument = true
+            # Recurse into child nodes
+            if node.children? then node.children.forEach (attr) ->
+                if node[attr]?
+                    attrs = _.flatten [node[attr]]
+                    index = 0
+                    while index < attrs.length
+                        child = attrs[index]
+                        effectiveOptions.log?.debug "Recursing into #{nodeType(node)}:#{attr}:#{index} -> #{nodeType(child)}"
+                        instrumentTree(child, {
+                            parent: node,
+                            childAttr: attr,
+                            childIndex: index,
+                            depth: nodeData.depth + 1
+                        })
+                        child.coffeeCoverage ?= {}
+                        child.coffeeCoverage.visited = true
 
-                # Recurse into child nodes
-                node.eachChild (child) => instrumentTree(child, node, depth + 1)
-
-            else
-                # If this is a block, then instrument all the lines in the block.
-                children = node.expressions
-                childIndex = 0
-                while childIndex < children.length
-                    expression = children[childIndex]
-                    line = expression.locationData.first_line + 1
-
-                    doAnnotation = true
-
-                    if nodeType(expression) is "Comment"
-                        # Don't bother to instrument the comment.
-                        doAnnotation = false
-
-                    if line in instrumentedLines
-                        # Never instrument the same line twice.  This can happen in a situation like:
-                        #
-                        #     if x then console.log "foo"
-                        #
-                        # Here the "if" statement can be instrumented, but we could also instrument the
-                        # "console.log" statement on the same line.
-                        #
-                        # Note that we also run into a weird situation here:
-                        #
-                        #     x = if y then {name: "foo"} \
-                        #              else {name: "bar"}
-                        #
-                        # Because here we're going to instrument the inside of the "else" block,
-                        # but not the inside of the "if" block, which is OK, but a bit weird.
-                        debug "Skipping   l:#{line} d:#{depth + 1} #{nodeType(expression)}"
-                        doAnnotation = false
-
-                    if doAnnotation
-                        debug "Annotating l:#{line} d:#{depth + 1} #{nodeType(expression)}"
-
-                        instrumentedLines.push line
-
-                        instrumentedLine = coffeeScript.nodes(
-                            "#{effectiveOptions.coverageVar}[#{quotedFileName}][#{line}]++")
-
-                        fixLocationData instrumentedLine, line
-
-                        # Add the new nodes immediately before the statement we're instrumenting.
-                        children.splice(childIndex, 0, instrumentedLine);
-                        childIndex++
-
-                    # Annotate child expressions here, so we don't waste time instrumenting
-                    # our instrumentedLines.
-                    instrumentTree(expression, node, depth + 1)
-                    childIndex++
+                        # Bump index up in case we inserted nodes
+                        # TODO: Guard against incrementing forever?
+                        while (child != attrs[index])
+                            skipNode = attrs[index]
+                            if skipNode.coffeeCoverage?.visited
+                                # Skiping a visited node
+                            else if skipNode.coffeeCoverage?.generated
+                                # Skipping a generated node
+                            else
+                                throw new Error "Shouldn't be skipping this node!"
+                            index++
+                        index++
 
         instrumentTree(ast)
 
-        # Write out top-level initalization
-        init = """
-            if (typeof #{effectiveOptions.coverageVar} === 'undefined') #{effectiveOptions.coverageVar} = {};
-            (function(_export) {
-                if (typeof _export.#{effectiveOptions.coverageVar} === 'undefined') {
-                    _export.#{effectiveOptions.coverageVar} = #{effectiveOptions.coverageVar};
-                }
-            })(typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : this);
-            if (! #{effectiveOptions.coverageVar}[#{quotedFileName}]) {
-                #{effectiveOptions.coverageVar}[#{quotedFileName}] = [];\n"""
-
-        for lineNumber in instrumentedLines
-            init += "    #{effectiveOptions.coverageVar}[#{quotedFileName}][#{lineNumber}] = 0;\n"
-
-        init += "}\n\n"
-
-        # Write the original source code into the ".source" array.
-        init += "#{effectiveOptions.coverageVar}[#{quotedFileName}].source = ["
-        fileToInstrumentLines = fileToLines fileData
-        for line, index in fileToInstrumentLines
-            if !!index then init += ", "
-            init += toQuotedString(line)
-        init += "];\n\n"
+        init = instrumentor.getInitString({fileData})
 
         # Compile the instrumented CoffeeScript and write it to the JS file.
         try
@@ -536,7 +465,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
         answer = {
             init: init
             js: js
-            lines: instrumentedLines.length
+            lines: instrumentor.getInstrumentedLineCount()
         }
 
         return answer

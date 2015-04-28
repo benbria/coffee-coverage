@@ -39,7 +39,9 @@
   },
   "dependencies": {
     "argparse": "^0.1.16",
+    "chai": "^2.3.0",
     "coffee-script": ">=1.6.2",
+    "lodash": "^3.7.0",
     "pkginfo": ">=0.2.3"
   },
   "devDependencies": {

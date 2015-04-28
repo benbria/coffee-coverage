@@ -1,26 +1,10 @@
-fs = require 'fs'
-path = require 'path'
-path.sep = path.sep || "/" # Assume "/" on older versions of node, where this is missing.
+fs           = require 'fs'
+path         = require 'path'
+coffeeScript = require 'coffee-script'
+_            = require 'lodash'
 {EXTENSIONS} = require './constants'
 
-# Returns true if `str` starts with `prefix`
-startsWith = (str, prefix) ->
-    return str[..(prefix.length-1)] == prefix
-
-# Returns true if `str` ends with `suffix`
-exports.endsWith = (str, suffix) ->
-    return str[-(suffix.length) ..] == suffix
-
-# Shallow copy all properties of src to dest, but only if those properties don't exist on dest.
-exports.defaults = (dest, src) ->
-    if not dest
-        dest = {}
-
-    for key, val of src
-        if not (key of dest)
-            dest[key] = val
-
-    return dest
+path.sep = path.sep || "/" # Assume "/" on older versions of node, where this is missing.
 
 exports.stripLeadingDotOrSlash = (pathName) -> pathName.replace(/^\//, "").replace(/^\.\//, "")
 
@@ -80,7 +64,7 @@ exports.abbreviatedPath = (pathName) ->
             answer += ""
         else if pathElement is ".."
             answer += pathElement
-        else if startsWith pathElement, "."
+        else if _.startsWith pathElement, "."
             answer += pathElement[0..1]
         else
             answer += pathElement[0]
@@ -97,7 +81,7 @@ exports.abbreviatedPath = (pathName) ->
 # if the file is not relative to basePath.
 exports.getRelativeFilename = (basePath, fileName) ->
     relativeFileName = path.resolve fileName
-    if basePath? and startsWith(relativeFileName, basePath)
+    if basePath? and _.startsWith(relativeFileName, basePath)
         relativeFileName = path.relative basePath, fileName
     return relativeFileName
 
@@ -126,7 +110,7 @@ exports.excludeFile = (fileName, options) ->
         if !excluded
             for excludePath in exclude
                 # Allow `exlude` paths to start with /s or not.
-                if startsWith("/#{relativeFilename}", excludePath) or startsWith(relativeFilename, excludePath)
+                if _.startsWith("/#{relativeFilename}", excludePath) or _.startsWith(relativeFilename, excludePath)
                     excluded = true
 
     if !excluded and (not path.extname(fileName) in Object.keys(EXTENSIONS))
@@ -134,8 +118,54 @@ exports.excludeFile = (fileName, options) ->
 
     if !excluded
         for excludePath in exclude
-            if startsWith fileName, excludePath
+            if _.startsWith fileName, excludePath
                 excluded = true
 
     return excluded
 
+# Takes in a string, and returns a quoted string with any \s and "s in the string escaped to be
+# JS friendly.
+exports.toQuotedString = (string) ->
+        answer = string.replace /\\/g, '\\\\'
+        return '"' + (answer.replace /"/g, '\\\"') + '"'
+
+# Return the type of an AST node.
+exports.nodeType = (node) -> node?.constructor?.name or null
+
+# Fix up location data for each instrumented line.  Make these all 0-length,
+# so we don't have to rewrite the location data for all the non-generated
+# nodes in the tree.
+exports.fixLocationData = (instrumentedLine, line) ->
+    doIt = (node) ->
+        node.locationData =
+            first_line: line - 1 # -1 because `line` is 1-based
+            first_column: 0
+            last_line: line - 1
+            last_column: 0
+    doIt instrumentedLine
+    instrumentedLine.eachChild doIt
+
+insertNodeBeforeNodes = (node, nodeData, newNode) ->
+    {parent, childIndex, childAttr} = nodeData
+
+    # childIndex is more of a hint, since nodes can move around.
+    if parent[childAttr][childIndex] isnt node
+        childIndex = _.indexOf parent[childAttr], node
+        if childIndex is -1 then throw new Error "Can't find node in parent"
+
+    parent[childAttr].splice(childIndex, 0, newNode)
+
+# Converts `csSource` into compiled coffee-script, and then inserts the compiled code before
+# `node`.  `nodeData` is a `{parent, childIndex, childAttr}` object for `node`.
+exports.insertBeforeNode = (node, nodeData, csSource) ->
+    compiled = coffeeScript.nodes(csSource)
+    exports.fixLocationData compiled, node.locationData.first_line
+
+    # Mark each node as coffee-coverage generated, so we won't try to instrument our instrumented lines.
+    setCoffeeCoverageGenerated = (node) ->
+        node.coffeeCoverage ?= {}
+        node.coffeeCoverage.generated = true
+    setCoffeeCoverageGenerated compiled
+    compiled.eachChild setCoffeeCoverageGenerated
+
+    insertNodeBeforeNodes node, nodeData, compiled
