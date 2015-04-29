@@ -48,7 +48,7 @@
     "mocha": "^2.1.0"
   },
   "scripts": {
-    "prepublish": "coffee -c -o lib src",
+    "prepublish": "coffee -c -o lib src && mocha",
     "test": "mocha"
   },
   "engines": {
