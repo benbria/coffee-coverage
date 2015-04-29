@@ -15,9 +15,14 @@ path = require 'path'
 _ = require 'lodash'
 path.sep = path.sep || "/" # Assume "/" on older versions of node, where this is missing.
 
-JSCoverageInstrumentor = require './instrumentors/JSCoverage'
+NodeWrapper = require './NodeWrapper'
 
-{abbreviatedPath, mkdirs, stripLeadingDotOrSlash, statFile, nodeType,
+INSTRUMENTORS = {
+    jscoverage: require './instrumentors/JSCoverage'
+    istanbul:   require './instrumentors/Istanbul'
+}
+
+{mkdirs, stripLeadingDotOrSlash, statFile, nodeType,
     getRelativeFilename, excludeFile, fixLocationData} = require './helpers'
 {EXTENSIONS} = require './constants'
 
@@ -43,6 +48,7 @@ factoryDefaults =
     exclude: []
     recursive: true
     bare: false
+    instrumentor: 'jscoverage'
 
 # Register coffeeCoverage to automatically process '.coffee', '.litcoffee', '.coffee.md' and '._coffee' files.
 #
@@ -361,111 +367,85 @@ class exports.CoverageInstrumentor extends events.EventEmitter
     # * `lines` - the total number of instrumented lines.
     #
     instrumentCoffee: (fileName, fileData, options={}) ->
-        origFileName = fileName
-        literate = /\.(litcoffee|coffee\.md)$/.test(fileName)
-
         effectiveOptions = getEffectiveOptions options, @defaultOptions
 
         effectiveOptions.log?.info "Instrumenting #{fileName}"
 
-        switch effectiveOptions.path
-            when 'relative' then fileName = stripLeadingDotOrSlash fileName
-            when 'abbr' then fileName = abbreviatedPath stripLeadingDotOrSlash fileName
-            else fileName = path.basename fileName
+        instrumentorConstructor = INSTRUMENTORS[effectiveOptions.instrumentor]
+        instrumentor = new instrumentorConstructor(fileName, effectiveOptions)
 
-        # Generate a unique fileName if required.
-        if effectiveOptions.usedfileNames
-            if fileName in effectiveOptions.usedfileNames
-                fileName = generateUniqueName effectiveOptions.usedfileNames, fileName
-            effectiveOptions.usedfileNames.push fileName
+        result = exports._runInstrumentor instrumentor, fileName, fileData, effectiveOptions
 
-        # Compile coffee to nodes.
-        try
-            coffeeOptions = {
-                bare: effectiveOptions.bare
-                literate: literate
-            }
+        effectiveOptions.initFileStream?.write result.init
 
-            tokens = coffeeScript.tokens fileData, coffeeOptions
+        return result
 
-            # collect referenced variables
-            coffeeOptions.referencedVars = (token[1] for token in tokens when token.variable)
-
-            # convert tokens to ast
-            ast = coffeeScript.nodes(tokens)
-        catch err
-            throw new CoverageError("Could not parse #{fileName}: #{err.stack}")
-
-        instrumentor = new JSCoverageInstrumentor(fileName, effectiveOptions)
-
-        # * `node` is the root node of a tree.
-        # * `nodeData` is a `{parent, childAttr, childIndex, depth}` object which describes where `node` is
-        #   relative to it's parent.
-        instrumentTree = (node, nodeData) =>
-            nodeData ?= {parent: null, childIndex: null, childAttr: null, depth: 0}
-            effectiveOptions.log?.debug "Examining  l:#{node.locationData.first_line + 1} d:#{nodeData.depth} #{nodeType(node)}"
-
-            # Ignore code that we generated.
-            return if node.coffeeCoverage?.generated
-
-            if(
-                nodeType(nodeData.parent) is 'Block' and
-                nodeData.childAttr is 'expressions' and
-                nodeType(node) isnt 'Comment'
-            )
-                # TODO: might need to fix nodeData.childIndex
-                instrumentor["visitStatement"]?(node, nodeData)
-
-            # Call block-specific visitor function.
-            # TODO: might need to fix nodeData.childIndex
-            instrumentor["visit#{nodeType(node)}"]?(node, nodeData)
-
-            # Recurse into child nodes
-            if node.children? then node.children.forEach (attr) ->
-                if node[attr]?
-                    attrs = _.flatten [node[attr]]
-                    index = 0
-                    while index < attrs.length
-                        child = attrs[index]
-                        effectiveOptions.log?.debug "Recursing into #{nodeType(node)}:#{attr}:#{index} -> #{nodeType(child)}"
-                        instrumentTree(child, {
-                            parent: node,
-                            childAttr: attr,
-                            childIndex: index,
-                            depth: nodeData.depth + 1
-                        })
-                        child.coffeeCoverage ?= {}
-                        child.coffeeCoverage.visited = true
-
-                        # Bump index up in case we inserted nodes
-                        # TODO: Guard against incrementing forever?
-                        while (child != attrs[index])
-                            skipNode = attrs[index]
-                            if skipNode.coffeeCoverage?.visited
-                                # Skiping a visited node
-                            else if skipNode.coffeeCoverage?.generated
-                                # Skipping a generated node
-                            else
-                                throw new Error "Shouldn't be skipping this node!"
-                            index++
-                        index++
-
-        instrumentTree(ast)
-
-        init = instrumentor.getInitString({fileData})
-
-        # Compile the instrumented CoffeeScript and write it to the JS file.
-        try
-            js = ast.compile coffeeOptions
-        catch err
-            throw new CoverageError("Could not compile #{fileName} after annotating: #{err.stack}")
-
-        effectiveOptions.initFileStream?.write init
-
-        answer = {
-            init: init
-            js: js
-            lines: instrumentor.getInstrumentedLineCount()
+# Runs an instrumentor on some source code.
+#
+# * `instrumentor` an instance of an instrumentor class to run on.
+# * `fileName` the name of the source file.
+# * `source` a string containing the sourcecode the instrument.
+# * `options.bare` true if we should compile bare coffee-script (no enclosing function).
+# * `options.log` log object.
+#
+exports._runInstrumentor = (instrumentor, fileName, source, options={}) ->
+    # Compile coffee to nodes.
+    try
+        options.log?.debug "Instrumenting #{fileName}"
+        coffeeOptions = {
+            bare: options.bare ? false
+            literate: /\.(litcoffee|coffee\.md)$/.test(fileName)
         }
 
-        return answer
+        tokens = coffeeScript.tokens source, coffeeOptions
+
+        # collect referenced variables
+        coffeeOptions.referencedVars = (token[1] for token in tokens when token.variable)
+
+        # convert tokens to ast
+        ast = coffeeScript.nodes(tokens)
+    catch err
+        throw new CoverageError("Could not parse #{fileName}: #{err.stack}")
+
+    instrumentTree = (nodeWrapper) =>
+        # Ignore code that we generated.
+        return if nodeWrapper.node.coffeeCoverage?.generated
+
+        indent = ("  " for i in [0...nodeWrapper.depth]).join ''
+
+        if nodeWrapper.node.coffeeCoverage?.visited
+            throw new Error "Revisiting node #{nodeWrapper.toString()}"
+
+        options.log?.debug "#{indent}Examining #{nodeWrapper.toString()}"
+
+        if nodeWrapper.isStatement
+            instrumentor["visitStatement"]?(nodeWrapper)
+
+        # Call block-specific visitor function.
+        instrumentor["visit#{nodeWrapper.type}"]?(nodeWrapper)
+
+        # Recurse into child nodes
+        nodeWrapper.forEachChild (child) ->
+            options.log?.debug "#{indent}Recursing into #{child.toString()}"
+            instrumentTree(child)
+
+            child.node.coffeeCoverage ?= {}
+            child.node.coffeeCoverage.visited = true
+
+    instrumentTree(new NodeWrapper ast)
+
+    init = instrumentor.getInitString({source})
+
+    # Compile the instrumented CoffeeScript and write it to the JS file.
+    try
+        js = ast.compile coffeeOptions
+    catch err
+        throw new CoverageError("Could not compile #{fileName} after annotating: #{err.stack}")
+
+    answer = {
+        init: init
+        js: js
+        lines: instrumentor.getInstrumentedLineCount()
+    }
+
+    return answer

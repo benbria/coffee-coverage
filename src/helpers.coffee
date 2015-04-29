@@ -46,37 +46,6 @@ exports.mkdirs = (dirPath, mode) ->
                 # Create the directory
                 fs.mkdirSync currentPath, mode
 
-# Converts a path like "./foo/"
-exports.abbreviatedPath = (pathName) ->
-    needTrailingSlash = no
-
-    splitPath = pathName.split path.sep
-
-    if splitPath[-1..-1][0] == ''
-        needTrailingSlash = yes
-        splitPath.pop()
-
-    filename = splitPath.pop()
-
-    answer = ""
-    for pathElement in splitPath
-        if pathElement.length == 0
-            answer += ""
-        else if pathElement is ".."
-            answer += pathElement
-        else if _.startsWith pathElement, "."
-            answer += pathElement[0..1]
-        else
-            answer += pathElement[0]
-        answer += path.sep
-
-    answer += filename
-
-    if needTrailingSlash
-        answer += path.sep
-
-    return answer
-
 # Return the relative path for the file from the basePath.  Returns file name
 # if the file is not relative to basePath.
 exports.getRelativeFilename = (basePath, fileName) ->
@@ -155,9 +124,7 @@ insertNodeBeforeNodes = (node, nodeData, newNode) ->
 
     parent[childAttr].splice(childIndex, 0, newNode)
 
-# Converts `csSource` into compiled coffee-script, and then inserts the compiled code before
-# `node`.  `nodeData` is a `{parent, childIndex, childAttr}` object for `node`.
-exports.insertBeforeNode = (node, nodeData, csSource) ->
+compile = (csSource, node) ->
     compiled = coffeeScript.nodes(csSource)
     exports.fixLocationData compiled, node.locationData.first_line
 
@@ -168,4 +135,24 @@ exports.insertBeforeNode = (node, nodeData, csSource) ->
     setCoffeeCoverageGenerated compiled
     compiled.eachChild setCoffeeCoverageGenerated
 
-    insertNodeBeforeNodes node, nodeData, compiled
+    return compiled
+
+# Converts `csSource` into compiled coffee-script, and then inserts the compiled code before
+# `node`.  `nodeData` is a `{parent, childIndex, childAttr}` object for `node`.
+exports.insertBeforeNode = (node, nodeData, csSource) ->
+    insertNodeBeforeNodes node, nodeData, compile(csSource, node)
+
+# Add a statement to the start of a Block.  Returns the instrumented Block.
+# If `node` is null, this will generate a new Block and return it.
+exports.insertAtStart = (node, parent, csSource) ->
+    compiled = coffeeScript.nodes(csSource, node ? parent)
+
+    if !node
+        return compiled
+
+    else if exports.nodeType(node) is 'Block'
+        node.expressions.unshift compiled
+        return node
+
+    else
+        throw new Error "Don't know how to insert statement into #{exports.nodeType node}"

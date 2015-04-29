@@ -6,25 +6,72 @@
 # split into lines.
 #
 
-{insertBeforeNode, nodeType, toQuotedString} = require '../helpers'
+path = require 'path'
+{insertBeforeNode, nodeType, toQuotedString, stripLeadingDotOrSlash} = require '../helpers'
 
 # Takes the contents of a file and returns an array of lines.
-# `fileData` is a string containing an entire file.
-fileToLines = (fileData) ->
-    dataWithFixedLfs = fileData.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+# `source` is a string containing an entire file.
+fileToLines = (source) ->
+    dataWithFixedLfs = source.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
     return dataWithFixedLfs.split("\n")
 
-module.exports = class JSCoverageInstrumentor
-    # `options` is a `{log, coverageVar}` object.
+# Converts a path like "./foo/"
+abbreviatedPath = (pathName) ->
+    needTrailingSlash = no
+
+    splitPath = pathName.split path.sep
+
+    if splitPath[-1..-1][0] == ''
+        needTrailingSlash = yes
+        splitPath.pop()
+
+    filename = splitPath.pop()
+
+    answer = ""
+    for pathElement in splitPath
+        if pathElement.length == 0
+            answer += ""
+        else if pathElement is ".."
+            answer += pathElement
+        else if _.startsWith pathElement, "."
+            answer += pathElement[0..1]
+        else
+            answer += pathElement[0]
+        answer += path.sep
+
+    answer += filename
+
+    if needTrailingSlash
+        answer += path.sep
+
+    return answer
+
+
+
+module.exports = class JSCoverage
+    # `options` is a `{log, coverageVar, path, usedfileNames}` object.
     #
     constructor: (fileName, options) ->
         {@log, @coverageVar} = options
         @instrumentedLines = []
-        @quotedFileName = toQuotedString fileName
+
+        shortFileName = switch options.path
+            when 'relative' then stripLeadingDotOrSlash fileName
+            when 'abbr' then abbreviatedPath stripLeadingDotOrSlash fileName
+            else path.basename fileName
+
+        # Generate a unique fileName if required.
+        if options.usedfileNames
+            if shortFileName in options.usedfileNames
+                shortFileName = generateUniqueName options.usedfileNames, shortFileName
+            options.usedfileNames.push shortFileName
+
+        @quotedFileName = toQuotedString shortFileName
+
 
     # Called on each non-comment statement within a Block.  If a `visitXXX` exists for the
     # specific node type, it will also be called after `visitStatement`.
-    visitStatement: (node, nodeData) ->
+    visitStatement: (node) ->
         line = node.locationData.first_line + 1
 
         if line in @instrumentedLines
@@ -42,16 +89,15 @@ module.exports = class JSCoverageInstrumentor
             #
             # Because here we're going to instrument the inside of the "else" block,
             # but not the inside of the "if" block, which is OK, but a bit weird.
-            @log?.debug "Skipping   l:#{line} d:#{nodeData.depth + 1} #{nodeType(node)}"
+            @log?.debug "Skipping   #{node.toString()}"
 
         else
-            @log?.debug "Instrumenting l:#{line} d:#{nodeData.depth + 1} #{nodeType(node)}"
+            @log?.debug "Instrumenting #{node.toString()}"
             @instrumentedLines.push line
-            insertBeforeNode node, nodeData,
-                "#{@coverageVar}[#{@quotedFileName}][#{line}]++"
+            node.insertBefore "#{@coverageVar}[#{@quotedFileName}][#{line}]++"
 
     visitIf: (node) ->
-        if node.isChain
+        if node.node.isChain
             # Chaining is where coffee compiles something into `... else if ...`
             # instead of '... else {if ...}`.  Chaining produces nicer looking coder
             # with fewer indents, but it also produces code that's harder to instrument
@@ -59,13 +105,9 @@ module.exports = class JSCoverageInstrumentor
             #
 
             @log?.debug "  Disabling chaining for if statement"
-            node.isChain = false
+            node.node.isChain = false
 
-            # An alternative to to disable instrumentation on the else node.
-            # node.elseBody.coffeeCoverage ?= {}
-            # node.elseBody.coffeeCoverage.doNotInstrument = true
-
-    getInitString: ({fileData}) ->
+    getInitString: ({source}) ->
         init = """
             if (typeof #{@coverageVar} === 'undefined') #{@coverageVar} = {};
             (function(_export) {
@@ -83,7 +125,7 @@ module.exports = class JSCoverageInstrumentor
 
         # Write the original source code into the ".source" array.
         init += "#{@coverageVar}[#{@quotedFileName}].source = ["
-        fileToInstrumentLines = fileToLines fileData
+        fileToInstrumentLines = fileToLines source
         for line, index in fileToInstrumentLines
             if !!index then init += ", "
             init += toQuotedString(line)
