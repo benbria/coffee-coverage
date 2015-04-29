@@ -37,7 +37,7 @@
 assert = require 'assert'
 _ = require 'lodash'
 NodeWrapper = require '../NodeWrapper'
-{insertBeforeNode, insertAtStart, nodeType, toQuotedString} = require '../helpers'
+{insertBeforeNode, insertAtStart, toQuotedString} = require '../helpers'
 
 nodeToLocation = (node) ->
     # Istanbul uses 1-based lines, but 0-based columns

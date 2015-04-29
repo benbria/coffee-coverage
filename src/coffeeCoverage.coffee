@@ -22,7 +22,9 @@ INSTRUMENTORS = {
     istanbul:   require './instrumentors/Istanbul'
 }
 
-{mkdirs, stripLeadingDotOrSlash, statFile, nodeType,
+exports.instrumentors = Object.keys(INSTRUMENTORS)
+
+{mkdirs, stripLeadingDotOrSlash, statFile,
     getRelativeFilename, excludeFile, fixLocationData} = require './helpers'
 {EXTENSIONS} = require './constants'
 

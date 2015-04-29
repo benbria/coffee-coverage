@@ -7,7 +7,7 @@
 #
 
 path = require 'path'
-{insertBeforeNode, nodeType, toQuotedString, stripLeadingDotOrSlash} = require '../helpers'
+{insertBeforeNode, toQuotedString, stripLeadingDotOrSlash} = require '../helpers'
 
 # Takes the contents of a file and returns an array of lines.
 # `source` is a string containing an entire file.
