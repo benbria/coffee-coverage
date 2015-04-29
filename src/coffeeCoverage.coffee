@@ -60,19 +60,12 @@ factoryDefaults =
 # file will already have been compiled.
 #
 # Parameters:
-# * `options.coverageVar` gives the name of the global variable to use to store coverage data in.
-#   This defaults to '_$jscoverage' to be compatible with JSCoverage.
-# * `options.basePath` is the root folder of your project.  This path will be stripped from
-#   file names.
+# * Any option from `CoverageInstrumentor.instrument()`, except `recursive`, `initFileStream`.
 # * `options.path` should be one of:
 #     * 'relative' - File names will be used as the file name in the instrumented sources.
 #     * 'abbr' - an abbreviated file name will be constructed, with each parent in the path
 #        replaced by the first character in its name.
 #     * null - Path names will be omitted.  Only the base file name will be used.
-# * `options.exclude` is an array of files to ignore.  instrumentDirectory will not instrument
-#   a file if it is in this list, nor will it recursively traverse into a directory if it is
-#   in this list.  This defaults to [] if not explicitly passed.  Note that this option
-#   will only work if `options.basePath` is provided.
 # * `options.streamlinejs` - Enable experimental support for streamlinejs.  This option will
 #   be removed in a future version of coffeeCoverage.
 # * `options.initAll` - If true, then coffeeCoverage will recursively walk through all
@@ -199,6 +192,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
     #   written to via `initFileStream.write(data)`.
     # * `options.log` should be a `{debug(), info(), warn(), error()}` object, where each is a function
     #   that takes multiple parameters and logs them (similar to `console.log()`.)
+    # * `options.instrumentor` is the name of the instrumentor to use (see `INSTURMENTORS`.)
     #
     # Throws CoverageError if there is a problem with the `source` or `out` parameters.
     instrument: (source, out, options = {}) ->

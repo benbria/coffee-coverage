@@ -5,12 +5,14 @@
 fs = require 'fs'
 path = require 'path'
 path.sep = path.sep || "/" # Assume "/" on older versions of node, where this is missing.
+_ = require 'lodash'
 
-{CoverageInstrumentor, version} = require './coffeeCoverage'
+{CoverageInstrumentor, version, instrumentors:INSTRUMENTORS} = require './coffeeCoverage'
 {stripLeadingDotOrSlash, mkdirs} = require './helpers'
 
-printHelp = () ->
-    console.log usageString
+DEFAULT_INSTRUMENTOR = 'jscoverage'
+
+executableName = path.basename process.argv[1]
 
 parseArgs = (args) ->
     ArgumentParser = require('argparse').ArgumentParser
@@ -36,6 +38,12 @@ parseArgs = (args) ->
               '#{coverageVarDefault}'."""
         metavar: "name"
         defaultValue: coverageVarDefault
+
+    parser.addArgument [ '-t', '--inst' ],
+        help: """Set the type of coverage to use.  Valid options are:
+              #{INSTRUMENTORS.map((t) -> if t is DEFAULT_INSTRUMENTOR then "#{t} (default)" else t).join ', '}"""
+        metavar: "type"
+        defaultValue: DEFAULT_INSTRUMENTOR
 
     excludeDefault = "node_modules,.git"
     parser.addArgument [ '-e', '--exclude' ],
@@ -73,6 +81,12 @@ parseArgs = (args) ->
 
     options = parser.parseArgs(args)
 
+    if options.inst not in INSTRUMENTORS
+        parser.printUsage()
+        console.error """#{executableName}: error: Invalid coverage type #{options.inst}.
+            Must be one of #{INSTRUMENTORS.join ', '}"""
+        process.exit 1
+
     # Split exclude into an array.
     if options.exclude
         options.exclude = options.exclude.split ","
@@ -88,14 +102,17 @@ exports.main = (args) ->
         if options.bare
             options.bare = true
 
-        coverageInstrumentor = new CoverageInstrumentor(bare: options.bare)
+        coverageInstrumentor = new CoverageInstrumentor(
+            bare: options.bare
+            instrumentor: options.inst
+        )
 
         if options.verbose
-            coverageInstrumentor.on "instrumentingFile", (sourceFile, outFile) ->
-                console.log "    #{stripLeadingDotOrSlash sourceFile} to #{stripLeadingDotOrSlash outFile}"
-
             coverageInstrumentor.on "instrumentingDirectory", (sourceDir, outDir) ->
                 console.log "Instrumenting directory: #{stripLeadingDotOrSlash sourceDir} to #{stripLeadingDotOrSlash outDir}"
+
+            coverageInstrumentor.on "instrumentingFile", (sourceFile, outFile) ->
+                console.log "    #{stripLeadingDotOrSlash sourceFile} to #{stripLeadingDotOrSlash outFile}"
 
             coverageInstrumentor.on "skip", (file) ->
                 console.log "    Skipping: #{stripLeadingDotOrSlash file}"
