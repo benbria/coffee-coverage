@@ -45,12 +45,13 @@
     "pkginfo": ">=0.2.3"
   },
   "devDependencies": {
+    "istanbul": "^0.3.13",
     "mocha": "^2.1.0"
   },
   "scripts": {
     "prepublish": "coffee -c -o lib src && mocha",
     "test": "mocha",
-    "cover": "npm run prepublish && mocha --require ./register-istanbul.js"
+    "cover": "npm run prepublish && mocha --require ./register-istanbul.js && istanbul report"
   },
   "engines": {
     "node": ">=0.6.19"
