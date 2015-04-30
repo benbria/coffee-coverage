@@ -24,8 +24,7 @@ INSTRUMENTORS = {
 
 exports.instrumentors = Object.keys(INSTRUMENTORS)
 
-{mkdirs, stripLeadingDotOrSlash, statFile,
-    getRelativeFilename, excludeFile, fixLocationData} = require './helpers'
+{mkdirs, stripLeadingDotOrSlash, statFile, excludeFile, fixLocationData} = require './helpers'
 {EXTENSIONS} = require './constants'
 
 # Add 'version', 'author', and 'contributors' to our exports
@@ -61,23 +60,20 @@ factoryDefaults =
 #
 # Parameters:
 # * Any option from `CoverageInstrumentor.instrument()`, except `recursive`, `initFileStream`.
-# * `options.path` should be one of:
-#     * 'relative' - File names will be used as the file name in the instrumented sources.
-#     * 'abbr' - an abbreviated file name will be constructed, with each parent in the path
-#        replaced by the first character in its name.
-#     * null - Path names will be omitted.  Only the base file name will be used.
 # * `options.streamlinejs` - Enable experimental support for streamlinejs.  This option will
 #   be removed in a future version of coffeeCoverage.
 # * `options.initAll` - If true, then coffeeCoverage will recursively walk through all
 #   subdirectories of `options.basePath` and gather line number information for all CoffeeScript files
 #   found.  This way even files which are not `require`d at any point during your test will still
 #   be instrumented and reported on.
+# * `options.writeOnExit` - A file to write a JSON coverage file to on completion.  This will
+#   stringify `options.coverageVar`.
 #
 # e.g. `coffeeCoverage.register {path: 'abbr', basePath: "#{__dirname}/.." }`
 #
 exports.register = (options) ->
     # Clone options so we don't modify the original.
-    actualOptions = _.clone options
+    actualOptions = _.defaults {}, options, factoryDefaults
 
     if actualOptions.basePath
         actualOptions.basePath = path.resolve actualOptions.basePath
@@ -97,8 +93,7 @@ exports.register = (options) ->
 
     instrumentFile = (fileName) ->
         content = fs.readFileSync fileName, 'utf8'
-        coverageFileName = getRelativeFilename actualOptions.basePath, fileName
-        instrumented = coverage.instrumentCoffee coverageFileName, content
+        instrumented = coverage.instrumentCoffee fileName, content
         return instrumented.init + instrumented.js
 
     replaceHandler = (extension) ->
@@ -125,6 +120,16 @@ exports.register = (options) ->
                 compiled = instrumentFile fileName
                 # TODO: Pass a sourcemap here?
                 streamline_js module, fileName, compiled, null
+
+    if options.writeOnExit?
+        process.on 'exit', ->
+            try
+                dirName = path.dirname options.writeOnExit
+                mkdirs dirName
+                fs.writeFileSync options.writeOnExit, JSON.stringify(global[actualOptions.coverageVar])
+            catch err
+                console.error "Failed to write coverage data", err.stack ? err
+
 
 
 #### CoverageInstrumentor
@@ -193,6 +198,9 @@ class exports.CoverageInstrumentor extends events.EventEmitter
     # * `options.log` should be a `{debug(), info(), warn(), error()}` object, where each is a function
     #   that takes multiple parameters and logs them (similar to `console.log()`.)
     # * `options.instrumentor` is the name of the instrumentor to use (see `INSTURMENTORS`.)
+    #   All options passed in will be passed along to the instrumentor implementation, so
+    #   instrumentor-specific options may be added to `options` as well.
+    #
     #
     # Throws CoverageError if there is a problem with the `source` or `out` parameters.
     instrument: (source, out, options = {}) ->
@@ -299,10 +307,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
 
                         # Replace the ".(lit)coffee(.md)" extension with a ".js" extension
                         outFile = @getOutputFileName outFile
-                        instrumentOptions = _.assign {}, effectiveOptions, {
-                            fileName: getRelativeFilename options.basePath, sourceFile
-                        }
-                        inst = @instrumentFile sourceFile, outFile, instrumentOptions
+                        inst = @instrumentFile sourceFile, outFile, effectiveOptions
                         answer.lines += inst.lines
                         processed = true
                         break
@@ -331,7 +336,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
         validateSrcDest sourceFile, outFile
 
         data = fs.readFileSync sourceFile, 'utf8'
-        answer = @instrumentCoffee (effectiveOptions.fileName or sourceFile), data, effectiveOptions
+        answer = @instrumentCoffee path.resolve(sourceFile), data, effectiveOptions
 
         if outFile
             writeToFile outFile, (answer.init + answer.js)
@@ -342,13 +347,12 @@ class exports.CoverageInstrumentor extends events.EventEmitter
     #
     # Parameters:
     #
+    # * `fileName` is the name of the file.  This should be an absolute path.
+    #
     # * `fileData` is the contents of the coffee file.
     #
-    # * `options.path` should be one of:
-    #     * 'relative' - `fileName` will be used as the file name in the instrumented sources.
-    #     * 'abbr' - an abbreviated file name will be constructed, with each parent in the path
-    #        replaced by the first character in its name.
-    #     * null - Path names will be omitted.  Only the base file name will be used.
+    # * `options.fileName` - if rpresent, this will be the filename passed to the instrumentor.
+    #   Otherwise the absolute path will be passed.
     #
     # * If `options.usedFileNames` is present, it must be an array.  This method will add the
     #   name of the file to usedFileNames.  If the name of the file is already in usedFileNames
@@ -379,7 +383,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
 # Runs an instrumentor on some source code.
 #
 # * `instrumentor` an instance of an instrumentor class to run on.
-# * `fileName` the name of the source file.
+# * `fileName` the absolute path of the source file.
 # * `source` a string containing the sourcecode the instrument.
 # * `options.bare` true if we should compile bare coffee-script (no enclosing function).
 # * `options.log` log object.
@@ -430,7 +434,7 @@ exports._runInstrumentor = (instrumentor, fileName, source, options={}) ->
 
     instrumentTree(new NodeWrapper ast)
 
-    init = instrumentor.getInitString({source})
+    init = instrumentor.getInitString({fileName, source})
 
     # Compile the instrumented CoffeeScript and write it to the JS file.
     try

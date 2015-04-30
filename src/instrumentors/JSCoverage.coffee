@@ -7,7 +7,7 @@
 #
 
 path = require 'path'
-{insertBeforeNode, toQuotedString, stripLeadingDotOrSlash} = require '../helpers'
+{insertBeforeNode, toQuotedString, stripLeadingDotOrSlash, getRelativeFilename} = require '../helpers'
 
 # Takes the contents of a file and returns an array of lines.
 # `source` is a string containing an entire file.
@@ -49,11 +49,20 @@ abbreviatedPath = (pathName) ->
 
 
 module.exports = class JSCoverage
-    # `options` is a `{log, coverageVar, path, usedfileNames}` object.
+    # `options` is a `{log, coverageVar, basePath, path, usedfileNames}` object.
+    #
+    # * `options.path` should be one of:
+    #     * 'relative' - like 'absolute', but leading slash will be stripped.
+    #     * 'abbr' - an abbreviated file name will be constructed, with each parent in the path
+    #        replaced by the first character in its name.
+    #     * null - Path names will be omitted.  Only the base file name will be used.
+    #
     #
     constructor: (fileName, options) ->
         {@log, @coverageVar} = options
         @instrumentedLines = []
+
+        fileName = getRelativeFilename options.basePath, fileName
 
         shortFileName = switch options.path
             when 'relative' then stripLeadingDotOrSlash fileName

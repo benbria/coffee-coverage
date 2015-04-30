@@ -182,7 +182,29 @@ module.exports = class JSCoverage
 
         node.insertAtStart 'body', "#{@_prefix}.f[#{functionId}]++"
 
-    getInitString: ({source}) ->
+    getInitString: ({fileName, source}) ->
+        initData = {
+            path: fileName
+            s: {}
+            b: {}
+            f: {}
+            fnMap: {}
+            statementMap: {}
+            branchMap: {}
+        }
+
+        @statementMap.forEach (statement, id) =>
+            initData.s[id + 1] = 0
+            initData.statementMap[id + 1] = statement
+
+        @branchMap.forEach (branch, id) =>
+            initData.b[id + 1] = (0 for [0...branch.locations.length])
+            initData.branchMap[id + 1] = branch
+
+        @fnMap.forEach (fn, id) =>
+            initData.f[id + 1] = 0
+            initData.fnMap[id + 1] = fn
+
         init = """
             if (typeof #{@coverageVar} === 'undefined') #{@coverageVar} = {};
             (function(_export) {
@@ -190,29 +212,7 @@ module.exports = class JSCoverage
                     _export.#{@coverageVar} = #{@coverageVar};
                 }
             })(typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : this);
-            if (! #{@_prefix}) {
-                #{@_prefix} = {
-                    s: {},
-                    b: {},
-                    f: {},
-                    fnMap: {},
-                    statementMap: {},
-                    branchMap: {}
-                };\n"""
-
-        @statementMap.forEach (statement, id) =>
-            init += "    #{@_prefix}.s[#{id + 1}] = 0;\n"
-            init += "    #{@_prefix}.statementMap[#{id + 1}] = #{JSON.stringify statement};\n"
-
-        @branchMap.forEach (branch, id) =>
-            branchCounts = (0 for [0...branch.locations.length])
-            init += "    #{@_prefix}.b[#{id + 1}] = #{JSON.stringify branchCounts};\n"
-            init += "    #{@_prefix}.branchMap[#{id + 1}] = #{JSON.stringify branch};\n"
-
-        @fnMap.forEach (fn, id) =>
-            init += "    #{@_prefix}.f[#{id + 1}] = 0;\n"
-            init += "    #{@_prefix}.fnMap[#{id + 1}] = #{JSON.stringify fn};\n"
-
-        init += "}\n\n"
+            if (! #{@_prefix}) { #{@_prefix} = #{JSON.stringify initData} }
+        """
 
     getInstrumentedLineCount: -> @instrumentedLineCount

@@ -49,7 +49,8 @@
   },
   "scripts": {
     "prepublish": "coffee -c -o lib src && mocha",
-    "test": "mocha"
+    "test": "mocha",
+    "cover": "npm run prepublish && mocha --require ./register-istanbul.js"
   },
   "engines": {
     "node": ">=0.6.19"

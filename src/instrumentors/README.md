@@ -5,7 +5,8 @@ instrumented code compatible with Istanbul.
 
 Each instrumentor should implement the following functions:
 
-* `constructor(fileName, options)`.
+* `constructor(fileName, options)`.  `fileName` will be an absolute path.  `options` include
+  all the options passed to coffeeCoverage.
 * `visit{Type}(node)` - called for each node of the given Type.  For example, `visitIf()`
   will be called once for each If statement in the AST.  Nodes are visited in-order.
   `node` is a `NodeWrapper` object.
