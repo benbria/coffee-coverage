@@ -7,11 +7,6 @@ Istanbul = require '../src/instrumentors/Istanbul'
 {COVERAGE_VAR, log} = require './testConfig'
 FILENAME = '/Users/jwalton/foo.coffee'
 
-run = (source) ->
-    instrumentor = new Istanbul(FILENAME, {log, coverageVar: COVERAGE_VAR})
-    result = coffeeCoverage._runInstrumentor instrumentor, FILENAME, source, {log}
-    return {instrumentor, result}
-
 checkStatementsAreCovered = (instrumentor, result, statementCount, filename=FILENAME) ->
     expect(instrumentor.statementMap.length, 'statement count').to.equal statementCount
     [1..statementCount].forEach (id) ->
@@ -39,28 +34,36 @@ checkFunctionsAreCovered = (instrumentor, result, fnCount, filename=FILENAME) ->
         expect(result.js, "function #{id} should be instrumented")
         .to.contain "#{COVERAGE_VAR}[\"#{filename}\"].f[#{id}]++"
 
+
+run = (source, options={}) ->
+    instrumentor = new Istanbul(FILENAME, {log, coverageVar: COVERAGE_VAR})
+    result = coffeeCoverage._runInstrumentor instrumentor, FILENAME, source, {log}
+
+    if options.counts?.s then checkStatementsAreCovered instrumentor, result, options.counts.s, options.filename
+    if options.counts?.b then checkBranchesAreCovered instrumentor, result, options.counts.b, options.filename
+    if options.counts?.f then checkFunctionsAreCovered instrumentor, result, options.counts.f, options.filename
+
+    return {instrumentor, result}
+
+
 describe "Istanbul tests", ->
     it "should find statements", ->
         {instrumentor, result} = run """
             console.log "Hello world!"
-        """
+        """, counts: {f: 0, s: 1, b: {}}
 
-        checkStatementsAreCovered instrumentor, result, 1
         expect(instrumentor.statementMap[0]).to.eql {
             start: {line: 1, column: 0}, end: {line: 1, column: 25}
         }
-        checkBranchesAreCovered instrumentor, result, {}
-        checkFunctionsAreCovered instrumentor, result, 0
 
-    it "should find if branches", ->
+    it "should find 'if' branches", ->
         {instrumentor, result} = run """
             if x
                 console.log "Hello world!"
             else
                 console.log "Goodbye world!"
-        """
+        """, {f: 0, s: 3, b: {1:2}}
 
-        checkStatementsAreCovered instrumentor, result, 3
         expect(instrumentor.statementMap[0], "first statement").to.eql {
             start: {line: 1, column: 0}, end: {line: 4, column: 31}
         }
@@ -71,7 +74,6 @@ describe "Istanbul tests", ->
             start: {line: 4, column: 4}, end: {line: 4, column: 31}
         }
 
-        checkBranchesAreCovered instrumentor, result, {1: 2}
         expect(instrumentor.branchMap[0]).to.eql {
             line: 1
             type: 'if'
@@ -81,7 +83,22 @@ describe "Istanbul tests", ->
             ]
         }
 
-        checkFunctionsAreCovered instrumentor, result, 0
+    it "should find 'unless' branches", ->
+        {instrumentor, result} = run """
+            unless x
+                console.log "Hello world!"
+            else
+                console.log "Goodbye world!"
+        """, {f: 0, s: 3, b: {1:2}}
+
+        expect(instrumentor.branchMap[0]).to.eql {
+            line: 1
+            type: 'if'
+            locations: [
+                {start: {line: 1, column: 0}, end: {line: 1, column: 0}}
+                {start: {line: 1, column: 0}, end: {line: 1, column: 0}}
+            ]
+        }
 
     it "should find chained ifs", ->
         {instrumentor, result} = run """
@@ -91,9 +108,8 @@ describe "Istanbul tests", ->
                 console.log "2"
             else
                 console.log "3"
-        """
+        """, counts: {f: 0, s: 5, b: {1:2, 2:2}}
 
-        checkStatementsAreCovered instrumentor, result, 5
         expect(instrumentor.statementMap[0], "if/else if/else").to.eql {
             start: {line: 1, column: 0}, end: {line: 6, column: 18}
         }
@@ -110,7 +126,6 @@ describe "Istanbul tests", ->
             start: {line: 6, column: 4}, end: {line: 6, column: 18}
         }
 
-        checkBranchesAreCovered instrumentor, result, {1: 2, 2: 2}
         expect(instrumentor.branchMap[0]).to.eql {
             line: 1
             type: 'if'
@@ -128,15 +143,12 @@ describe "Istanbul tests", ->
             ]
         }
 
-        checkFunctionsAreCovered instrumentor, result, 0
-
-    it "should find if branches with no else", ->
+    it "should find if branch with no else", ->
         {instrumentor, result} = run """
             if x
                 console.log "Hello world!"
-        """
+        """, counts: {f: 0, s: 2, b: {1:2}}
 
-        checkStatementsAreCovered instrumentor, result, 2
         expect(instrumentor.statementMap[0], "first statement").to.eql {
             # Wha?  Why do these end on different columns?
             start: {line: 1, column: 0}, end: {line: 2, column: 30}
@@ -145,7 +157,6 @@ describe "Istanbul tests", ->
             start: {line: 2, column: 4}, end: {line: 2, column: 29}
         }
 
-        checkBranchesAreCovered instrumentor, result, {1: 2}
         expect(instrumentor.branchMap[0]).to.eql {
             line: 1
             type: 'if'
@@ -155,20 +166,32 @@ describe "Istanbul tests", ->
             ]
         }
 
-        checkFunctionsAreCovered instrumentor, result, 0
-
     it "should correctly compile an 'if' which is an expression instead of a statement", ->
-        {instrumentor, result} = run 'x = if true then 0 else 1'
-
         # TODO: Right now this actually instruments the `0` and the `1` as statements.  The
         # generated code looks totally insane, but bizarrely, it actually works.  :P  We might want
         # to explicitly disable this behavior, though...  Have to see if it causes any weird consequences.
-        checkStatementsAreCovered instrumentor, result, 3
+        {instrumentor, result} = run 'x = if y then 0 else 1',
+            counts: {f: 0, s: 3, b: {1:2}}
+
+        {instrumentor, result} = run 'x = if y then 0',
+            counts: {f: 0, s: 2, b: {1:2}}
+        expect(result.js).to.contain '(_myCoverageVar["/Users/jwalton/foo.coffee"].b[1][1]++, void 0)'
+
+
+    it "should correctly compile an 'unless' which is an expression instead of a statement", ->
+        # TODO: Right now this actually instruments the `0` and the `1` as statements.  The
+        # generated code looks totally insane, but bizarrely, it actually works.  :P  We might want
+        # to explicitly disable this behavior, though...  Have to see if it causes any weird consequences.
+        {instrumentor, result} = run 'x = unless y then 0 else 1',
+            counts: {f: 0, s: 3, b: {1:2}}
+
+        {instrumentor, result} = run 'x = unless y then 0',
+            counts: {f: 0, s: 2, b: {1:2}}
+        expect(result.js).to.contain '(_myCoverageVar["/Users/jwalton/foo.coffee"].b[1][1]++, void 0)'
 
     it "should correctly compile an 'if' which is a destructuring expression", ->
-        {instrumentor, result} = run '[x,y] = if true then [0,1] else [2,3]'
-
-        checkStatementsAreCovered instrumentor, result, 3
+        {instrumentor, result} = run '[x,y] = if y then [0,1] else [2,3]',
+            counts: {f: 0, s: 3, b: {1:2}}
 
 
     it "should find switch/case branches", ->
@@ -179,9 +202,8 @@ describe "Istanbul tests", ->
                 when 2 then console.log "b"
                 else
                     console.log "c"
-        """
+        """, counts: {f: 0, s: 4, b: {1:3}}
 
-        checkStatementsAreCovered instrumentor, result, 4
         expect(instrumentor.statementMap[0], "first statement").to.eql {
             # Should really end on col 22?
             start: {line: 1, column: 0}, end: {line: 6, column: 23}
@@ -196,7 +218,6 @@ describe "Istanbul tests", ->
             start: {line: 6, column: 8}, end: {line: 6, column: 22}
         }
 
-        checkBranchesAreCovered instrumentor, result, {1: 3}
         expect(instrumentor.branchMap[0]).to.eql {
             line: 1
             type: 'switch'
@@ -208,8 +229,6 @@ describe "Istanbul tests", ->
             ]
         }
 
-        checkFunctionsAreCovered instrumentor, result, 0
-
     it "should work for a switch with no 'else'", ->
         {instrumentor, result} = run """
             switch x
@@ -217,11 +236,7 @@ describe "Istanbul tests", ->
                     console.log "a"
                 when 2
                     console.log "b"
-        """
-
-        checkStatementsAreCovered instrumentor, result, 3
-        checkBranchesAreCovered instrumentor, result, {1: 2}
-        checkFunctionsAreCovered instrumentor, result, 0
+        """, counts: {f: 0, s: 3, b: {1:2}}
 
         expect(instrumentor.branchMap[0]).to.eql {
             line: 1
@@ -236,9 +251,8 @@ describe "Istanbul tests", ->
         {instrumentor, result} = run """
             myFunc = ->
                 console.log "Hello"
-        """
+        """, counts: {f: 1, s: 2, b: {}}
 
-        checkStatementsAreCovered instrumentor, result, 2
         expect(instrumentor.statementMap[0], "first statement").to.eql {
             # Should end on 22?
             start: {line: 1, column: 0}, end: {line: 2, column: 23}
@@ -247,7 +261,6 @@ describe "Istanbul tests", ->
             start: {line: 2, column: 4}, end: {line: 2, column: 22}
         }
 
-        checkFunctionsAreCovered instrumentor, result, 1
         expect(instrumentor.fnMap[0]).to.eql {
             name: 'myFunc'
             line: 1
@@ -258,10 +271,8 @@ describe "Istanbul tests", ->
         {instrumentor, result} = run """
             myFunc = (x,y,z) ->
                 console.log "Hello"
-        """
+        """, counts: {f: 1, s: 2, b: {}}
 
-        checkStatementsAreCovered instrumentor, result, 2
-        checkFunctionsAreCovered instrumentor, result, 1
         expect(instrumentor.fnMap[0]).to.eql {
             name: 'myFunc'
             line: 1
@@ -272,10 +283,8 @@ describe "Istanbul tests", ->
         {instrumentor, result} = run """
             myFunc = (x,y,z)   ->
                 console.log "Hello"
-        """
+        """, counts: {f: 1, s: 2, b: {}}
 
-        checkStatementsAreCovered instrumentor, result, 2
-        checkFunctionsAreCovered instrumentor, result, 1
         expect(instrumentor.fnMap[0]).to.eql {
             name: 'myFunc'
             line: 1
@@ -285,10 +294,8 @@ describe "Istanbul tests", ->
     it "should find anonymous functions", ->
         {instrumentor, result} = run """
             [1,2,3].forEach -> console.log "x"
-        """
+        """, counts: {f: 1, s: 2, b: {}}
 
-        checkStatementsAreCovered instrumentor, result, 2
-        checkFunctionsAreCovered instrumentor, result, 1
         expect(instrumentor.fnMap[0]).to.eql {
             name: '(anonymous_1)'
             line: 1
@@ -298,10 +305,8 @@ describe "Istanbul tests", ->
     it "should find anonymous functions with parameters", ->
         {instrumentor, result} = run """
             [1,2,3].forEach (num) -> console.log num
-        """
+        """, counts: {f: 1, s: 2, b: {}}
 
-        checkStatementsAreCovered instrumentor, result, 2
-        checkFunctionsAreCovered instrumentor, result, 1
         expect(instrumentor.fnMap[0]).to.eql {
             name: '(anonymous_1)'
             line: 1
@@ -311,9 +316,8 @@ describe "Istanbul tests", ->
     it "should use right-most name for funciton with multiple names", ->
         {instrumentor, result} = run """
             x = y = -> console.log "Hello"
-        """
+        """, counts: {f: 1, s: 2, b: {}}
 
-        checkFunctionsAreCovered instrumentor, result, 1
         expect(instrumentor.fnMap[0].name).to.equal 'y'
 
 
@@ -322,9 +326,8 @@ describe "Istanbul tests", ->
             class Foo
                 constructor: ->
                     @bar = 'Hello World'
-        """
+        """, counts: {f: 2, s: 3, b: {}}
 
-        checkStatementsAreCovered instrumentor, result, 3
         expect(instrumentor.statementMap[0], "class statement").to.eql {
             # Should end on column 27?
             start: {line: 1, column: 0}, end: {line: 3, column: 28}
@@ -336,7 +339,6 @@ describe "Istanbul tests", ->
             start: {line: 3, column: 8}, end: {line: 3, column: 27}
         }
 
-        checkFunctionsAreCovered instrumentor, result, 2
         expect(instrumentor.fnMap[0], "class fn").to.eql {
             name: 'Foo'
             line: 1
@@ -355,9 +357,8 @@ describe "Istanbul tests", ->
             X = class
                 constructor: ->
                     @bar = 'Hello World'
-        """
+        """, counts: {f: 2, s: 3, b: {}}
 
-        checkFunctionsAreCovered instrumentor, result, 2
         expect(instrumentor.fnMap[0], "class fn").to.eql {
             name: '(anonymousClass)' # Should be X?
             line: 1
@@ -391,8 +392,3 @@ describe "Istanbul tests", ->
             expect(
                 testInstance._minLocation([])
             ).to.eql null
-
-
-# TODO:
-# * `foo = bar = -> ...`
-# * `Foo = class Bar ...`

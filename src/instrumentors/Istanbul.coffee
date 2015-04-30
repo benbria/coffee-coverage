@@ -143,6 +143,11 @@ module.exports = class JSCoverage
             node.node.coffeeCoverage ?= {}
             node.node.coffeeCoverage.wasChain = true
 
+        if !node.isStatement
+            # Add 'undefined's for any missing bodies.
+            if !node.child('body') then node.insertAtStart 'body', "undefined"
+            if !node.child('elseBody') then node.insertAtStart 'elseBody', "undefined"
+
         node.insertAtStart 'body', "#{@_prefix}.b[#{branchId}][0]++"
         node.insertAtStart 'elseBody', "#{@_prefix}.b[#{branchId}][1]++"
         @instrumentedLineCount += 2
