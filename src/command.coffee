@@ -41,8 +41,8 @@ parseArgs = (args) ->
         defaultValue: coverageVarDefault
 
     parser.addArgument [ '-t', '--inst' ],
-        help: """Set the type of coverage to use.  Valid options are:
-              #{INSTRUMENTORS.map((t) -> if t is DEFAULT_INSTRUMENTOR then "#{t} (default)" else t).join ', '}"""
+        help: """Set the type of instrumentation to generate.  Valid options are:
+              #{Object.keys(INSTRUMENTORS).map((t) -> if t is DEFAULT_INSTRUMENTOR then "#{t} (default)" else t).join ', '}"""
         metavar: "type"
         defaultValue: DEFAULT_INSTRUMENTOR
 
@@ -131,7 +131,7 @@ exports.main = (args) ->
 
         options.initFileStream?.end()
 
-        console.log "Annotated #{result.lines} lines."
+        console.log "Instrumented #{result.lines} lines."
 
     catch err
         if err.constructor.name == "CoverageError"

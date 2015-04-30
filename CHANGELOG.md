@@ -1,7 +1,17 @@
 # coffee-coverage Changelog
 
-### v0.4.5
+### v0.5.0
+  - Added support for [Istanbul](./docs/HOWTO-istanbul.md). (thanks to
+    [Carsten Klein](https://github.com/silkentrance) for some help and suggestions.)
+  - `coffee-coverage/register` now instruments all js files in the CWD by default (instead of only
+    files which get loaded.)  You can disable this behavior by setting the `COFFEECOV_INIT_ALL`
+    environment variable to 'false'.
 
+Breaking changes:
+  - `CoverageInstrumentor.instrumentCoffee()` now expects an absolute path for a file.  It will
+    probably continue to work, even if you pass a relative path, though.
+
+### v0.4.5
   - Compatibility fix for coffee-script 1.9.1 (thanks [technogeek00](https://github.com/technogeek00))
 
 ### v0.4.4

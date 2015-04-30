@@ -45,6 +45,8 @@
 #
 # An `### instanbul ignore next ###` before a `when` in a `switch` should cause the appropriate
 # entry in the `branchMap` to be marked skip, and all statements inside the `when`.
+# (coffee-script doesn't allow block comments at top scope inside a switch.  Might not be
+# able to do this.)
 #
 # An `### instanbul ignore next ###` before a function declaration should cause the location in
 # the `fnMap` to be marked `skip`, the statement for the function delcaration and all statements in

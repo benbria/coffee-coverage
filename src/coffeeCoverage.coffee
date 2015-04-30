@@ -335,7 +335,7 @@ exports._runInstrumentor = (instrumentor, fileName, source, options={}) ->
     try
         js = ast.compile coffeeOptions
     catch err
-        throw new CoverageError("Could not compile #{fileName} after annotating: #{err.stack}")
+        throw new CoverageError("Could not compile #{fileName} after instrumenting: #{err.stack}")
 
     answer = {
         init: init

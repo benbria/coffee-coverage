@@ -1,12 +1,22 @@
-Quick Start
------------
+Running with [Istanbul](https://github.com/gotwarlost/istanbul)
+---------------------------------------------------------------
+
+Contents
+========
+
+* [Quick Start with Mocha](#quick-start-with-mocha)
+  * [Run with NPM](#run-with-npm)
+  * [Writing a Custom Loader](#writing-a-custom-loader)
+
+Quick Start with Mocha
+----------------------
 
 Assuming you have a coffee-script project with tests cases stored in /test, and you are using
 mocha to run your unit tests, `cd` to your project and run:
 
     npm install --save-dev coffee-coverage
     npm install --save-dev istanbul
-    ./node_modules/.bin/mocha --recursive \
+    mocha --recursive \
           --compilers coffee:coffee-script/register \
           --require coffee-coverage/register-istanbul \
           test
@@ -18,10 +28,8 @@ This should work for the majority of projects, but if it doesn't quite do what y
 tweak a few things with environment variables, or you can set up
 [custom options with a loader](#writing-a-custom-loader).
 
-Not using mocha?  See [precompiling files](#precompiling-files) below to see how to instrument
-files at compile time.
-
-You can control how `register-istanbul.js` will work with the following environment variables:
+You can control how `coffee-coverage/register-istanbul` will work with the following environment
+variables:
 
 * `COFFEECOV_OUT` - (defaults to 'coverage/coverage-coffee.json') location to write coverage JSON
   report when your process exits.
@@ -43,7 +51,7 @@ Save your mocha options in `/test/mocha.opts`:
 In package.json, add:
 
     "scripts": {
-        "test": "npm run build && mocha && istanbul report"
+        "test": "mocha && istanbul report"
     }
 
 now you can run `npm test` to run your tests and generate a coverage report.
@@ -55,9 +63,9 @@ If the defaults in `coffee-coverage/register-istanbul` don't work for you, you c
 loader.  Save this in "coffee-coverage-loader.js":
 
     require('coffee-coverage').register({
+      instrumentor: 'istanbul',
       basePath: process.cwd(),
       exclude: ['/test', '/node_modules', '/.git'],
-      instrumentor: 'istanbul',
       coverageVar: '$_coffeeIstanbul',
       writeOnExit: 'coverage/coverage-coffee.json',
       initAll: true
@@ -65,7 +73,3 @@ loader.  Save this in "coffee-coverage-loader.js":
 
 Then when you run mocha, use `--require ./coffee-coverage-loader.js`.
 
-Precompiling Files
-------------------
-
-TODO: Figure out how this is going to work.  :)
