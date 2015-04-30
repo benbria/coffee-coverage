@@ -1,12 +1,12 @@
 /**
  * This file is useful for mocha tests
- * To use it, run mocha --require coffee-coverage/register --reporter html-cov > coverage.html
+ * To use it, run mocha --require coffee-coverage/register-istanbul
  */
 require('./').register({
   basePath: process.cwd(),
-  path: 'absolute',
   exclude: ['/test', '/node_modules', '/.git'],
-  coverageVar: '$_coffeeIstanbul',
   instrumentor: 'istanbul',
-  writeOnExit: 'coverage/coverage-coffee.json'
+  coverageVar: '$_coffeeIstanbul',
+  writeOnExit: (_ref = process.env.COFFEECOV_OUT) != null ? _ref : 'coverage/coverage-coffee.json',
+  initAll: (_ref = process.env.COFFEECOV_INIT_ALL) != null ? (_ref === 'true') : true,
 });
