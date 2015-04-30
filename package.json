@@ -49,9 +49,9 @@
     "mocha": "^2.1.0"
   },
   "scripts": {
-    "prepublish": "coffee -c -o lib src && mocha",
-    "test": "mocha",
-    "cover": "npm run prepublish && mocha --require ./register-istanbul.js && istanbul report"
+    "prepublish": "npm run build && mocha",
+    "test": "npm run build && mocha && istanbul report",
+    "build": "coffee -c -o lib src"
   },
   "engines": {
     "node": ">=0.6.19"
