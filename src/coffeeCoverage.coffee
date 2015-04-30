@@ -9,39 +9,26 @@
 coffeeScript = require 'coffee-script'
 
 events = require 'events'
-fs = require 'fs'
-util = require 'util'
-path = require 'path'
-_ = require 'lodash'
+fs     = require 'fs'
+util   = require 'util'
+path   = require 'path'
+_      = require 'lodash'
 path.sep = path.sep || "/" # Assume "/" on older versions of node, where this is missing.
 
 NodeWrapper = require './NodeWrapper'
+{mkdirs, statFile, excludeFile} = require './helpers'
+{EXTENSIONS} = require './constants'
 
-INSTRUMENTORS = {
+exports.INSTRUMENTORS = INSTRUMENTORS = {
     jscoverage: require './instrumentors/JSCoverage'
     istanbul:   require './instrumentors/Istanbul'
 }
-
-exports.instrumentors = Object.keys(INSTRUMENTORS)
-
-{mkdirs, stripLeadingDotOrSlash, statFile, excludeFile, fixLocationData} = require './helpers'
-{EXTENSIONS} = require './constants'
-
-# Add 'version', 'author', and 'contributors' to our exports
-pkginfo = require('pkginfo') module, 'version', 'author', 'contributors'
 
 class CoverageError extends Error
     constructor: (@message) ->
         @name = "CoverageError"
         Error.call this
         Error.captureStackTrace this, arguments.callee
-
-class StringStream
-    constructor: () ->
-        @data = ""
-
-    write: (data) ->
-        @data += data
 
 # Default options.
 factoryDefaults =
@@ -50,87 +37,6 @@ factoryDefaults =
     recursive: true
     bare: false
     instrumentor: 'jscoverage'
-
-# Register coffeeCoverage to automatically process '.coffee', '.litcoffee', '.coffee.md' and '._coffee' files.
-#
-# Note if you're using this in conjunction with
-# [streamlinejs](https://github.com/Sage/streamlinejs), you *must* call this function
-# after calling `streamline.register()`, otherwise by the time we get the source the
-# file will already have been compiled.
-#
-# Parameters:
-# * Any option from `CoverageInstrumentor.instrument()`, except `recursive`, `initFileStream`.
-# * `options.streamlinejs` - Enable experimental support for streamlinejs.  This option will
-#   be removed in a future version of coffeeCoverage.
-# * `options.initAll` - If true, then coffeeCoverage will recursively walk through all
-#   subdirectories of `options.basePath` and gather line number information for all CoffeeScript files
-#   found.  This way even files which are not `require`d at any point during your test will still
-#   be instrumented and reported on.
-# * `options.writeOnExit` - A file to write a JSON coverage file to on completion.  This will
-#   stringify `options.coverageVar`.
-#
-# e.g. `coffeeCoverage.register {path: 'abbr', basePath: "#{__dirname}/.." }`
-#
-exports.register = (options) ->
-    # Clone options so we don't modify the original.
-    actualOptions = _.defaults {}, options, factoryDefaults
-
-    if actualOptions.basePath
-        actualOptions.basePath = path.resolve actualOptions.basePath
-
-        if actualOptions.initAll
-            # Recursively instrument everything in the base path to
-            # generate intialization data.
-            actualOptions.initFileStream = new StringStream()
-
-    coverage = new exports.CoverageInstrumentor actualOptions
-    module = require('module');
-
-    if actualOptions.basePath and actualOptions.initAll
-        # Recursively instrument everything in the base path to generate intialization data.
-        coverage.instrumentDirectory actualOptions.basePath, null
-        eval actualOptions.initFileStream.data
-
-    instrumentFile = (fileName) ->
-        content = fs.readFileSync fileName, 'utf8'
-        instrumented = coverage.instrumentCoffee fileName, content
-        return instrumented.init + instrumented.js
-
-    replaceHandler = (extension) ->
-        origCoffeeHandler = require.extensions[extension]
-        require.extensions[extension] = (module, fileName) ->
-            if excludeFile fileName, actualOptions
-                return origCoffeeHandler.call this, module, fileName
-            module._compile instrumentFile(fileName), fileName
-    replaceHandler ".coffee"
-    replaceHandler ".litcoffee"
-    replaceHandler ".coffee.md"
-
-    if actualOptions.streamlinejs
-        # TODO: This is pretty fragile, as we rely on some undocumented parts of streamline_js.
-        # Would be better to do this via some programatic interface to streamline.  Need to make a
-        # pull request.
-        streamline_js = require.extensions["._js"]
-        if streamline_js
-            origStreamineCoffeeHandler = require.extensions["._coffee"]
-            require.extensions["._coffee"] = (module, fileName) ->
-                if excludeFile fileName, actualOptions
-                    return origStreamineCoffeeHandler.call this, module, fileName
-
-                compiled = instrumentFile fileName
-                # TODO: Pass a sourcemap here?
-                streamline_js module, fileName, compiled, null
-
-    if options.writeOnExit?
-        process.on 'exit', ->
-            try
-                dirName = path.dirname options.writeOnExit
-                mkdirs dirName
-                fs.writeFileSync options.writeOnExit, JSON.stringify(global[actualOptions.coverageVar])
-            catch err
-                console.error "Failed to write coverage data", err.stack ? err
-
-
 
 #### CoverageInstrumentor
 #

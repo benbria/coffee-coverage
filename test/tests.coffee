@@ -1,6 +1,6 @@
 path = require 'path'
 assert = require 'assert'
-coffeeCoverage = require("../src/coffeeCoverage")
+coffeeCoverage = require("../src/index")
 
 dummyJsFile = path.resolve __dirname, "../testFixtures/testWithConfig/dummy.js"
 testDir = path.resolve __dirname, "../testFixtures/testWithConfig"

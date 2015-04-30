@@ -7,7 +7,8 @@ path = require 'path'
 path.sep = path.sep || "/" # Assume "/" on older versions of node, where this is missing.
 _ = require 'lodash'
 
-{CoverageInstrumentor, version, instrumentors:INSTRUMENTORS} = require './coffeeCoverage'
+{CoverageInstrumentor, version} = require './index'
+{INSTRUMENTORS} = require './coffeeCoverage'
 {stripLeadingDotOrSlash, mkdirs} = require './helpers'
 
 DEFAULT_INSTRUMENTOR = 'jscoverage'
@@ -81,10 +82,10 @@ parseArgs = (args) ->
 
     options = parser.parseArgs(args)
 
-    if options.inst not in INSTRUMENTORS
+    if not options.inst of INSTRUMENTORS
         parser.printUsage()
         console.error """#{executableName}: error: Invalid coverage type #{options.inst}.
-            Must be one of #{INSTRUMENTORS.join ', '}"""
+            Must be one of #{Object.keys(INSTRUMENTORS).join ', '}"""
         process.exit 1
 
     # Split exclude into an array.
