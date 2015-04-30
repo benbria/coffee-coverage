@@ -1,3 +1,4 @@
+assert       = require 'assert'
 fs           = require 'fs'
 path         = require 'path'
 coffeeScript = require 'coffee-script'
@@ -49,10 +50,9 @@ exports.mkdirs = (dirPath, mode) ->
 # Return the relative path for the file from the basePath.  Returns file name
 # if the file is not relative to basePath.
 exports.getRelativeFilename = (basePath, fileName) ->
-    relativeFileName = path.resolve fileName
-    if basePath? and _.startsWith(relativeFileName, basePath)
-        relativeFileName = path.relative basePath, fileName
-    return relativeFileName
+    if basePath? and _.startsWith(fileName, basePath)
+        fileName = path.relative basePath, fileName
+    return fileName
 
 # Return true if we should exclude a file.
 #
@@ -61,6 +61,9 @@ exports.getRelativeFilename = (basePath, fileName) ->
 exports.excludeFile = (fileName, options) ->
     basePath = options.basePath
     exclude = options.exclude
+
+    resolvedFileName = path.resolve fileName
+    assert resolvedFileName is fileName
 
     return if !exclude
 

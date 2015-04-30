@@ -1,4 +1,5 @@
 --compilers coffee:coffee-script/register
 --reporter spec
+--require ./register-istanbul.js
 --recursive
 --growl

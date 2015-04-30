@@ -163,17 +163,6 @@ class exports.CoverageInstrumentor extends events.EventEmitter
             if sourceStat.isDirectory() and outStat.isFile()
                 throw new CoverageError("Refusing to overwrite file #{out} with directory.")
 
-    # Generate a unique file name
-    generateUniqueName = (usedNames, desiredName) ->
-        answer = ""
-        suffix = 1
-        while true
-            answer = desiredName + " (" + suffix + ")"
-            if not (answer in usedNames) then break
-            suffix++
-
-        return answer
-
     #### Instrument a file or directory.
     #
     # This calls @instrumentFile or @instrumentDirectory, depending on whether "source" is

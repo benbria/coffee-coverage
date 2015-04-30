@@ -36,12 +36,16 @@ checkFunctionsAreCovered = (instrumentor, result, fnCount, filename=FILENAME) ->
 
 
 run = (source, options={}) ->
-    instrumentor = new Istanbul(FILENAME, {log, coverageVar: COVERAGE_VAR})
-    result = coffeeCoverage._runInstrumentor instrumentor, FILENAME, source, {log}
+    filename = options.filename ? FILENAME
+    instrumentor = new Istanbul(filename, {log, coverageVar: COVERAGE_VAR})
+    result = coffeeCoverage._runInstrumentor instrumentor, filename, source, {log}
 
-    if options.counts?.s then checkStatementsAreCovered instrumentor, result, options.counts.s, options.filename
-    if options.counts?.b then checkBranchesAreCovered instrumentor, result, options.counts.b, options.filename
-    if options.counts?.f then checkFunctionsAreCovered instrumentor, result, options.counts.f, options.filename
+    if options.counts?.s
+        checkStatementsAreCovered instrumentor, result, options.counts.s, filename
+    if options.counts?.b
+        checkBranchesAreCovered instrumentor, result, options.counts.b, filename
+    if options.counts?.f
+        checkFunctionsAreCovered instrumentor, result, options.counts.f, filename
 
     return {instrumentor, result}
 
@@ -49,7 +53,7 @@ run = (source, options={}) ->
 describe "Istanbul tests", ->
     it "should find statements", ->
         {instrumentor, result} = run """
-            console.log "Hello world!"
+            obj.callAFn "Hello world!"
         """, counts: {f: 0, s: 1, b: {}}
 
         expect(instrumentor.statementMap[0]).to.eql {
@@ -59,9 +63,9 @@ describe "Istanbul tests", ->
     it "should find 'if' branches", ->
         {instrumentor, result} = run """
             if x
-                console.log "Hello world!"
+                obj.callAFn "Hello world!"
             else
-                console.log "Goodbye world!"
+                obj.callAFn "Goodbye world!"
         """, {f: 0, s: 3, b: {1:2}}
 
         expect(instrumentor.statementMap[0], "first statement").to.eql {
@@ -86,9 +90,9 @@ describe "Istanbul tests", ->
     it "should find 'unless' branches", ->
         {instrumentor, result} = run """
             unless x
-                console.log "Hello world!"
+                obj.callAFn "Hello world!"
             else
-                console.log "Goodbye world!"
+                obj.callAFn "Goodbye world!"
         """, {f: 0, s: 3, b: {1:2}}
 
         expect(instrumentor.branchMap[0]).to.eql {
@@ -103,26 +107,26 @@ describe "Istanbul tests", ->
     it "should find chained ifs", ->
         {instrumentor, result} = run """
             if x
-                console.log "1"
+                obj.callAFn "1"
             else if y
-                console.log "2"
+                obj.callAFn "2"
             else
-                console.log "3"
+                obj.callAFn "3"
         """, counts: {f: 0, s: 5, b: {1:2, 2:2}}
 
         expect(instrumentor.statementMap[0], "if/else if/else").to.eql {
             start: {line: 1, column: 0}, end: {line: 6, column: 18}
         }
-        expect(instrumentor.statementMap[1], "console.log 1").to.eql {
+        expect(instrumentor.statementMap[1], "obj.callAFn 1").to.eql {
             start: {line: 2, column: 4}, end: {line: 2, column: 18}
         }
         expect(instrumentor.statementMap[2], "if/else if").to.eql {
             start: {line: 3, column: 5}, end: {line: 6, column: 18}
         }
-        expect(instrumentor.statementMap[3], "console.log 2").to.eql {
+        expect(instrumentor.statementMap[3], "obj.callAFn 2").to.eql {
             start: {line: 4, column: 4}, end: {line: 4, column: 18}
         }
-        expect(instrumentor.statementMap[4], "console.log 3").to.eql {
+        expect(instrumentor.statementMap[4], "obj.callAFn 3").to.eql {
             start: {line: 6, column: 4}, end: {line: 6, column: 18}
         }
 
@@ -146,7 +150,7 @@ describe "Istanbul tests", ->
     it "should find if branch with no else", ->
         {instrumentor, result} = run """
             if x
-                console.log "Hello world!"
+                obj.callAFn "Hello world!"
         """, counts: {f: 0, s: 2, b: {1:2}}
 
         expect(instrumentor.statementMap[0], "first statement").to.eql {
@@ -198,10 +202,10 @@ describe "Istanbul tests", ->
         {instrumentor, result} = run """
             switch x
                 when 1
-                    console.log "a"
-                when 2 then console.log "b"
+                    obj.callAFn "a"
+                when 2 then obj.callAFn "b"
                 else
-                    console.log "c"
+                    obj.callAFn "c"
         """, counts: {f: 0, s: 4, b: {1:3}}
 
         expect(instrumentor.statementMap[0], "first statement").to.eql {
@@ -233,9 +237,9 @@ describe "Istanbul tests", ->
         {instrumentor, result} = run """
             switch x
                 when 1
-                    console.log "a"
+                    obj.callAFn "a"
                 when 2
-                    console.log "b"
+                    obj.callAFn "b"
         """, counts: {f: 0, s: 3, b: {1:2}}
 
         expect(instrumentor.branchMap[0]).to.eql {
@@ -250,7 +254,7 @@ describe "Istanbul tests", ->
     it "should find functions", ->
         {instrumentor, result} = run """
             myFunc = ->
-                console.log "Hello"
+                obj.callAFn "Hello"
         """, counts: {f: 1, s: 2, b: {}}
 
         expect(instrumentor.statementMap[0], "first statement").to.eql {
@@ -270,7 +274,7 @@ describe "Istanbul tests", ->
     it "should find functions with parameters", ->
         {instrumentor, result} = run """
             myFunc = (x,y,z) ->
-                console.log "Hello"
+                obj.callAFn "Hello"
         """, counts: {f: 1, s: 2, b: {}}
 
         expect(instrumentor.fnMap[0]).to.eql {
@@ -282,7 +286,7 @@ describe "Istanbul tests", ->
     it.skip "should correctly find the end of functions with extra whitespace", ->
         {instrumentor, result} = run """
             myFunc = (x,y,z)   ->
-                console.log "Hello"
+                obj.callAFn "Hello"
         """, counts: {f: 1, s: 2, b: {}}
 
         expect(instrumentor.fnMap[0]).to.eql {
@@ -293,7 +297,7 @@ describe "Istanbul tests", ->
 
     it "should find anonymous functions", ->
         {instrumentor, result} = run """
-            [1,2,3].forEach -> console.log "x"
+            [1,2,3].forEach -> obj.callAFn "x"
         """, counts: {f: 1, s: 2, b: {}}
 
         expect(instrumentor.fnMap[0]).to.eql {
@@ -304,7 +308,7 @@ describe "Istanbul tests", ->
 
     it "should find anonymous functions with parameters", ->
         {instrumentor, result} = run """
-            [1,2,3].forEach (num) -> console.log num
+            [1,2,3].forEach (num) -> obj.callAFn num
         """, counts: {f: 1, s: 2, b: {}}
 
         expect(instrumentor.fnMap[0]).to.eql {
@@ -315,7 +319,7 @@ describe "Istanbul tests", ->
 
     it "should use right-most name for funciton with multiple names", ->
         {instrumentor, result} = run """
-            x = y = -> console.log "Hello"
+            x = y = -> obj.callAFn "Hello"
         """, counts: {f: 1, s: 2, b: {}}
 
         expect(instrumentor.fnMap[0].name).to.equal 'y'

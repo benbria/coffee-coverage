@@ -7,6 +7,7 @@
 #
 
 path = require 'path'
+_    = require 'lodash'
 {insertBeforeNode, toQuotedString, stripLeadingDotOrSlash, getRelativeFilename} = require '../helpers'
 
 # Takes the contents of a file and returns an array of lines.
@@ -15,37 +16,16 @@ fileToLines = (source) ->
     dataWithFixedLfs = source.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
     return dataWithFixedLfs.split("\n")
 
-# Converts a path like "./foo/"
-abbreviatedPath = (pathName) ->
-    needTrailingSlash = no
-
-    splitPath = pathName.split path.sep
-
-    if splitPath[-1..-1][0] == ''
-        needTrailingSlash = yes
-        splitPath.pop()
-
-    filename = splitPath.pop()
-
+# Generate a unique file name
+generateUniqueName = (usedNames, desiredName) ->
     answer = ""
-    for pathElement in splitPath
-        if pathElement.length == 0
-            answer += ""
-        else if pathElement is ".."
-            answer += pathElement
-        else if _.startsWith pathElement, "."
-            answer += pathElement[0..1]
-        else
-            answer += pathElement[0]
-        answer += path.sep
-
-    answer += filename
-
-    if needTrailingSlash
-        answer += path.sep
+    suffix = 1
+    while true
+        answer = desiredName + " (" + suffix + ")"
+        if not (answer in usedNames) then break
+        suffix++
 
     return answer
-
 
 
 module.exports = class JSCoverage
@@ -57,26 +37,60 @@ module.exports = class JSCoverage
     #        replaced by the first character in its name.
     #     * null - Path names will be omitted.  Only the base file name will be used.
     #
+    # * If `options.usedFileNames` is present, it must be an array.  This method will add the
+    #   name of the file to usedFileNames.  If the name of the file is already in usedFileNames
+    #   then this method will generate a unique name.
     #
-    constructor: (fileName, options) ->
+    constructor: (fileName, options={}) ->
+        # FIXME: Pick a sane default for coverageVar
         {@log, @coverageVar} = options
         @instrumentedLines = []
 
         fileName = getRelativeFilename options.basePath, fileName
 
-        shortFileName = switch options.path
+        @shortFileName = switch options.path
             when 'relative' then stripLeadingDotOrSlash fileName
-            when 'abbr' then abbreviatedPath stripLeadingDotOrSlash fileName
+            when 'abbr' then @_abbreviatedPath stripLeadingDotOrSlash fileName
             else path.basename fileName
 
         # Generate a unique fileName if required.
-        if options.usedfileNames
-            if shortFileName in options.usedfileNames
-                shortFileName = generateUniqueName options.usedfileNames, shortFileName
-            options.usedfileNames.push shortFileName
+        if options.usedFileNames?
+            if @shortFileName in options.usedFileNames
+                @shortFileName = generateUniqueName options.usedFileNames, @shortFileName
+            options.usedFileNames.push @shortFileName
 
-        @quotedFileName = toQuotedString shortFileName
+        @quotedFileName = toQuotedString @shortFileName
 
+    # Converts a path like "./foo/bar/baz" to "./f/b/baz"
+    _abbreviatedPath: (pathName) ->
+        needTrailingSlash = no
+
+        splitPath = pathName.split path.sep
+
+        if splitPath[-1..-1][0] == ''
+            needTrailingSlash = yes
+            splitPath.pop()
+
+        filename = splitPath.pop()
+
+        answer = ""
+        for pathElement in splitPath
+            if pathElement.length == 0
+                answer += ""
+            else if pathElement is ".."
+                answer += pathElement
+            else if _.startsWith pathElement, "."
+                answer += pathElement[0..1]
+            else
+                answer += pathElement[0]
+            answer += path.sep
+
+        answer += filename
+
+        if needTrailingSlash
+            answer += path.sep
+
+        return answer
 
     # Called on each non-comment statement within a Block.  If a `visitXXX` exists for the
     # specific node type, it will also be called after `visitStatement`.
