@@ -61,10 +61,8 @@ describe "Istanbul tests", ->
         """
 
         checkStatementsAreCovered instrumentor, result, 3
-        # FIXME: Istanbul will put the `end` of the `if` statement on line 4.  It will put the
-        # end of a chained if/else if/else statement at the end of the last else.
         expect(instrumentor.statementMap[0], "first statement").to.eql {
-            start: {line: 1, column: 0}, end: {line: 2, column: 30}
+            start: {line: 1, column: 0}, end: {line: 4, column: 31}
         }
         expect(instrumentor.statementMap[1], "second statement").to.eql {
             start: {line: 2, column: 4}, end: {line: 2, column: 29}
@@ -80,6 +78,53 @@ describe "Istanbul tests", ->
             locations: [
                 {start: {line: 1, column: 0}, end: {line: 1, column: 0}}
                 {start: {line: 1, column: 0}, end: {line: 1, column: 0}}
+            ]
+        }
+
+        checkFunctionsAreCovered instrumentor, result, 0
+
+    it "should find chained ifs", ->
+        {instrumentor, result} = run """
+            if x
+                console.log "1"
+            else if y
+                console.log "2"
+            else
+                console.log "3"
+        """
+
+        checkStatementsAreCovered instrumentor, result, 5
+        expect(instrumentor.statementMap[0], "if/else if/else").to.eql {
+            start: {line: 1, column: 0}, end: {line: 6, column: 18}
+        }
+        expect(instrumentor.statementMap[1], "console.log 1").to.eql {
+            start: {line: 2, column: 4}, end: {line: 2, column: 18}
+        }
+        expect(instrumentor.statementMap[2], "if/else if").to.eql {
+            start: {line: 3, column: 5}, end: {line: 6, column: 18}
+        }
+        expect(instrumentor.statementMap[3], "console.log 2").to.eql {
+            start: {line: 4, column: 4}, end: {line: 4, column: 18}
+        }
+        expect(instrumentor.statementMap[4], "console.log 3").to.eql {
+            start: {line: 6, column: 4}, end: {line: 6, column: 18}
+        }
+
+        checkBranchesAreCovered instrumentor, result, {1: 2, 2: 2}
+        expect(instrumentor.branchMap[0]).to.eql {
+            line: 1
+            type: 'if'
+            locations: [
+                {start: {line: 1, column: 0}, end: {line: 1, column: 0}}
+                {start: {line: 1, column: 0}, end: {line: 1, column: 0}}
+            ]
+        }
+        expect(instrumentor.branchMap[1]).to.eql {
+            line: 3
+            type: 'if'
+            locations: [
+                {start: {line: 3, column: 5}, end: {line: 3, column: 5}}
+                {start: {line: 3, column: 5}, end: {line: 3, column: 5}}
             ]
         }
 
@@ -165,7 +210,27 @@ describe "Istanbul tests", ->
 
         checkFunctionsAreCovered instrumentor, result, 0
 
-    # TODO: switch with no 'else' case?  Istanbul doesn't instrument this.  Should we?
+    it "should work for a switch with no 'else'", ->
+        {instrumentor, result} = run """
+            switch x
+                when 1
+                    console.log "a"
+                when 2
+                    console.log "b"
+        """
+
+        checkStatementsAreCovered instrumentor, result, 3
+        checkBranchesAreCovered instrumentor, result, {1: 2}
+        checkFunctionsAreCovered instrumentor, result, 0
+
+        expect(instrumentor.branchMap[0]).to.eql {
+            line: 1
+            type: 'switch'
+            locations: [
+                {start: {line: 2, column: 4}, end: {line: 3, column: 22}}
+                {start: {line: 4, column: 4}, end: {line: 5, column: 22}}
+            ]
+        }
 
     it "should find functions", ->
         {instrumentor, result} = run """
@@ -187,6 +252,60 @@ describe "Istanbul tests", ->
             name: 'myFunc'
             line: 1
             loc: {start: {line: 1, column: 0}, end: {line: 1, column: 10}}
+        }
+
+    it "should find functions with parameters", ->
+        {instrumentor, result} = run """
+            myFunc = (x,y,z) ->
+                console.log "Hello"
+        """
+
+        checkStatementsAreCovered instrumentor, result, 2
+        checkFunctionsAreCovered instrumentor, result, 1
+        expect(instrumentor.fnMap[0]).to.eql {
+            name: 'myFunc'
+            line: 1
+            loc: {start: {line: 1, column: 0}, end: {line: 1, column: 18}}
+        }
+
+    it.skip "should correctly find the end of functions with extra whitespace", ->
+        {instrumentor, result} = run """
+            myFunc = (x,y,z)   ->
+                console.log "Hello"
+        """
+
+        checkStatementsAreCovered instrumentor, result, 2
+        checkFunctionsAreCovered instrumentor, result, 1
+        expect(instrumentor.fnMap[0]).to.eql {
+            name: 'myFunc'
+            line: 1
+            loc: {start: {line: 1, column: 0}, end: {line: 1, column: 20}}
+        }
+
+    it "should find anonymous functions", ->
+        {instrumentor, result} = run """
+            [1,2,3].forEach -> console.log "x"
+        """
+
+        checkStatementsAreCovered instrumentor, result, 2
+        checkFunctionsAreCovered instrumentor, result, 1
+        expect(instrumentor.fnMap[0]).to.eql {
+            name: '(anonymous_1)'
+            line: 1
+            loc: {start: {line: 1, column: 16}, end: {line: 1, column: 17}}
+        }
+
+    it "should find anonymous functions with parameters", ->
+        {instrumentor, result} = run """
+            [1,2,3].forEach (num) -> console.log num
+        """
+
+        checkStatementsAreCovered instrumentor, result, 2
+        checkFunctionsAreCovered instrumentor, result, 1
+        expect(instrumentor.fnMap[0]).to.eql {
+            name: '(anonymous_1)'
+            line: 1
+            loc: {start: {line: 1, column: 16}, end: {line: 1, column: 23}}
         }
 
     it "should use right-most name for funciton with multiple names", ->
@@ -245,6 +364,34 @@ describe "Istanbul tests", ->
             # Not sure these column counts are at all correct, but good enough...
             loc: {start: {line: 1, column: 4}, end: {line: 1, column: 4}}
         }
+
+    describe 'Istanbul._minLocation', ->
+        testInstance = new Istanbul("test.coffee")
+
+        it "should find the minimum location", ->
+            expect(
+                testInstance._minLocation([{line: 1, column: 10}, {line: 1, column: 20}])
+            ).to.eql {line:1, column: 10}
+
+        it "should find the minimum location when order is reversed", ->
+            expect(
+                testInstance._minLocation([{line: 1, column: 20}, {line: 1, column: 10}])
+            ).to.eql {line:1, column: 10}
+
+        it "should find the minimum location when on different lines", ->
+            expect(
+                testInstance._minLocation([{line: 1, column: 20}, {line: 2, column: 10}])
+            ).to.eql {line:1, column: 20}
+
+            expect(
+                testInstance._minLocation([{line: 1, column: 10}, {line: 2, column: 20}])
+            ).to.eql {line:1, column: 10}
+
+        it "should return null when given no locations", ->
+            expect(
+                testInstance._minLocation([])
+            ).to.eql null
+
 
 # TODO:
 # * `foo = bar = -> ...`
