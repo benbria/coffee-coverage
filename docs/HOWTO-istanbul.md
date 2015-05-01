@@ -5,6 +5,7 @@ Contents
 ========
 
 * [Quick Start with Mocha](#quick-start-with-mocha)
+  * [Mixed JS and Coffee Projects](#mixed-js-and-coffee-projects)
   * [Run with NPM](#run-with-npm)
   * [Writing a Custom Loader](#writing-a-custom-loader)
 
@@ -39,6 +40,24 @@ variables:
   './node_modules', and './.git' folders.  If you want to ignore other folders, see
   [#how to write a custom loader](#writing-a-custom-loader).
 
+
+Mixed JS and Coffee Projects
+============================
+
+Assuming you have a project with a mix of .js and .coffee files in /src, and compiled code in /lib,
+and your tests are set up to load code from /src, then run:
+
+    npm install --save-dev coffee-coverage
+    npm install --save-dev istanbul
+    ./node_modules/.bin/istanbul cover -x 'lib/**' ./node_modules/.bin/_mocha -- \
+        --compilers coffee:coffee-script/register \
+        --require coffee-coverage/register-istanbul \
+        --recursive \
+        test
+
+The `-x 'lib/**'` tells Istanbul to ignore the compiled code in /lib.  Also note we're running
+`_mocha` here instead of `mocha`, as Istanbul has problems with `mocha`.
+
 Run with NPM
 ============
 
@@ -62,13 +81,17 @@ Writing a Custom Loader
 If the defaults in `coffee-coverage/register-istanbul` don't work for you, you can write a custom
 loader.  Save this in "coffee-coverage-loader.js":
 
-    require('coffee-coverage').register({
-      instrumentor: 'istanbul',
-      basePath: process.cwd(),
-      exclude: ['/test', '/node_modules', '/.git'],
-      coverageVar: '$_coffeeIstanbul',
-      writeOnExit: 'coverage/coverage-coffee.json',
-      initAll: true
+    var coffeeCoverage = require('coffee-coverage');
+    var coverageVar = coffeeCoverage.findIstanbulVariable();
+    var writeOnExit = coverageVar == null;
+
+    coffeeCoverage.register({
+        instrumentor: 'istanbul',
+        basePath: process.cwd(),
+        exclude: ['/test', '/node_modules', '/.git'],
+        coverageVar: coverageVar,
+        writeOnExit: writeOnExit,
+        initAll: true
     });
 
 Then when you run mocha, use `--require ./coffee-coverage-loader.js`.

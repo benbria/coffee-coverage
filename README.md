@@ -8,11 +8,33 @@ Instruments CoffeeScript files for code coverage.  Compiles .coffee files to .js
 Features
 --------
 
+* Native coffee-script instrumentation - not based on source maps.
 * Support for [Istanbul](./docs/HOWTO-istanbul.md) style instrumentation.
 * Support for [JSCoverage](./docs/HOWTO-jscoverage.md) style insturmentation.
 * Support for [Streamline compiler](./docs/streamline.md) style insturmentation.
 * Dynamic instrumentation - instrument your code at run time.
 * [Precompiled instrumentation](./docs/cli.md).
+
+Quick Start
+-----------
+
+From your project's folder, run:
+
+    npm install --save-dev coffee-coverage
+    npm install --save-dev istanbul
+    mocha --recursive \
+          --compilers coffee:coffee-script/register \
+          --require coffee-coverage/register-istanbul \
+          test
+    ./node_modules/.bin/istanbul report
+
+You should now have an Istanbul coverage report in ./coverage/lcov-report/index.html.
+
+Tutorials:
+----------
+
+* [Mocha and Istanbul Guide](./docs/HOWTO-istanbul.md)
+* [Mocha and JSCoverage Guide](./docs/HOWTO-jscoverage.md)
 
 What it Does
 ------------
@@ -28,8 +50,3 @@ Installation and a Quick Intro
 Check out the [Istanbul](./docs/HOWTO-istanbul.md) documentation to get setup with CoffeeCoverage
 quickly.  There is also a `coffeeCoverage` command line tool which can be used to
 [instrument files at compile time](./docs/cli.md).
-
-How it Works
-------------
-See the [Design](https://github.com/benbria/coffee-coverage/wiki/Design) page on the Wiki.
-

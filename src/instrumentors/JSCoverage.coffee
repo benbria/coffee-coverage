@@ -29,10 +29,18 @@ generateUniqueName = (usedNames, desiredName) ->
 
 
 module.exports = class JSCoverage
-    # `options` is a `{log, coverageVar, basePath, path, usedfileNames}` object.
+
+    # Return default options for this instrumentor.
+    @getDefaultOptions: -> {
+        path: 'relative'
+        usedFileNames: []
+        coverageVar: '_$jscoverage'
+    }
+
+    # `options` is a `{log, coverageVar, basePath, path, usedFileNames}` object.
     #
     # * `options.path` should be one of:
-    #     * 'relative' - like 'absolute', but leading slash will be stripped.
+    #     * 'relative' - file names will have the `basePath` stripped from them.
     #     * 'abbr' - an abbreviated file name will be constructed, with each parent in the path
     #        replaced by the first character in its name.
     #     * null - Path names will be omitted.  Only the base file name will be used.

@@ -21,12 +21,12 @@
 #   `line` is the line the branch starts on.  `type` is the type of the branch (e.g. "if", "switch").
 #   `locations` is an array of `Location` objects, one for each possible outcome of the branch.
 #   Note for an `if` statement where there is no `else` clause, there will still be two `locations`
-#   generated.  Instanbul does *not* generate coverage for the `default` case of a switch statement
+#   generated.  Istanbul does *not* generate coverage for the `default` case of a switch statement
 #   if `default` is not explicitly present in the source code.
 #
 #   `locations` for an if statement are always 0-length and located at the start of the `if` (even
 #   the location for the "else").  For a `switch` statement, `locations` start at the start of the
-#   `case` statement and go to the end of the line before the next case statement (note Instanbul
+#   `case` statement and go to the end of the line before the next case statement (note Istanbul
 #   does nothing clever here if a `case` is missing a `break`.)
 #
 # ## Location Objects
@@ -43,12 +43,12 @@
 # marked `skip`, along with all statements inside the `if`.  Similar for
 # `### istanbul ignore else ###`.
 #
-# An `### instanbul ignore next ###` before a `when` in a `switch` should cause the appropriate
+# An `### istanbul ignore next ###` before a `when` in a `switch` should cause the appropriate
 # entry in the `branchMap` to be marked skip, and all statements inside the `when`.
 # (coffee-script doesn't allow block comments at top scope inside a switch.  Might not be
 # able to do this.)
 #
-# An `### instanbul ignore next ###` before a function declaration should cause the location in
+# An `### istanbul ignore next ###` before a function declaration should cause the location in
 # the `fnMap` to be marked `skip`, the statement for the function delcaration and all statements in
 # the function to be marked `skip` in the `statementMap`.
 #
@@ -67,7 +67,29 @@ nodeToLocation = (node) ->
         line:   node.locationData.last_line + 1
         column: node.locationData.last_column
 
-module.exports = class JSCoverage
+module.exports = class Istanbul
+
+    # Return default options for this instrumentor.
+    @getDefaultOptions: -> {
+        coverageVar: module.exports.findIstanbulVariable() ? '_$coffeeIstanbul'
+    }
+
+    # Find the runtime Istanbul variable, if it exists.  Otherwise, fall back to a sensible default.
+    @findIstanbulVariable: ->
+        coverageVar = "$$cov_#{Date.now()}$$"
+
+        if !global[coverageVar]?
+            coverageVars = Object.keys(global)
+                .filter (key) -> _.startsWith key, '$$cov_'
+
+            if coverageVars.length is 1
+                coverageVar = coverageVars[0]
+            else
+                coverageVar = null
+
+        return coverageVar
+
+
     # `options` is a `{log, coverageVar}` object.
     #
     constructor: (fileName, options={}) ->
@@ -104,7 +126,9 @@ module.exports = class JSCoverage
             return nodeToLocation(ifNode).end
 
     visitComment: (node) ->
-        # TODO: Respect 'istanbul ignore if', 'istanbul ignore else', and 'istanbul ignore next'
+        # TODO: Respect 'istanbul ignore if', 'istanbul ignore else', and 'istanbul ignore next'?
+        # or maybe use 'pragma coverage-skip', 'pragma coverage-skip-if', 'pragma coverage-skip-else'?
+        # or both!
         commentData = node.node.comment?.trim() ? ''
 
 
