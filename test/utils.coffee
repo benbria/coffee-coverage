@@ -1,3 +1,5 @@
+_ = require 'lodash'
+
 conditionalRun = (skip) -> return {
     it: if skip then it.skip else it
     describe: if skip then describe.skip else describe
@@ -17,7 +19,5 @@ exports.whenNoGlobal = (varName) ->
 
 # Returns an `{it}` object which will only run if `fn` returns true.
 exports.when = (fn) ->
-    skip = !fn()
-    answer = conditionalRun skip
-    console.log  "when:", skip, answer
-    return answer
+    skip = if _.isFunction(fn) then !fn() else !fn
+    return conditionalRun skip

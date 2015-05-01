@@ -20,12 +20,10 @@ exports.mkdirs = (dirPath, mode) ->
     if not statFile dirPath
         pathElements = dirPath.split path.sep
 
+        if _.last(pathElements) is '' then pathElements.pop()
+
         currentPath = ""
         for pathElement in pathElements
-            if not pathElement
-                # Skip the trailing ""
-                continue
-
             currentPath += pathElement + path.sep
             stat = statFile currentPath
 
@@ -35,6 +33,10 @@ exports.mkdirs = (dirPath, mode) ->
             if not stat
                 # Create the directory
                 fs.mkdirSync currentPath, mode
+
+        return true
+
+    return false
 
 # Return the relative path for the file from the basePath.  Returns file name
 # if the file is not relative to basePath.
