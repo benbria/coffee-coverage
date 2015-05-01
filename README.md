@@ -4,6 +4,7 @@ Benbria CoffeeCoverage
 ======================
 
 [![Codeship Build Status](https://codeship.com/projects/015eb880-d22c-0132-7a3a-16c1124d299d/status?branch=master)](https://www.codeship.io/projects/28495)
+[![Coverage Status](https://coveralls.io/repos/benbria/coffee-coverage/badge.svg?branch=master)](https://coveralls.io/r/benbria/coffee-coverage?branch=master)
 
 Instruments CoffeeScript files for code coverage.  Compiles .coffee files to .js files, and adds JSCoverage or Istanbul style instrumentation for the original coffee script source.
 
