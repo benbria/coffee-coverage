@@ -100,3 +100,9 @@ exports.excludeFile = (fileName, options) ->
 exports.toQuotedString = (string) ->
         answer = string.replace /\\/g, '\\\\'
         return '"' + (answer.replace /"/g, '\\\"') + '"'
+
+# Takes the contents of a file and returns an array of lines.
+# `source` is a string containing an entire file.
+exports.fileToLines = (source) ->
+    dataWithFixedLfs = source.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+    return dataWithFixedLfs.split("\n")

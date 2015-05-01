@@ -56,7 +56,7 @@
 assert = require 'assert'
 _ = require 'lodash'
 NodeWrapper = require '../NodeWrapper'
-{insertBeforeNode, insertAtStart, toQuotedString} = require '../helpers'
+{insertBeforeNode, insertAtStart, toQuotedString, fileToLines} = require '../helpers'
 
 nodeToLocation = (node) ->
     # Istanbul uses 1-based lines, but 0-based columns
@@ -70,6 +70,7 @@ nodeToLocation = (node) ->
 module.exports = class Istanbul
 
     # Return default options for this instrumentor.
+    # TODO: This isn't being called.
     @getDefaultOptions: -> {
         coverageVar: module.exports.findIstanbulVariable() ? '_$coffeeIstanbul'
     }
@@ -85,18 +86,22 @@ module.exports = class Istanbul
             if coverageVars.length is 1
                 coverageVar = coverageVars[0]
             else
-                coverageVar = null
+                coverageVar = undefined
 
         return coverageVar
 
 
     # `options` is a `{log, coverageVar}` object.
     #
-    constructor: (fileName, options={}) ->
-        # FIXME: Should use sensible default coverageVar
+    constructor: (@fileName, @source, options={}) ->
         {@log, @coverageVar} = options
 
-        @quotedFileName = toQuotedString fileName
+        # FIXME: Should use sensible default coverageVar
+        assert @coverageVar
+
+        @sourceLines = fileToLines @source
+
+        @quotedFileName = toQuotedString @fileName
 
         @statementMap = []
         @branchMap = []
@@ -187,8 +192,15 @@ module.exports = class Istanbul
                 .map( (condition) -> nodeToLocation(condition).start )
             )
 
-            # TODO: Should find the source line, find the start of the `when`.
-            start.column -= 5 # Account for the 'when'
+            # start.column is the start of the condition, but we want the start of the
+            # `when`.
+            start.column = if (startColumn = @sourceLines[start.line-1]?.indexOf('when')) > -1
+                startColumn
+            else
+                log.warn "Couldn't find 'when' for #{node.toString()}"
+                # Intelligent guess
+                start.column -= 5
+                if start.column < 0 then start.column = 0
 
             {start, end: nodeToLocation(block).end}
         if node.node.otherwise?
@@ -230,9 +242,16 @@ module.exports = class Istanbul
         if paramCount > 0
             lastParam = node.child('params', paramCount-1)
             end = nodeToLocation(lastParam).end
-            # Coffee-script doesn't tell us where the `->` is, so we have to guess.
-            # TODO: Find it in the source?
-            end.column += 4
+
+            # Coffee-script doesn't tell us where the `->` is, so we have to find it
+            end.column = if (endColumn = @sourceLines[start.line-1]?.indexOf('->', end.column)) > -1
+                endColumn + 1
+            else if (endColumn = @sourceLines[start.line-1]?.indexOf('=>', end.column)) > -1
+                endColumn + 1
+            else
+                log.warn "Couldn't find '->' or '=>' for #{node.toString()}"
+                # Educated guess
+                end.column + 4
         else
             end = nodeToLocation(node).start
             # Fix off-by-one error
@@ -264,9 +283,9 @@ module.exports = class Istanbul
 
         node.insertAtStart 'body', "#{@_prefix}.f[#{functionId}]++"
 
-    getInitString: ({fileName, source}) ->
+    getInitString: () ->
         initData = {
-            path: fileName
+            path: @fileName
             s: {}
             b: {}
             f: {}

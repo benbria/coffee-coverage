@@ -16,7 +16,7 @@ checkLinesAreCovered = (code, lineNumbers, filename) ->
 run = (source, options={}) ->
     filename = options.filename ? FILENAME
     coverageOptions = _.assign {log, coverageVar: COVERAGE_VAR}, options.coverageOptions
-    instrumentor = new JSCoverage(filename, coverageOptions)
+    instrumentor = new JSCoverage(filename, source, coverageOptions)
     result = coffeeCoverage._runInstrumentor instrumentor, filename, source, {log}
 
     if options.counts?.l
@@ -140,7 +140,7 @@ describe "JSCoverage tests", ->
         expect(firstIndexOf is lastIndexOf).to.be.true
 
     describe '_abbreviatedPath', ->
-        testInstance = new JSCoverage("test.coffee")
+        testInstance = new JSCoverage("test.coffee", "")
 
         it 'should work for files', ->
             expect(testInstance._abbreviatedPath('foo/bar/baz.coffee')).to.equal 'f/b/baz.coffee'

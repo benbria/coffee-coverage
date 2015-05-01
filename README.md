@@ -30,6 +30,8 @@ From your project's folder, run:
 
 You should now have an Istanbul coverage report in ./coverage/lcov-report/index.html.
 
+If this doesn't quite do what you're after, check out our tutorials below:
+
 Tutorials:
 ----------
 

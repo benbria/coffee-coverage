@@ -8,13 +8,7 @@
 
 path = require 'path'
 _    = require 'lodash'
-{insertBeforeNode, toQuotedString, stripLeadingDotOrSlash, getRelativeFilename} = require '../helpers'
-
-# Takes the contents of a file and returns an array of lines.
-# `source` is a string containing an entire file.
-fileToLines = (source) ->
-    dataWithFixedLfs = source.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
-    return dataWithFixedLfs.split("\n")
+{insertBeforeNode, toQuotedString, stripLeadingDotOrSlash, getRelativeFilename, fileToLines} = require '../helpers'
 
 # Generate a unique file name
 generateUniqueName = (usedNames, desiredName) ->
@@ -32,7 +26,7 @@ module.exports = class JSCoverage
 
     # Return default options for this instrumentor.
     @getDefaultOptions: -> {
-        path: 'relative'
+        path: 'bare'
         usedFileNames: []
         coverageVar: '_$jscoverage'
     }
@@ -43,23 +37,25 @@ module.exports = class JSCoverage
     #     * 'relative' - file names will have the `basePath` stripped from them.
     #     * 'abbr' - an abbreviated file name will be constructed, with each parent in the path
     #        replaced by the first character in its name.
-    #     * null - Path names will be omitted.  Only the base file name will be used.
+    #     * 'bare' (default) - Path names will be omitted.  Only the base file name will be used.
     #
     # * If `options.usedFileNames` is present, it must be an array.  This method will add the
     #   name of the file to usedFileNames.  If the name of the file is already in usedFileNames
     #   then this method will generate a unique name.
     #
-    constructor: (fileName, options={}) ->
-        # FIXME: Pick a sane default for coverageVar
+    constructor: (@fileName, @source, options={}) ->
         {@log, @coverageVar} = options
+
+        options = _.defaults {}, options, JSCoverage.getDefaultOptions()
+
         @instrumentedLines = []
 
-        fileName = getRelativeFilename options.basePath, fileName
+        relativeFileName = getRelativeFilename options.basePath, @fileName
 
         @shortFileName = switch options.path
-            when 'relative' then stripLeadingDotOrSlash fileName
-            when 'abbr' then @_abbreviatedPath stripLeadingDotOrSlash fileName
-            else path.basename fileName
+            when 'relative' then stripLeadingDotOrSlash relativeFileName
+            when 'abbr' then @_abbreviatedPath stripLeadingDotOrSlash relativeFileName
+            else path.basename relativeFileName
 
         # Generate a unique fileName if required.
         if options.usedFileNames?
@@ -138,7 +134,7 @@ module.exports = class JSCoverage
             @log?.debug "  Disabling chaining for if statement"
             node.node.isChain = false
 
-    getInitString: ({source}) ->
+    getInitString: () ->
         init = """
             if (typeof #{@coverageVar} === 'undefined') #{@coverageVar} = {};
             (function(_export) {
@@ -156,7 +152,7 @@ module.exports = class JSCoverage
 
         # Write the original source code into the ".source" array.
         init += "#{@coverageVar}[#{@quotedFileName}].source = ["
-        fileToInstrumentLines = fileToLines source
+        fileToInstrumentLines = fileToLines @source
         for line, index in fileToInstrumentLines
             if !!index then init += ", "
             init += toQuotedString(line)

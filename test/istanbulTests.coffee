@@ -37,7 +37,7 @@ checkFunctionsAreCovered = (instrumentor, result, fnCount, filename=FILENAME) ->
 
 run = (source, options={}) ->
     filename = options.filename ? FILENAME
-    instrumentor = new Istanbul(filename, {log, coverageVar: COVERAGE_VAR})
+    instrumentor = new Istanbul(filename, source, {log, coverageVar: COVERAGE_VAR})
     result = coffeeCoverage._runInstrumentor instrumentor, filename, source, {log}
 
     if options.counts?.s
@@ -283,17 +283,18 @@ describe "Istanbul tests", ->
             loc: {start: {line: 1, column: 0}, end: {line: 1, column: 18}}
         }
 
-    it.skip "should correctly find the end of functions with extra whitespace", ->
-        {instrumentor, result} = run """
-            myFunc = (x,y,z)   ->
-                obj.callAFn "Hello"
-        """, counts: {f: 1, s: 2, b: {}}
+    it "should correctly find the end of functions with extra whitespace", ->
+        ['->', '=>'].forEach (arrow) ->
+            {instrumentor, result} = run """
+                myFunc = (x,y,z)   #{arrow}
+                    obj.callAFn "Hello"
+            """, counts: {f: 1, s: 2, b: {}}
 
-        expect(instrumentor.fnMap[0]).to.eql {
-            name: 'myFunc'
-            line: 1
-            loc: {start: {line: 1, column: 0}, end: {line: 1, column: 20}}
-        }
+            expect(instrumentor.fnMap[0]).to.eql {
+                name: 'myFunc'
+                line: 1
+                loc: {start: {line: 1, column: 0}, end: {line: 1, column: 20}}
+            }
 
     it "should find anonymous functions", ->
         {instrumentor, result} = run """
@@ -371,7 +372,7 @@ describe "Istanbul tests", ->
         }
 
     describe 'Istanbul._minLocation', ->
-        testInstance = new Istanbul("test.coffee")
+        testInstance = new Istanbul("test.coffee", "", {coverageVar: 'foo'})
 
         it "should find the minimum location", ->
             expect(

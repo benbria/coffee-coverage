@@ -32,11 +32,16 @@ class CoverageError extends Error
 
 # Default options.
 factoryDefaults =
-    coverageVar: '_$jscoverage'
     exclude: []
     recursive: true
     bare: false
     instrumentor: 'jscoverage'
+
+exports.getInstrumentorClass = getInstrumentorClass = (instrumentorName) ->
+    instrumentor = INSTRUMENTORS[instrumentorName]
+    if !instrumentor
+        throw new Error "Invalid instrumentor #{instrumentorName}. Valid options are: #{Object.keys(INSTRUMENTORS).join ', '}"
+    return instrumentor
 
 #### CoverageInstrumentor
 #
@@ -49,6 +54,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
     #
     constructor: (options = {}) ->
         @defaultOptions = _.defaults {}, options, factoryDefaults
+        _.defaults @defaultOptions, getInstrumentorClass(@defaultOptions.instrumentor).getDefaultOptions()
 
     # Write a string to a file.
     writeToFile = (outFile, content) ->
@@ -244,7 +250,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
     #
     # * `fileName` is the name of the file.  This should be an absolute path.
     #
-    # * `fileData` is the contents of the coffee file.
+    # * `source` is the contents of the coffee file.
     #
     # * `options.fileName` - if rpresent, this will be the filename passed to the instrumentor.
     #   Otherwise the absolute path will be passed.
@@ -261,15 +267,15 @@ class exports.CoverageInstrumentor extends events.EventEmitter
     # * `js` - the compiled JavaScript, instrumented to collect coverage data.
     # * `lines` - the total number of instrumented lines.
     #
-    instrumentCoffee: (fileName, fileData, options={}) ->
+    instrumentCoffee: (fileName, source, options={}) ->
         effectiveOptions = getEffectiveOptions options, @defaultOptions
 
         effectiveOptions.log?.info "Instrumenting #{fileName}"
 
-        instrumentorConstructor = INSTRUMENTORS[effectiveOptions.instrumentor]
-        instrumentor = new instrumentorConstructor(fileName, effectiveOptions)
+        instrumentorConstructor = getInstrumentorClass effectiveOptions.instrumentor
+        instrumentor = new instrumentorConstructor(fileName, source, effectiveOptions)
 
-        result = exports._runInstrumentor instrumentor, fileName, fileData, effectiveOptions
+        result = exports._runInstrumentor instrumentor, fileName, source, effectiveOptions
 
         effectiveOptions.initFileStream?.write result.init
 
@@ -321,7 +327,6 @@ exports._runInstrumentor = (instrumentor, fileName, source, options={}) ->
 
         # Recurse into child nodes
         nodeWrapper.forEachChild (child) ->
-            options.log?.debug "#{indent}Recursing into #{child.toString()}"
             instrumentTree(child)
 
             child.node.coffeeCoverage ?= {}
@@ -329,7 +334,7 @@ exports._runInstrumentor = (instrumentor, fileName, source, options={}) ->
 
     instrumentTree(new NodeWrapper ast)
 
-    init = instrumentor.getInitString({fileName, source})
+    init = instrumentor.getInitString()
 
     # Compile the instrumented CoffeeScript and write it to the JS file.
     try

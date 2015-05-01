@@ -65,8 +65,8 @@ module.exports = (options={}) ->
         throw new Error "Unknown instrumentor: #{options.instrumentor}.  " +
             "Valid options are #{Object.keys coffeeCoverage.INSTRUMENTORS}"
     if instrumentorClass.getDefaultOptions?
-        _.defaults options, instrumentorClass.getDefaultOptions()
-
+        defaults = instrumentorClass.getDefaultOptions()
+        options = _.defaults options, defaults
 
     if options.basePath
         options.basePath = path.resolve options.basePath
