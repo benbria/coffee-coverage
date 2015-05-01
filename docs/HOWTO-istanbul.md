@@ -81,13 +81,16 @@ Writing a Custom Loader
 If the defaults in `coffee-coverage/register-istanbul` don't work for you, you can write a custom
 loader.  Save this in "coffee-coverage-loader.js":
 
+    var path = require('path');
     var coffeeCoverage = require('coffee-coverage');
+    var projectRoot = path.resolve(__dirname, "../..");
     var coverageVar = coffeeCoverage.findIstanbulVariable();
-    var writeOnExit = coverageVar == null;
+    // Only write a coverage report if we're not running inside of Istanbul.
+    var writeOnExit = (coverageVar == null) ? (projectRoot + '/coverage/coverage-coffee.json') : null;
 
     coffeeCoverage.register({
         instrumentor: 'istanbul',
-        basePath: process.cwd(),
+        basePath: projectRoot,
         exclude: ['/test', '/node_modules', '/.git'],
         coverageVar: coverageVar,
         writeOnExit: writeOnExit,
