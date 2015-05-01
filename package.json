@@ -9,7 +9,8 @@
     "test",
     "unit test",
     "istanbul",
-    "jscoverage"
+    "jscoverage",
+    "coveralls"
   ],
   "version": "0.5.0-pre",
   "author": "Benbria (http://www.benbria.com/)",

@@ -42,6 +42,7 @@ Tutorials:
 
 * [Mocha and Istanbul Guide](./docs/HOWTO-istanbul.md)
 * [Mocha and JSCoverage Guide](./docs/HOWTO-jscoverage.md)
+* [Codeship and Coveralls](./docs/HOWTO-codeship-and-coveralls.md)
 
 What it Does
 ------------
