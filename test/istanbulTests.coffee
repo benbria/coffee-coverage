@@ -1,10 +1,12 @@
-path = require 'path'
-{expect} = require 'chai'
+path                = require 'path'
+{expect}            = require 'chai'
+sinon               = require 'sinon'
 
-coffeeCoverage = require("../src/coffeeCoverage")
-Istanbul = require '../src/instrumentors/Istanbul'
+coffeeCoverage      = require("../src/coffeeCoverage")
+Istanbul            = require '../src/instrumentors/Istanbul'
 
 {COVERAGE_VAR, log} = require './testConfig'
+testUtils           = require './utils'
 FILENAME = '/Users/jwalton/foo.coffee'
 
 checkStatementsAreCovered = (instrumentor, result, statementCount, filename=FILENAME) ->
@@ -371,7 +373,34 @@ describe "Istanbul tests", ->
             loc: {start: {line: 1, column: 4}, end: {line: 1, column: 4}}
         }
 
-    describe 'Istanbul._minLocation', ->
+    findIstanbulVariableNow = Date.now()
+    currentCoverageVar = "$$cov_#{findIstanbulVariableNow}$$"
+    oldCoverageVar = "$$cov_#{findIstanbulVariableNow - 10}$$"
+
+    testUtils.when( -> !global[currentCoverageVar]? and !global[oldCoverageVar]? )
+    .describe 'findIstanbulVariable()', ->
+        before ->
+            # Stub out `Date.now()` to get predictable behavior
+            sinon.stub Date, 'now', -> findIstanbulVariableNow
+
+        after ->
+            Date.now.restore()
+
+        it "should return undefined if we're not running inside Istanbul", ->
+            expect(Istanbul.findIstanbulVariable()).to.equal undefined
+
+        it "should find the Instabul coverage variable", ->
+            global[oldCoverageVar] = {foo: true}
+            global[currentCoverageVar] = {foo: true}
+            expect(Istanbul.findIstanbulVariable()).to.equal currentCoverageVar
+            delete global[currentCoverageVar]
+
+        it "should find an old Instabul coverage variable", ->
+            global[oldCoverageVar] = {foo: true}
+            expect(Istanbul.findIstanbulVariable()).to.equal oldCoverageVar
+            delete global[oldCoverageVar]
+
+    describe 'Istanbul._minLocation()', ->
         testInstance = new Istanbul("test.coffee", "", {coverageVar: 'foo'})
 
         it "should find the minimum location", ->

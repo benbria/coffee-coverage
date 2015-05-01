@@ -86,6 +86,7 @@ module.exports = class Istanbul
             if coverageVars.length is 1
                 coverageVar = coverageVars[0]
             else
+                # Needs to be undefined and not `null`, because `_.defaults()` treats them differently.
                 coverageVar = undefined
 
         return coverageVar
