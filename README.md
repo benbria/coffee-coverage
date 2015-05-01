@@ -18,7 +18,8 @@ Features
 Quick Start
 -----------
 
-From your project's folder, run:
+Assuming you have a folder named "test" full of mocha tests, which directly loads your .coffee
+files, then from your project's folder, run:
 
     npm install --save-dev coffee-coverage
     npm install --save-dev istanbul
