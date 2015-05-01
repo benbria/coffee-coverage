@@ -63,6 +63,6 @@
     "distclean": "npm run clean && rm -rf node_modules"
   },
   "engines": {
-    "node": ">=0.6.19"
+    "node": ">=0.8.0"
   }
 }

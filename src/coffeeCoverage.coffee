@@ -13,7 +13,6 @@ fs     = require 'fs'
 util   = require 'util'
 path   = require 'path'
 _      = require 'lodash'
-path.sep = path.sep || "/" # Assume "/" on older versions of node, where this is missing.
 
 NodeWrapper = require './NodeWrapper'
 {mkdirs, statFile, excludeFile} = require './helpers'

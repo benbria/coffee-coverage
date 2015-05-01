@@ -5,23 +5,12 @@ coffeeScript = require 'coffee-script'
 _            = require 'lodash'
 {EXTENSIONS} = require './constants'
 
-path.sep = path.sep || "/" # Assume "/" on older versions of node, where this is missing.
-
 exports.stripLeadingDotOrSlash = (pathName) -> pathName.replace(/^\//, "").replace(/^\.\//, "")
 
 # Get details about a file.  Returns a fs.Stats object, or null if the file does not exist.
 exports.statFile = statFile = (file) ->
-    try
-        answer = fs.statSync(file)
-    catch err
-        if 'code' of err and err.code is 'ENOENT'
-            # File does not exist
-            answer = null
-        else
-            # Some other weird error - throw it.
-            throw err
-
-    return answer
+    if !fs.existsSync(file) then return null
+    return fs.statSync(file)
 
 # Creates the directory supplied by `dirPath`, creating any intermediate directories as
 # required.  For example, `mkdirs('a/b/c')` might create the directory 'a', then 'a/b', then

@@ -1,5 +1,4 @@
 path           = require 'path'
-path.sep       = path.sep || "/" # Assume "/" on older versions of node, where this is missing.
 fs             = require 'fs'
 _              = require 'lodash'
 

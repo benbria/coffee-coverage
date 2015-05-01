@@ -4,7 +4,6 @@
 
 fs = require 'fs'
 path = require 'path'
-path.sep = path.sep || "/" # Assume "/" on older versions of node, where this is missing.
 _ = require 'lodash'
 
 {CoverageInstrumentor, version} = require './index'
