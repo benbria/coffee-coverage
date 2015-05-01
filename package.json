@@ -48,6 +48,7 @@
     "pkginfo": ">=0.2.3"
   },
   "devDependencies": {
+    "coveralls": "^2.11.2",
     "istanbul": "^0.3.13",
     "mocha": "^2.1.0"
   },
