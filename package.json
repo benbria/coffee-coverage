@@ -54,6 +54,7 @@
   "scripts": {
     "prepublish": "npm run build && mocha",
     "test": "npm run build && mocha --require ./register-istanbul && istanbul report",
+    "testonly": "mocha",
     "build": "coffee -c -o lib src",
     "clean": "rm -rf lib coverage",
     "distclean": "npm run clean && rm -rf node_modules"
