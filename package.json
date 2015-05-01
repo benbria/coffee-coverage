@@ -1,14 +1,17 @@
 {
   "name": "coffee-coverage",
-  "description": "JSCoverage-style instrumentation for CoffeeScript files.",
+  "description": "Istanbul and JSCoverage-style instrumentation for CoffeeScript files.",
   "keywords": [
     "javascript",
     "coffeescript",
     "coverage",
     "code coverage",
-    "test"
+    "test",
+    "unit test",
+    "istanbul",
+    "jscoverage"
   ],
-  "version": "0.4.6",
+  "version": "0.5.0-pre",
   "author": "Benbria (http://www.benbria.com/)",
   "contributors": [
     "Jason Walton <dev@lucid.thedreaming.org> (https://github.com/jwalton)",
@@ -51,7 +54,9 @@
   "scripts": {
     "prepublish": "npm run build && mocha",
     "test": "npm run build && mocha && istanbul report",
-    "build": "coffee -c -o lib src"
+    "build": "coffee -c -o lib src",
+    "clean": "rm -rf lib coverage",
+    "distclean": "npm run clean && rm -rf node_modules"
   },
   "engines": {
     "node": ">=0.6.19"
