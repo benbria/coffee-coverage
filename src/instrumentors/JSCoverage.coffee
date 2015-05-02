@@ -8,7 +8,7 @@
 
 path = require 'path'
 _    = require 'lodash'
-{insertBeforeNode, toQuotedString, stripLeadingDotOrSlash, getRelativeFilename, fileToLines} = require '../helpers'
+{toQuotedString, stripLeadingDotOrSlash, getRelativeFilename, fileToLines} = require '../helpers'
 
 # Generate a unique file name
 generateUniqueName = (usedNames, desiredName) ->
