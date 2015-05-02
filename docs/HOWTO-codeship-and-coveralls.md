@@ -2,7 +2,7 @@ Codeship and Coveralls
 ----------------------
 
 Coveralls support is based on istanbul, so have a look at
-[the Istanbul documentation](./HOWTO-istanbul.md) if you run into any problems with Istanbul.  This
+[the Istanbul documentation](./HOWTO-istanbul.md) if you run into any problems.  This
 HOWTO also assumes you are using mocha, but you should be able to easily get other test frameworks
 working.
 
@@ -25,16 +25,19 @@ Save your mocha options in `./test/mocha.opts`:
 In `package.json`, add:
 
     "scripts": {
-        "citest": "mocha && istanbul report lcovonly"
+        "test": "mocha"
     }
 
 In codeship, in your project settings, in the "Test" tab, set your "Test Pipeline" to:
 
     # Build project.  Set this to whatever you use to build:
     npm run prepublish
+
     # Run CI tests and coverage
-    npm run citest
+    npm run test
+
     # Upload results to coveralls.io
+    istanbul report lcovonly
     export COVERALLS_SERVICE_NAME=codeship
     export COVERALLS_SERVICE_JOB_ID=${CI_BUILD_NUMBER}
     export COVERALLS_REPO_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx

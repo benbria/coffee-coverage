@@ -13,12 +13,12 @@ Instruments CoffeeScript files for code coverage.  Compiles .coffee files to .js
 Features
 --------
 
-* Native coffee-script instrumentation - not based on source maps.
-* Support for [Istanbul](./docs/HOWTO-istanbul.md) style instrumentation.
-* Support for [JSCoverage](./docs/HOWTO-jscoverage.md) style insturmentation.
-* Support for [Streamline compiler](./docs/streamline.md) style insturmentation.
-* Dynamic instrumentation - instrument your code at run time.
-* [Precompiled instrumentation](./docs/cli.md).
+* Native coffee-script instrumentation - [not based on source maps](./docs/comparison-to-ibrik.md)
+* Support for [Istanbul](./docs/HOWTO-istanbul.md) style instrumentation
+* Support for [JSCoverage](./docs/HOWTO-jscoverage.md) style insturmentation
+* Support for [Streamline compiler](./docs/streamline.md) style insturmentation
+* Dynamic instrumentation - instrument your code at run time
+* [Precompiled instrumentation](./docs/cli.md)
 
 Quick Start
 -----------
