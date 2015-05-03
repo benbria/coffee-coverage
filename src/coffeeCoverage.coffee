@@ -294,7 +294,7 @@ exports._runInstrumentor = (instrumentor, fileName, source, options={}) ->
 
     # Compile coffee to nodes.
     try
-        options.log?.debug "Instrumenting #{fileName}"
+        options.log?.debug? "Instrumenting #{fileName}"
         coffeeOptions = {
             bare: options.bare ? false
             literate: /\.(litcoffee|coffee\.md)$/.test(fileName)
@@ -314,9 +314,9 @@ exports._runInstrumentor = (instrumentor, fileName, source, options={}) ->
         # Ignore code that we generated.
         return if nodeWrapper.node.coffeeCoverage?.generated
 
-        indent = ("  " for i in [0...nodeWrapper.depth]).join ''
-
-        options.log?.debug "#{indent}Examining #{nodeWrapper.toString()}"
+        if options.log?.debug?
+            indent = ("  " for i in [0...nodeWrapper.depth]).join ''
+            options.log.debug "#{indent}Examining #{nodeWrapper.toString()}"
 
         if nodeWrapper.isStatement
             visitor["visitStatement"]?(nodeWrapper)

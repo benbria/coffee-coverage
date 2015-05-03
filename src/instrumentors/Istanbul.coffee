@@ -193,7 +193,7 @@ module.exports = class Istanbul
             # with fewer indents, but it also produces code that's harder to instrument
             # (because we can't add code between the `else` and the `if`), so we turn it off.
             #
-            @log?.debug "  Disabling chaining for if statement"
+            @log?.debug? "  Disabling chaining for if statement"
             node.node.isChain = false
             node.node.coffeeCoverage ?= {}
             node.node.coffeeCoverage.wasChain = true

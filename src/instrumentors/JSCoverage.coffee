@@ -119,10 +119,10 @@ module.exports = class JSCoverage
             #
             # Because here we're going to instrument the inside of the "else" block,
             # but not the inside of the "if" block, which is OK, but a bit weird.
-            @log?.debug "Skipping   #{node.toString()}"
+            @log?.debug? "Skipping   #{node.toString()}"
 
         else
-            @log?.debug "Instrumenting #{node.toString()}"
+            @log?.debug? "Instrumenting #{node.toString()}"
             @instrumentedLines.push line
             node.insertBefore "#{@coverageVar}[#{@quotedFileName}][#{line}]++"
 
@@ -134,7 +134,7 @@ module.exports = class JSCoverage
             # (because we can't add code between the `else` and the `if`), so we turn it off.
             #
 
-            @log?.debug "  Disabling chaining for if statement"
+            @log?.debug? "  Disabling chaining for if statement"
             node.node.isChain = false
 
     getInitString: () ->
