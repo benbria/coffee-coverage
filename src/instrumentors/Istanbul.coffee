@@ -60,12 +60,16 @@ NodeWrapper = require '../NodeWrapper'
 
 nodeToLocation = (node) ->
     # Istanbul uses 1-based lines, but 0-based columns
-    start:
-        line:   node.locationData.first_line + 1
-        column: node.locationData.first_column
-    end:
-        line:   node.locationData.last_line + 1
-        column: node.locationData.last_column
+    answer =
+        start:
+            line:   node.locationData.first_line + 1
+            column: node.locationData.first_column
+        end:
+            line:   node.locationData.last_line + 1
+            column: node.locationData.last_column
+    if node.coffeeCoverage?.skip or node.node?.coffeeCoverage?.skip
+        answer.skip = true
+    return answer
 
 module.exports = class Istanbul
 
@@ -112,24 +116,15 @@ module.exports = class Istanbul
 
         @_prefix = "#{@coverageVar}[#{@quotedFileName}]"
 
-    # coffee-script will put the end of an 'If' statement as being right before the start of
-    # the 'else' (which is probably a bug.)  Istanbul expects the end to be the end of the last
-    # line in the else (and for chained ifs, Istanbul expects the end of the very last else.)
-    _findEndOfIf: (ifNode) ->
-        assert ifNode.type is 'If'
-        elseBody = ifNode.child 'elseBody'
+    _warn: (message, options={}) ->
+        str = message
+        str += "\n    file:  #{@fileName}"
+        if options.node
+            str += "\n    node:  #{options.node.toString()}"
+        if options.line
+            str += "\n    source: #{@sourceLines[options.line - 1]}"
+        @log?.warn str
 
-        if ifNode.node.isChain or ifNode.node.coffeeCoverage?.wasChain
-            assert elseBody?
-            elseChild = elseBody.child 'expressions', 0
-            assert elseChild.type is 'If'
-            return @_findEndOfIf elseChild
-
-        else if elseBody?
-            return nodeToLocation(elseBody).end
-
-        else
-            return nodeToLocation(ifNode).end
 
     visitComment: (node) ->
         # TODO: Respect 'istanbul ignore if', 'istanbul ignore else', and 'istanbul ignore next'?
@@ -150,6 +145,25 @@ module.exports = class Istanbul
         node.insertBefore "#{@_prefix}.s[#{statementId}]++"
         @instrumentedLineCount++
 
+    # coffee-script will put the end of an 'If' statement as being right before the start of
+    # the 'else' (which is probably a bug.)  Istanbul expects the end to be the end of the last
+    # line in the else (and for chained ifs, Istanbul expects the end of the very last else.)
+    _findEndOfIf: (ifNode) ->
+        assert ifNode.type is 'If'
+        elseBody = ifNode.child 'elseBody'
+
+        if ifNode.node.isChain or ifNode.node.coffeeCoverage?.wasChain
+            assert elseBody?
+            elseChild = elseBody.child 'expressions', 0
+            assert elseChild.type is 'If'
+            return @_findEndOfIf elseChild
+
+        else if elseBody?
+            return nodeToLocation(elseBody).end
+
+        else
+            return nodeToLocation(ifNode).end
+
     visitIf: (node) ->
         branchId = @branchMap.length + 1
 
@@ -157,11 +171,20 @@ module.exports = class Istanbul
         ifLocation = nodeToLocation node
         ifLocation.end.line = ifLocation.start.line
         ifLocation.end.column = ifLocation.start.column
+        elseLocation = ifLocation
+
+        # Mark each location as `skip` if `skipIf` or `skipElse`.  If the location is
+        # already marked `skip`, then we have nothing to do, since all the children are going to
+        # be `skip` already.
+        if !ifLocation.skip
+            elseLocation = _.clone ifLocation
+            if node.node.coffeeCoverage?.skipIf then ifLocation.skip = true
+            if node.node.coffeeCoverage?.skipElse then elseLocation.skip = true
 
         @branchMap.push {
             line: ifLocation.start.line
             type: 'if'
-            locations: [ifLocation, ifLocation]
+            locations: [ifLocation, elseLocation]
         }
 
         if node.node.isChain
@@ -198,12 +221,16 @@ module.exports = class Istanbul
             start.column = if (startColumn = @sourceLines[start.line-1]?.indexOf('when')) > -1
                 startColumn
             else
-                log.warn "Couldn't find 'when' for #{node.toString()}"
+                @_warn "Couldn't find 'when'", {node, line: start.line}
                 # Intelligent guess
                 start.column -= 5
                 if start.column < 0 then start.column = 0
 
-            {start, end: nodeToLocation(block).end}
+            answer = {start, end: nodeToLocation(block).end}
+            if node.node.coffeeCoverage?.skip then answer.skip = true
+
+            return answer
+
         if node.node.otherwise?
             locations.push nodeToLocation node.node.otherwise
 
@@ -250,7 +277,7 @@ module.exports = class Istanbul
             else if (endColumn = @sourceLines[start.line-1]?.indexOf('=>', end.column)) > -1
                 endColumn + 1
             else
-                log.warn "Couldn't find '->' or '=>' for #{node.toString()}"
+                @_warn "Couldn't find '->' or '=>'", {node, line: start.line}
                 # Educated guess
                 end.column + 4
         else
@@ -259,12 +286,10 @@ module.exports = class Istanbul
             end.column++
 
 
-        @fnMap.push {
-            name: name
-            line: start.line
-            loc: {start, end}
-        }
+        loc = {start, end}
+        if node.node.coffeeCoverage?.skip then loc.skip = true
 
+        @fnMap.push {name, line: start.line, loc}
         node.insertAtStart 'body', "#{@_prefix}.f[#{functionId}]++"
 
     visitClass: (node) ->

@@ -139,6 +139,17 @@ describe "JSCoverage tests", ->
         expect(firstIndexOf).to.not.equal -1
         expect(firstIndexOf is lastIndexOf).to.be.true
 
+    it "should not instrument statements with '!pragma coverage-skip' pragmas", ->
+        {instrumentor, result} = run """
+            console.log "hello"
+            ### !pragma coverage-skip ###
+            console.log "world"
+            console.log "!"
+        """, {l: 1, 4}
+
+        expect(result.js, "line 3 should not be instrumented")
+        .to.not.contain "#{COVERAGE_VAR}[\"#{FILENAME}\"][3]++;"
+
     describe '_abbreviatedPath', ->
         testInstance = new JSCoverage("test.coffee", "")
 

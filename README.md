@@ -14,6 +14,7 @@ Features
 --------
 
 * Native coffee-script instrumentation - [not based on source maps](./docs/comparison-to-ibrik.md)
+* Conditional instrumentation with [pragmas](./docs/pragmas.md)
 * Support for [Istanbul](./docs/HOWTO-istanbul.md) style instrumentation
 * Support for [JSCoverage](./docs/HOWTO-jscoverage.md) style insturmentation
 * Support for [Streamline compiler](./docs/streamline.md) style insturmentation
@@ -44,6 +45,7 @@ Tutorials:
 * [Mocha and Istanbul Guide](./docs/HOWTO-istanbul.md)
 * [Mocha and JSCoverage Guide](./docs/HOWTO-jscoverage.md)
 * [Codeship and Coveralls](./docs/HOWTO-codeship-and-coveralls.md)
+* [Ignoring code with Pragmas](./docs/pragmas.md)
 
 What it Does
 ------------
@@ -53,9 +55,3 @@ by instrumentating .coffee files to see how often each line, branch, or function
 CoffeeCoverage is capable of producing both [Istanbul](./docs/HOWTO-istanbul.md) and
 [JSCoverage](./docs/HOWTO-jscoverage.md) style instrumentation.
 
-Installation and a Quick Intro
-------------------------------
-
-Check out the [Istanbul](./docs/HOWTO-istanbul.md) documentation to get setup with CoffeeCoverage
-quickly.  There is also a `coffeeCoverage` command line tool which can be used to
-[instrument files at compile time](./docs/cli.md).

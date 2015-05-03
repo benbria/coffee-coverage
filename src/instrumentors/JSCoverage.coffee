@@ -99,6 +99,9 @@ module.exports = class JSCoverage
     # Called on each non-comment statement within a Block.  If a `visitXXX` exists for the
     # specific node type, it will also be called after `visitStatement`.
     visitStatement: (node) ->
+        # Don't instrument skipped lines.
+        return if node.node.coffeeCoverage?.skip
+
         line = node.locationData.first_line + 1
 
         if line in @instrumentedLines

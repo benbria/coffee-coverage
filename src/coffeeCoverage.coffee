@@ -6,17 +6,18 @@
 # By Jason Walton, Benbria
 #
 
+assert       = require 'assert'
+events       = require 'events'
+fs           = require 'fs'
+util         = require 'util'
+path         = require 'path'
 coffeeScript = require 'coffee-script'
+_            = require 'lodash'
 
-events = require 'events'
-fs     = require 'fs'
-util   = require 'util'
-path   = require 'path'
-_      = require 'lodash'
-
-NodeWrapper = require './NodeWrapper'
+NodeWrapper                     = require './NodeWrapper'
 {mkdirs, statFile, excludeFile} = require './helpers'
-{EXTENSIONS} = require './constants'
+{EXTENSIONS}                    = require './constants'
+SkipVisitor                     = require './SkipVisitor'
 
 exports.INSTRUMENTORS = INSTRUMENTORS = {
     jscoverage: require './instrumentors/JSCoverage'
@@ -289,6 +290,8 @@ class exports.CoverageInstrumentor extends events.EventEmitter
 # * `options.log` log object.
 #
 exports._runInstrumentor = (instrumentor, fileName, source, options={}) ->
+    assert instrumentor, "instrumentor"
+
     # Compile coffee to nodes.
     try
         options.log?.debug "Instrumenting #{fileName}"
@@ -307,31 +310,28 @@ exports._runInstrumentor = (instrumentor, fileName, source, options={}) ->
     catch err
         throw new CoverageError("Could not parse #{fileName}: #{err.stack}")
 
-    instrumentTree = (nodeWrapper) =>
+    runVisitor = (visitor, nodeWrapper) =>
         # Ignore code that we generated.
         return if nodeWrapper.node.coffeeCoverage?.generated
 
         indent = ("  " for i in [0...nodeWrapper.depth]).join ''
 
-        if nodeWrapper.node.coffeeCoverage?.visited
-            throw new Error "Revisiting node #{nodeWrapper.toString()}"
-
         options.log?.debug "#{indent}Examining #{nodeWrapper.toString()}"
 
         if nodeWrapper.isStatement
-            instrumentor["visitStatement"]?(nodeWrapper)
+            visitor["visitStatement"]?(nodeWrapper)
 
         # Call block-specific visitor function.
-        instrumentor["visit#{nodeWrapper.type}"]?(nodeWrapper)
+        visitor["visit#{nodeWrapper.type}"]?(nodeWrapper)
 
         # Recurse into child nodes
         nodeWrapper.forEachChild (child) ->
-            instrumentTree(child)
+            runVisitor(visitor, child)
 
-            child.node.coffeeCoverage ?= {}
-            child.node.coffeeCoverage.visited = true
+    wrappedAST = new NodeWrapper ast
 
-    instrumentTree(new NodeWrapper ast)
+    runVisitor(new SkipVisitor(), wrappedAST)
+    runVisitor(instrumentor, wrappedAST)
 
     init = instrumentor.getInitString()
 

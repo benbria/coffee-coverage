@@ -426,3 +426,149 @@ describe "Istanbul tests", ->
             expect(
                 testInstance._minLocation([])
             ).to.eql null
+
+    describe 'Pragmas', ->
+        it "should skip statements", ->
+            ['### !pragma coverage-skip ###', '### istanbul ignore next ###'].forEach (skipPragma) ->
+                {instrumentor, result} = run """
+                    console.log "hello"
+                    #{skipPragma}
+                    console.log "world"
+                    console.log "!"
+                """, counts: {f: 0, s: 3, b: {}}
+
+                expect(instrumentor.statementMap[0].skip).to.not.exist
+                expect(instrumentor.statementMap[1].skip).to.be.true
+                expect(instrumentor.statementMap[2].skip).to.not.exist
+
+        it "should skip if", ->
+            ['### !pragma coverage-skip-if ###', '### istanbul ignore if ###'].forEach (skipPragma) ->
+                {instrumentor, result} = run """
+                    console.log "hello"
+                    #{skipPragma}
+                    if x
+                        console.log "world"
+                    else
+                        console.log "earth"
+                """, counts: {f: 0, s: 4, b: {1:2}}
+
+                expect(instrumentor.statementMap[0].skip, "s0").to.not.exist
+                expect(instrumentor.statementMap[1].skip, "s1").to.not.exist
+                expect(instrumentor.statementMap[2].skip, "s2").to.be.true
+                expect(instrumentor.statementMap[3].skip, "s3").to.not.exist
+
+                expect(instrumentor.branchMap[0].locations[0].skip, "b0").to.be.true
+                expect(instrumentor.branchMap[0].locations[1].skip, "b1").to.not.exist
+
+        it "should skip else", ->
+            ['### !pragma coverage-skip-else ###', '### istanbul ignore else ###'].forEach (skipPragma) ->
+                {instrumentor, result} = run """
+                    console.log "hello"
+                    #{skipPragma}
+                    if x
+                        console.log "world"
+                    else
+                        console.log "earth"
+                """, counts: {f: 0, s: 4, b: {1:2}}
+
+                expect(instrumentor.statementMap[0].skip, "s0").to.not.exist
+                expect(instrumentor.statementMap[1].skip, "s1").to.not.exist
+                expect(instrumentor.statementMap[2].skip, "s2").to.not.exist
+                expect(instrumentor.statementMap[3].skip, "s3").to.be.true
+
+                expect(instrumentor.branchMap[0].locations[0].skip, "b0").to.not.exist
+                expect(instrumentor.branchMap[0].locations[1].skip, "b1").to.be.true
+
+        it "should skip branches and contents of an `if` when the whole `if` is skipped", ->
+            ['### !pragma coverage-skip ###', '### istanbul ignore next ###'].forEach (skipPragma) ->
+                {instrumentor, result} = run """
+                    console.log "hello"
+                    #{skipPragma}
+                    if x
+                        console.log "world"
+                    else
+                        console.log "earth"
+                """, counts: {f: 0, s: 4, b: {1:2}}
+
+                expect(instrumentor.statementMap[0].skip, "s0").to.not.exist
+                expect(instrumentor.statementMap[1].skip, "s1").to.be.true
+                expect(instrumentor.statementMap[2].skip, "s2").to.be.true
+                expect(instrumentor.statementMap[3].skip, "s3").to.be.true
+
+                expect(instrumentor.branchMap[0].locations[0].skip, "b0").to.be.true
+                expect(instrumentor.branchMap[0].locations[1].skip, "b1").to.be.true
+
+        it "should skip if and else, even when one is missing.", ->
+            ['### !pragma coverage-skip ###', '### istanbul ignore next ###'].forEach (skipPragma) ->
+                {instrumentor, result} = run """
+                    console.log "hello"
+                    #{skipPragma}
+                    if x
+                        console.log "world"
+                """, counts: {f: 0, s: 3, b: {1:2}}
+
+                expect(instrumentor.statementMap[0].skip, "s0").to.not.exist
+                expect(instrumentor.statementMap[1].skip, "s1").to.be.true
+                expect(instrumentor.statementMap[2].skip, "s2").to.be.true
+
+                expect(instrumentor.branchMap[0].locations[0].skip, "b0").to.be.true
+                expect(instrumentor.branchMap[0].locations[1].skip, "b1").to.be.true
+
+        it "should skip branches and contents of a `switch` when the whole `switch` is skipped", ->
+            ['### !pragma coverage-skip ###', '### istanbul ignore next ###'].forEach (skipPragma) ->
+                {instrumentor, result} = run """
+                    console.log "hello"
+                    #{skipPragma}
+                    switch x
+                        when 0 then console.log "world"
+                        when 1 then console.log "shazam"
+                        else console.log "boom"
+                    console.log "!"
+                """, counts: {f: 0, s: 6, b: {1:3}}
+
+                expect(instrumentor.statementMap[0].skip, "s0").to.not.exist
+                instrumentor.statementMap[1..4].forEach (s, i) -> expect(s.skip, "s#{i}").to.be.true
+                expect(instrumentor.statementMap[5].skip, "s5").to.not.exist
+
+                instrumentor.branchMap[0].locations.forEach (l, i) ->
+                    expect(l.skip, "b0l#{i}").to.be.true
+
+        it "should skip a function correctly", ->
+            ['### !pragma coverage-skip ###', '### istanbul ignore next ###'].forEach (skipPragma) ->
+                {instrumentor, result} = run """
+                    console.log "hello"
+                    #{skipPragma}
+                    a = ->
+                        console.log "foo"
+                """, counts: {f: 0, s: 3, b: {}}
+
+                expect(instrumentor.statementMap[0].skip, "s0").to.not.exist
+                instrumentor.statementMap[1..2].forEach (s, i) -> expect(s.skip, "s#{i}").to.be.true
+
+                expect(instrumentor.fnMap[0].loc.skip).to.be.true
+
+        it "should throw an error when a pragma is at the end of a block or file", ->
+            expect ->
+                run """
+                    myFunc = ->
+                        console.log "foo"
+                        ### !pragma coverage-skip ###
+                """
+            .to.throw "Pragma '!pragma coverage-skip' at (3:5) has no next statement"
+
+            expect ->
+                run """
+                    myFunc = ->
+                        console.log "foo"
+                    ### !pragma coverage-skip-if ###
+                """
+            .to.throw "Pragma '!pragma coverage-skip-if' at (3:1) has no next statement"
+
+        it "should throw an error when an 'if' pragma isn't before an 'if'", ->
+            expect ->
+                run """
+                    ### !pragma coverage-skip-if ###
+                    myFunc = ->
+                        console.log "foo"
+                """
+            .to.throw "Statement after pragma \'!pragma coverage-skip-if\' at (1:1) is not of type If"

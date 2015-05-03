@@ -54,6 +54,14 @@ module.exports = class NodeWrapper
                 index++ while (child != childNodes[index])
                 index++
 
+    # Mark this node and all descendants with the given flag.
+    markAll: (varName, value) ->
+        markCoffeeNode = (coffeeNode) ->
+            coffeeNode.coffeeCoverage ?= {}
+            coffeeNode.coffeeCoverage[varName] = value
+            coffeeNode.eachChild markCoffeeNode
+        markCoffeeNode @node
+
     # Returns a NodeWrapper for the given child.  This only works if the child is not an array
     # (e.g. `Block.expressions`)
     child: (name, index=null) ->
@@ -68,6 +76,27 @@ module.exports = class NodeWrapper
             if !child[index] then return null
             return new NodeWrapper child[index], this, name, index, @depth + 1
 
+    # `@childIndex` is a hint, since nodes can move around.  This updateds @childIndex if
+    # necessary.
+    _fixChildIndex: ->
+        if !_.isArray @parent.node[@childName]
+            @childIndex = 0
+        else
+            if @parent.node[@childName][@childIndex] isnt @node
+                childIndex = _.indexOf @parent.node[@childName], @node
+                if childIndex is -1 then throw new Error "Can't find node in parent"
+                @childIndex = childIndex
+
+    # Returns this node's next sibling, or null if this node has no next sibling.
+    #
+    next: ->
+        if @parent.type isnt 'Block' then return null
+        @_fixChildIndex()
+        nextNode = @parent.node[@childName][@childIndex + 1]
+        return if !nextNode?
+            null
+        else
+            new NodeWrapper nextNode, @parent, @childName, @childIndex + 1, @depth
 
     # Insert a new node before this node (only works if this node is in an array-based attribute,
     # like `Block.expressions`.)
@@ -79,13 +108,7 @@ module.exports = class NodeWrapper
         assert _.isArray @parent.node[@childName]
 
         compiled = compile csSource, @node
-
-        # childIndex is more of a hint, since nodes can move around.
-        if @parent.node[@childName][@childIndex] isnt @node
-            childIndex = _.indexOf @parent.node[@childName], @node
-            if childIndex is -1 then throw new Error "Can't find node in parent"
-            @childIndex = childIndex
-
+        @_fixChildIndex()
         @parent.node[@childName].splice(@childIndex, 0, compiled)
 
     # Insert a chunk of code at the start of a child of this node.  E.g. if this is a Block,
