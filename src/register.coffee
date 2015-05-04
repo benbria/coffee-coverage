@@ -11,7 +11,7 @@ class StringStream
     write: (data) ->
         @data += data
 
-{mkdirs, excludeFile} = require './helpers'
+{mkdirs, excludeFile} = require './utils/helpers'
 
 # Register coffeeCoverage to automatically process '.coffee', '.litcoffee', '.coffee.md' and '._coffee' files.
 #

@@ -56,7 +56,8 @@
 assert = require 'assert'
 _ = require 'lodash'
 NodeWrapper = require '../NodeWrapper'
-{toQuotedString, fileToLines} = require '../helpers'
+{toQuotedString} = require '../utils/helpers'
+{compareLocations, fileToLines, minLocation} = require '../utils/codeUtils'
 
 nodeToLocation = (node) ->
     # Istanbul uses 1-based lines, but 0-based columns
@@ -70,6 +71,22 @@ nodeToLocation = (node) ->
     if node.coffeeCoverage?.skip or node.node?.coffeeCoverage?.skip
         answer.skip = true
     return answer
+
+# Find a string in the source code, and return a `{line, column}`.
+# Line is 1-based and column is 0-based.
+findInCode = (code, str, options={}) ->
+    start = options.start ? {line: 1, column: 0}
+    end = options.end ? {line: code.length + 1, column: 0}
+
+    currentLine = start.line
+    currentCol = start.column
+    while currentLine < end.line
+        column = code[currentLine-1].indexOf(str, currentCol)
+        if column > -1 and compareLocations({line: currentLine, column}, end) < 1
+            return {line: currentLine, column}
+        currentLine++
+        currentCol = 0
+    return null
 
 module.exports = class Istanbul
 
@@ -116,6 +133,7 @@ module.exports = class Istanbul
 
         @_prefix = "#{@coverageVar}[#{@quotedFileName}]"
 
+    ### !pragma coverage-skip ###
     _warn: (message, options={}) ->
         str = message
         str += "\n    file:  #{@fileName}"
@@ -211,13 +229,14 @@ module.exports = class Istanbul
         branchId = @branchMap.length + 1
         locations = []
         locations = node.node.cases.map ([conditions, block]) =>
-            start = @_minLocation(
+            start = minLocation(
                 _.flatten([conditions], true)
                 .map( (condition) -> nodeToLocation(condition).start )
             )
 
             # start.column is the start of the condition, but we want the start of the
             # `when`.
+            ### !pragma coverage-skip-else ###
             start.column = if (startColumn = @sourceLines[start.line-1]?.indexOf('when')) > -1
                 startColumn
             else
@@ -272,14 +291,20 @@ module.exports = class Istanbul
             end = nodeToLocation(lastParam).end
 
             # Coffee-script doesn't tell us where the `->` is, so we have to find it
-            end.column = if (endColumn = @sourceLines[start.line-1]?.indexOf('->', end.column)) > -1
-                endColumn + 1
-            else if (endColumn = @sourceLines[start.line-1]?.indexOf('=>', end.column)) > -1
-                endColumn + 1
+            arrow = if node.node.bound then '=>' else '->'
+            endOfFn = findInCode @sourceLines, arrow, {
+                start: {line: end.line, column: end.column},
+                end: nodeToLocation(node).end
+            }
+
+            ### !pragma coverage-skip-else ###
+            if endOfFn
+                end = endOfFn
+                end.column += 1
             else
                 @_warn "Couldn't find '->' or '=>'", {node, line: start.line}
                 # Educated guess
-                end.column + 4
+                end.column += 4
         else
             end = nodeToLocation(node).start
             # Fix off-by-one error
@@ -343,13 +368,4 @@ module.exports = class Istanbul
         """
 
     getInstrumentedLineCount: -> @instrumentedLineCount
-
-    # Given an array of `line, column` objects, returns the one that occurs earliest in the document.
-    _minLocation: (locations) ->
-        if !locations or locations.length is 0 then return null
-
-        min = locations[0]
-        locations.forEach (loc) ->
-            if loc.line < min.line or (loc.line is min.line and loc.column < min.column) then min = loc
-        return min
 

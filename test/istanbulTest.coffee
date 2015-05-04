@@ -298,6 +298,30 @@ describe "Istanbul tests", ->
                 loc: {start: {line: 1, column: 0}, end: {line: 1, column: 20}}
             }
 
+    it "should find multi-line functions", ->
+        {instrumentor, result} = run """
+            myFunc = (
+                x,
+                y,
+                z
+            ) =>
+                obj.callAFn "Hello"
+        """, counts: {f: 1, s: 2, b: {}}
+
+        expect(instrumentor.statementMap[0], "first statement").to.eql {
+            # Should end on 22?
+            start: {line: 1, column: 0}, end: {line: 6, column: 23}
+        }
+        expect(instrumentor.statementMap[1], "second statement").to.eql {
+            start: {line: 6, column: 4}, end: {line: 6, column: 22}
+        }
+
+        expect(instrumentor.fnMap[0]).to.eql {
+            name: 'myFunc'
+            line: 1
+            loc: {start: {line: 1, column: 0}, end: {line: 5, column: 3}}
+        }
+
     it "should find anonymous functions", ->
         {instrumentor, result} = run """
             [1,2,3].forEach -> obj.callAFn "x"
@@ -399,33 +423,6 @@ describe "Istanbul tests", ->
             global[oldCoverageVar] = {foo: true}
             expect(Istanbul.findIstanbulVariable()).to.equal oldCoverageVar
             delete global[oldCoverageVar]
-
-    describe 'Istanbul._minLocation()', ->
-        testInstance = new Istanbul("test.coffee", "", {coverageVar: 'foo'})
-
-        it "should find the minimum location", ->
-            expect(
-                testInstance._minLocation([{line: 1, column: 10}, {line: 1, column: 20}])
-            ).to.eql {line:1, column: 10}
-
-        it "should find the minimum location when order is reversed", ->
-            expect(
-                testInstance._minLocation([{line: 1, column: 20}, {line: 1, column: 10}])
-            ).to.eql {line:1, column: 10}
-
-        it "should find the minimum location when on different lines", ->
-            expect(
-                testInstance._minLocation([{line: 1, column: 20}, {line: 2, column: 10}])
-            ).to.eql {line:1, column: 20}
-
-            expect(
-                testInstance._minLocation([{line: 1, column: 10}, {line: 2, column: 20}])
-            ).to.eql {line:1, column: 10}
-
-        it "should return null when given no locations", ->
-            expect(
-                testInstance._minLocation([])
-            ).to.eql null
 
     describe 'Pragmas', ->
         it "should skip statements", ->

@@ -15,7 +15,7 @@ coffeeScript = require 'coffee-script'
 _            = require 'lodash'
 
 NodeWrapper                     = require './NodeWrapper'
-{mkdirs, statFile, excludeFile} = require './helpers'
+{mkdirs, statFile, excludeFile} = require './utils/helpers'
 {EXTENSIONS}                    = require './constants'
 SkipVisitor                     = require './SkipVisitor'
 

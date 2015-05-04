@@ -1,9 +1,8 @@
 assert       = require 'assert'
 fs           = require 'fs'
 path         = require 'path'
-coffeeScript = require 'coffee-script'
 _            = require 'lodash'
-{EXTENSIONS} = require './constants'
+{EXTENSIONS} = require '../constants'
 
 exports.stripLeadingDotOrSlash = (pathName) -> pathName.replace(/^\//, "").replace(/^\.\//, "")
 
@@ -91,9 +90,3 @@ exports.excludeFile = (fileName, options) ->
 exports.toQuotedString = (string) ->
         answer = string.replace /\\/g, '\\\\'
         return '"' + (answer.replace /"/g, '\\\"') + '"'
-
-# Takes the contents of a file and returns an array of lines.
-# `source` is a string containing an entire file.
-exports.fileToLines = (source) ->
-    dataWithFixedLfs = source.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
-    return dataWithFixedLfs.split("\n")

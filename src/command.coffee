@@ -8,7 +8,7 @@ _ = require 'lodash'
 
 {CoverageInstrumentor, version} = require './index'
 {INSTRUMENTORS} = require './coffeeCoverage'
-{stripLeadingDotOrSlash, mkdirs} = require './helpers'
+{stripLeadingDotOrSlash, mkdirs} = require './utils/helpers'
 
 DEFAULT_INSTRUMENTOR = 'jscoverage'
 

@@ -4,8 +4,8 @@ fs                  = require 'fs'
 sinon               = require 'sinon'
 _                   = require 'lodash'
 
-helpers             = require "../src/helpers"
-testUtils           = require './utils'
+helpers             = require "../../src/utils/helpers"
+testUtils           = require '../utils'
 
 describe 'helpers', ->
     testUtils.when(fs.existsSync '/tmp')

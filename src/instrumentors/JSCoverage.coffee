@@ -8,7 +8,8 @@
 
 path = require 'path'
 _    = require 'lodash'
-{toQuotedString, stripLeadingDotOrSlash, getRelativeFilename, fileToLines} = require '../helpers'
+{toQuotedString, stripLeadingDotOrSlash, getRelativeFilename} = require '../utils/helpers'
+{fileToLines} = require '../utils/codeUtils'
 
 # Generate a unique file name
 generateUniqueName = (usedNames, desiredName) ->
