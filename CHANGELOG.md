@@ -3,6 +3,8 @@
 ### v0.5.0
   - Added support for [Istanbul](./docs/HOWTO-istanbul.md). (thanks to
     [Carsten Klein](https://github.com/silkentrance) for some help and suggestions.)
+  - Added support for pragmas.
+  - Dropped support for node.js v0.6.x.
   - `coffee-coverage/register` now instruments all js files in the CWD by default (instead of only
     files which get loaded.)  You can disable this behavior by setting the `COFFEECOV_INIT_ALL`
     environment variable to 'false'.
