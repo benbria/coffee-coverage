@@ -91,7 +91,6 @@ findInCode = (code, str, options={}) ->
 module.exports = class Istanbul
 
     # Return default options for this instrumentor.
-    # TODO: This isn't being called.
     @getDefaultOptions: -> {
         coverageVar: module.exports.findIstanbulVariable() ? '_$coffeeIstanbul'
     }
@@ -209,8 +208,12 @@ module.exports = class Istanbul
 
         if !node.isStatement
             # Add 'undefined's for any missing bodies.
-            if !node.child('body') then node.insertAtStart 'body', "undefined"
-            if !node.child('elseBody') then node.insertAtStart 'elseBody', "undefined"
+            body = node.child('body')
+            elseBody = node.child('elseBody')
+            if !body or body.node.expressions.length is 0
+                node.insertAtStart 'body', "undefined"
+            if !elseBody or elseBody.node.expressions.length is 0
+                node.insertAtStart 'elseBody', "undefined"
 
         node.insertAtStart 'body', "#{@_prefix}.b[#{branchId}][0]++"
         node.insertAtStart 'elseBody', "#{@_prefix}.b[#{branchId}][1]++"

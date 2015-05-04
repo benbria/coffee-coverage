@@ -183,6 +183,10 @@ describe "Istanbul tests", ->
             counts: {f: 0, s: 2, b: {1:2}}
         expect(result.js).to.contain '(_myCoverageVar["/Users/jwalton/foo.coffee"].b[1][1]++, void 0)'
 
+        {instrumentor, result} = run 'x = if y then else 0',
+            counts: {f: 0, s: 2, b: {1:2}}
+        expect(result.js).to.contain '(_myCoverageVar["/Users/jwalton/foo.coffee"].b[1][0]++, void 0)'
+
 
     it "should correctly compile an 'unless' which is an expression instead of a statement", ->
         # TODO: Right now this actually instruments the `0` and the `1` as statements.  The
@@ -198,7 +202,6 @@ describe "Istanbul tests", ->
     it "should correctly compile an 'if' which is a destructuring expression", ->
         {instrumentor, result} = run '[x,y] = if y then [0,1] else [2,3]',
             counts: {f: 0, s: 3, b: {1:2}}
-
 
     it "should find switch/case branches", ->
         {instrumentor, result} = run """
