@@ -133,7 +133,6 @@ module.exports = class Istanbul
 
         @_prefix = "#{@coverageVar}[#{@quotedFileName}]"
 
-    ### !pragma coverage-skip ###
     _warn: (message, options={}) ->
         str = message
         str += "\n    file:  #{@fileName}"
@@ -237,8 +236,8 @@ module.exports = class Istanbul
             # start.column is the start of the condition, but we want the start of the
             # `when`.
             ### !pragma coverage-skip-else ###
-            start.column = if (startColumn = @sourceLines[start.line-1]?.indexOf('when')) > -1
-                startColumn
+            if (startColumn = @sourceLines[start.line-1]?.indexOf('when')) > -1
+                start.column = startColumn
             else
                 @_warn "Couldn't find 'when'", {node, line: start.line}
                 # Intelligent guess
