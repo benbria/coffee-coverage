@@ -1,5 +1,6 @@
 path = require 'path'
 assert = require 'assert'
+{expect} = require 'chai'
 coffeeCoverage = require("../src/index")
 
 dummyJsFile = path.resolve __dirname, "../testFixtures/testWithConfig/dummy.js"
@@ -45,9 +46,9 @@ describe "Coverage tests", ->
         require '../testFixtures/testWithExcludes/a/foo.coffee'
         require '../testFixtures/testWithExcludes/b/bar.coffee'
 
-        assert global[COVERAGE_VAR]?, "Code should have been instrumented"
-        assert ('a/foo.coffee' of global[COVERAGE_VAR]), "Should instrument a/foo.coffee"
-        assert !('b/bar.coffee' of global[COVERAGE_VAR]), "Should not instrument b/bar.coffee"
+        expect(global[COVERAGE_VAR], "Code should have been instrumented").to.exist
+        expect(global[COVERAGE_VAR]['a/foo.coffee'], "Should instrument a/foo.coffee").to.exist
+        expect(global[COVERAGE_VAR]['b/bar.coffee'], "Should not instrument b/bar.coffee").to.not.exist
 
     it "should exclude directories when dynamically instrumenting code", ->
 
@@ -62,9 +63,9 @@ describe "Coverage tests", ->
         require '../testFixtures/testWithExcludes/a/foo.coffee'
         require '../testFixtures/testWithExcludes/b/bar.coffee'
 
-        assert global[COVERAGE_VAR]?, "Code should have been instrumented"
-        assert ('a/foo.coffee' of global[COVERAGE_VAR]), "Should instrument a/foo.coffee"
-        assert !('b/bar.coffee' of global[COVERAGE_VAR]), "Should not instrument b/bar.coffee"
+        expect(global[COVERAGE_VAR], "Code should have been instrumented").to.exist
+        expect(global[COVERAGE_VAR]['a/foo.coffee'], "Should instrument a/foo.coffee").to.exist
+        expect(global[COVERAGE_VAR]['b/bar.coffee'], "Should not instrument b/bar.coffee").to.not.exist
 
     it "should handle nested recursion correctly", ->
         # From https://github.com/benbria/coffee-coverage/pull/37
@@ -85,4 +86,52 @@ describe "Coverage tests", ->
 
         global[COVERAGE_VAR] = {"example.coffee": {}}
         z = eval code
-        assert.equal z, 10
+        expect(z).to.equal 10
+
+    it "should work with debug logging", ->
+        # From https://github.com/benbria/coffee-coverage/pull/37
+        instrumentor = new coffeeCoverage.CoverageInstrumentor({
+            coverageVar: COVERAGE_VAR
+            log: {
+                debug: ->
+                info: ->
+                warn: ->
+                error: ->
+            }
+            instrumentor: 'istanbul'
+        })
+        source = """
+            z = 0
+            for i in [0...2]
+                for j in [0...5]
+                    z++
+
+            return z
+        """
+
+        code = instrumentor.instrumentCoffee("example.coffee", source).js
+
+
+    it "should throw an error if input can't be compiled", ->
+        # From https://github.com/benbria/coffee-coverage/pull/37
+        instrumentor = new coffeeCoverage.CoverageInstrumentor({
+            coverageVar: COVERAGE_VAR
+            log: log
+        })
+        source = """
+            waka { waka
+        """
+
+        expect( ->
+            instrumentor.instrumentCoffee("example.coffee", source).js
+        ).to.throw(/^Could not parse example.coffee.*/)
+
+    it "should throw an error if an invalid instrumentor is specified", ->
+        # From https://github.com/benbria/coffee-coverage/pull/37
+        expect( ->
+            instrumentor = new coffeeCoverage.CoverageInstrumentor({
+                coverageVar: COVERAGE_VAR
+                log: log
+                instrumentor: 'foo'
+            })
+        ).to.throw()
