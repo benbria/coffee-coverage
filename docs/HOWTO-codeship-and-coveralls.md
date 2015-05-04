@@ -12,9 +12,7 @@ project set up in [Coveralls.io](https://coveralls.io/).
 Assuming you have a coffee-script project with tests cases stored in /test, and you are using
 mocha to run your unit tests, `cd` to your project and run:
 
-    npm install --save-dev coffee-coverage
-    npm install --save-dev istanbul
-    npm install --save-dev coveralls
+    npm install --save-dev coffee-coverage istanbul coveralls
 
 Save your mocha options in `./test/mocha.opts`:
 
@@ -25,7 +23,7 @@ Save your mocha options in `./test/mocha.opts`:
 In `package.json`, add:
 
     "scripts": {
-        "test": "mocha"
+        "test": "mocha && report text-summary lcov"
     }
 
 Add this line to your .gitignore:
@@ -38,10 +36,9 @@ In Codeship, in your project settings, in the "Test" tab, set your "Test Pipelin
     npm run prepublish
 
     # Run CI tests and coverage
-    npm run test
+    npm test
 
     # Upload results to coveralls.io
-    istanbul report lcovonly
     export COVERALLS_SERVICE_NAME=codeship
     export COVERALLS_SERVICE_JOB_ID=${CI_BUILD_NUMBER}
     export COVERALLS_REPO_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx

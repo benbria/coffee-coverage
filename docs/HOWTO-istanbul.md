@@ -15,8 +15,7 @@ Quick Start with Mocha
 Assuming you have a coffee-script project with tests cases stored in /test, and you are using
 mocha to run your unit tests, `cd` to your project and run:
 
-    npm install --save-dev coffee-coverage
-    npm install --save-dev istanbul
+    npm install --save-dev coffee-coverage istanbul
     mocha --recursive \
           --compilers coffee:coffee-script/register \
           --require coffee-coverage/register-istanbul \
