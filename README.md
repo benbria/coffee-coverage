@@ -16,8 +16,8 @@ Features
 * Native coffee-script instrumentation - [not based on source maps](./docs/comparison-to-ibrik.md)
 * Conditional instrumentation with [pragmas](./docs/pragmas.md)
 * Support for [Istanbul](./docs/HOWTO-istanbul.md) style instrumentation
-* Support for [JSCoverage](./docs/HOWTO-jscoverage.md) style insturmentation
-* Support for [Streamline compiler](./docs/streamline.md) style insturmentation
+* Support for [JSCoverage](./docs/HOWTO-jscoverage.md) style instrumentation
+* Support for [Streamline compiler](./docs/streamline.md) style instrumentation
 * Dynamic instrumentation - instrument your code at run time
 * [Precompiled instrumentation](./docs/cli.md)
 
@@ -47,11 +47,14 @@ Tutorials:
 * [Codeship and Coveralls](./docs/HOWTO-codeship-and-coveralls.md)
 * [Ignoring code with Pragmas](./docs/pragmas.md)
 
+Have coffee-coverage working in a setup not described above?
+[Raise an issue](https://github.com/benbria/coffee-coverage/issues/new) and let us know how you're
+using coffee-coverage, so we can document it here.
+
 What it Does
 ------------
 
 Benbria CoffeeCoverage is a tool for determining the coverage of your unit tests.  It does this
-by instrumentating .coffee files to see how often each line, branch, or function is executed.
+by instrumenting .coffee files to see how often each line, branch, or function is executed.
 CoffeeCoverage is capable of producing both [Istanbul](./docs/HOWTO-istanbul.md) and
 [JSCoverage](./docs/HOWTO-jscoverage.md) style instrumentation.
-

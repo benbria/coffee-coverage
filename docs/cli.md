@@ -21,8 +21,8 @@ Detailed Usage
 Usage: `coffeeCoverage [options] src dest`
 
 `src` and `dest` are the source file or directory and destination file or directory, respectively.
-If `src` is a .coffee file, then coffeecoverage will instrument the file and write the result to
-`dest` (e.g. `coffeeCoverage a.coffee a.js`.)  If `src` is a directory, then coffeecoverage will
+If `src` is a .coffee file, then coffee-coverage will instrument the file and write the result to
+`dest` (e.g. `coffeeCoverage a.coffee a.js`.)  If `src` is a directory, then coffee-coverage will
 recursively walk through `src` finding .coffee files, and writing them into the `dest`, creating
 any subdirectories in `dest` as required.  If `src` and `dest` are the same directory, then all the
 .coffee files in `src` will have .js files written alongside them.
@@ -39,7 +39,7 @@ Print the version number to stdout and quit.
 
 #### -c, --coverageVar
 
-By default, coffeecoverage will instrument source files with the global variable `_$jscoverage`
+By default, coffee-coverage will instrument source files with the global variable `_$jscoverage`
 (for jscoverage) or `_$coffeeIstanbul` (for istanbul).  You can set whatever variable name you'd
 like by using this option.
 
@@ -49,7 +49,7 @@ Set the type of instrumentation to generate. Valid options are: jscoverage (defa
 
 #### -i, --initfile
 
-Specifies an "initfile" which all global initalization is written to.  This is handy for testing
+Specifies an "initfile" which all global initialization is written to.  This is handy for testing
 with mocha and jscoverage.  If you `require` the initfile, then mocha's `html-cov` reporter will
 show coverage of all files in your project, even files which were never run.
 
@@ -70,7 +70,7 @@ parameters:
  - `none` is the default - if coffeeCoverage reads a file from "src/models/user.coffee", then
    the instrumented code will use the filename "user.coffee".  This works well provided you
    don't reuse filenames elsewhere in your code.  Note that if there is a name collision between
-   two files in different subdirectories, coffeecoverage will append a something to the
+   two files in different subdirectories, coffee-coverage will append a something to the
    end of one to make it unique, otherwise coverage data from one file would interfere with data
    from another.
  - `abbr` will use abbreviated path names; a file from "src/models/user.coffee" will be

@@ -28,7 +28,7 @@ In `package.json`, add:
         "test": "mocha"
     }
 
-In codeship, in your project settings, in the "Test" tab, set your "Test Pipeline" to:
+In Codeship, in your project settings, in the "Test" tab, set your "Test Pipeline" to:
 
     # Build project.  Set this to whatever you use to build:
     npm run prepublish

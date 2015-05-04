@@ -1,7 +1,7 @@
 Pragmas
 -------
 
-coffee-coverage supports conditonal instrumentation with pragmas.  Pragmas work for both Istanbul
+coffee-coverage supports conditional instrumentation with pragmas.  Pragmas work for both Istanbul
 and JSCoverage instrumentation.
 
 For example, consider the following code block:

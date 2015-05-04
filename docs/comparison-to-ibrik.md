@@ -21,8 +21,8 @@ Here's the output from `ibrik cover ./src/coverageTest.coffee`:
     Lines        : 100% ( 4/4 )
 
 First, note ibrik finds eight statements, two branches, and two functions in the above code.  This
-is because ibrik is instrumenting the compiled javascript.  The extra function comes from the fact
-that the javascript version has a `(function(){...}).call(this);` wrapper around the entire block.
+is because ibrik is instrumenting the compiled JavaScript.  The extra function comes from the fact
+that the JavaScript version has a `(function(){...}).call(this);` wrapper around the entire block.
 The "branch" comes from the default parameter, which will compile to an extra statement
 `if (x == null) { x = 7; }`.
 
