@@ -339,6 +339,7 @@ exports._runInstrumentor = (instrumentor, fileName, source, options={}) ->
     try
         js = ast.compile coffeeOptions
     catch err
+        ### !pragma coverage-skip-block ###
         throw new CoverageError("Could not compile #{fileName} after instrumenting: #{err.stack}")
 
     answer = {

@@ -48,9 +48,9 @@
 # (coffee-script doesn't allow block comments at top scope inside a switch.  Might not be
 # able to do this.)
 #
-# An `### istanbul ignore next ###` before a function declaration should cause the location in
-# the `fnMap` to be marked `skip`, the statement for the function delcaration and all statements in
-# the function to be marked `skip` in the `statementMap`.
+# An `### istanbul ignore next ###` before a function declaration should cause the function (not
+# the location) in the `fnMap` to be marked `skip`, the statement for the function delcaration and
+# all statements in the function to be marked `skip` in the `statementMap`.
 #
 
 assert = require 'assert'
@@ -308,9 +308,10 @@ module.exports = class Istanbul
 
 
         loc = {start, end}
-        if node.node.coffeeCoverage?.skip then loc.skip = true
+        fnMapEntry = {name, line: start.line, loc}
+        if node.node.coffeeCoverage?.skip then fnMapEntry.skip = true
 
-        @fnMap.push {name, line: start.line, loc}
+        @fnMap.push fnMapEntry
         node.insertAtStart 'body', "#{@_prefix}.f[#{functionId}]++"
 
     visitClass: (node) ->

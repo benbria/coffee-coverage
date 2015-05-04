@@ -582,7 +582,7 @@ describe "Istanbul tests", ->
                 expect(instrumentor.statementMap[0].skip, "s0").to.not.exist
                 instrumentor.statementMap[1..2].forEach (s, i) -> expect(s.skip, "s#{i+1}").to.be.true
 
-                expect(instrumentor.fnMap[0].loc.skip).to.be.true
+                expect(instrumentor.fnMap[0].skip).to.be.true
 
         it "should skip a branch in a switch statement", ->
             {instrumentor, result} = run """
@@ -621,8 +621,8 @@ describe "Istanbul tests", ->
                 expect(instrumentor.statementMap[0].skip, "s0").to.not.exist
                 expect(instrumentor.statementMap[1].skip, "s2").to.be.true
 
-                expect(instrumentor.fnMap[0].loc.skip).to.not.exist
-                expect(instrumentor.fnMap[1].loc.skip).to.be.true
+                expect(instrumentor.fnMap[0].skip).to.not.exist
+                expect(instrumentor.fnMap[1].skip).to.be.true
 
         it "should throw an error when a pragma is at the end of a block or file", ->
             expect ->
