@@ -330,7 +330,7 @@ exports._runInstrumentor = (instrumentor, fileName, source, options={}) ->
 
     wrappedAST = new NodeWrapper ast
 
-    runVisitor(new SkipVisitor(), wrappedAST)
+    runVisitor(new SkipVisitor(fileName), wrappedAST)
     runVisitor(instrumentor, wrappedAST)
 
     init = instrumentor.getInitString()

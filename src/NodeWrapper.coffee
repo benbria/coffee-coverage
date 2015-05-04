@@ -27,8 +27,17 @@ module.exports = class NodeWrapper
 
         # TODO: Is this too naive?  coffee-script nodes have a `isStatement(o)` function, which
         # really only cares about `o.level`.  Should we be working out the level and calling
-        # this function?
-        @isStatement = @parent? and @parent.type is 'Block' and @childName is 'expressions' and @type isnt 'Comment'
+        # this function instead of trying to figure this out ourselves?
+        @isStatement = @parent? and @type isnt 'Comment' and
+            @parent.type is 'Block' and @childName is 'expressions'
+
+        # Note we exclude 'Value' nodes.  When you parse a Class, you'll get Value nodes wrapping
+        # each contiguous block of function assignments, and we don't want to treat these as
+        # statements.  I can't think of another case where you have a Value as a direct child
+        # of an expression.
+        if @isStatement and @type is 'Value' and @parent.parent?.type is 'Class'
+            @isStatement = false
+
 
     # Run `fn(node)` for each child of this node.  Child nodes will be automatically wrapped in a
     # `NodeWrapper`.
@@ -90,7 +99,7 @@ module.exports = class NodeWrapper
     # Returns this node's next sibling, or null if this node has no next sibling.
     #
     next: ->
-        if @parent.type isnt 'Block' then return null
+        if @parent.type not in ['Block', 'Obj'] then return null
         @_fixChildIndex()
         nextNode = @parent.node[@childName][@childIndex + 1]
         return if !nextNode?

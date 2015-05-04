@@ -42,11 +42,11 @@ run = (source, options={}) ->
     instrumentor = new Istanbul(filename, source, {log, coverageVar: COVERAGE_VAR})
     result = coffeeCoverage._runInstrumentor instrumentor, filename, source, {log}
 
-    if options.counts?.s
+    if options.counts?.s?
         checkStatementsAreCovered instrumentor, result, options.counts.s, filename
-    if options.counts?.b
+    if options.counts?.b?
         checkBranchesAreCovered instrumentor, result, options.counts.b, filename
-    if options.counts?.f
+    if options.counts?.f?
         checkFunctionsAreCovered instrumentor, result, options.counts.f, filename
 
     return {instrumentor, result}
@@ -357,17 +357,18 @@ describe "Istanbul tests", ->
             class Foo
                 constructor: ->
                     @bar = 'Hello World'
-        """, counts: {f: 2, s: 3, b: {}}
+                x: -> 2
+        """, counts: {f: 3, s: 3, b: {}}
 
         expect(instrumentor.statementMap[0], "class statement").to.eql {
-            # Should end on column 27?
-            start: {line: 1, column: 0}, end: {line: 3, column: 28}
+            # Should end on column 10?
+            start: {line: 1, column: 0}, end: {line: 4, column: 11}
         }
-        expect(instrumentor.statementMap[1], "constructor declaration statement").to.eql {
-            start: {line: 2, column: 4}, end: {line: 3, column: 28}
-        }
-        expect(instrumentor.statementMap[2], "constructor body").to.eql {
+        expect(instrumentor.statementMap[1], "constructor body").to.eql {
             start: {line: 3, column: 8}, end: {line: 3, column: 27}
+        }
+        expect(instrumentor.statementMap[2], "x body").to.eql {
+            start: {line: 4, column: 10}, end: {line: 4, column: 10}
         }
 
         expect(instrumentor.fnMap[0], "class fn").to.eql {
@@ -383,12 +384,22 @@ describe "Istanbul tests", ->
             loc: {start: {line: 2, column: 4}, end: {line: 2, column: 18}}
         }
 
+    it "should find statements in a class", ->
+        {instrumentor, result} = run """
+            class Foo
+                constructor: ->
+                    @bar = 'Hello World'
+                console.log 'here'
+                x: -> 2
+                console.log 'there'
+        """, counts: {f: 3, s: 5, b: {}}
+
     it "should find name of anonymous class", ->
         {instrumentor, result} = run """
             X = class
                 constructor: ->
                     @bar = 'Hello World'
-        """, counts: {f: 2, s: 3, b: {}}
+        """, counts: {f: 2, s: 2, b: {}}
 
         expect(instrumentor.fnMap[0], "class fn").to.eql {
             name: '(anonymousClass)' # Should be X?
@@ -524,7 +535,7 @@ describe "Istanbul tests", ->
                 """, counts: {f: 0, s: 6, b: {1:3}}
 
                 expect(instrumentor.statementMap[0].skip, "s0").to.not.exist
-                instrumentor.statementMap[1..4].forEach (s, i) -> expect(s.skip, "s#{i}").to.be.true
+                instrumentor.statementMap[1..4].forEach (s, i) -> expect(s.skip, "s#{i+1}").to.be.true
                 expect(instrumentor.statementMap[5].skip, "s5").to.not.exist
 
                 instrumentor.branchMap[0].locations.forEach (l, i) ->
@@ -537,12 +548,27 @@ describe "Istanbul tests", ->
                     #{skipPragma}
                     a = ->
                         console.log "foo"
-                """, counts: {f: 0, s: 3, b: {}}
+                """, counts: {f: 1, s: 3, b: {}}
 
                 expect(instrumentor.statementMap[0].skip, "s0").to.not.exist
-                instrumentor.statementMap[1..2].forEach (s, i) -> expect(s.skip, "s#{i}").to.be.true
+                instrumentor.statementMap[1..2].forEach (s, i) -> expect(s.skip, "s#{i+1}").to.be.true
 
                 expect(instrumentor.fnMap[0].loc.skip).to.be.true
+
+        it "should skip a function in a class correctly", ->
+            ['### !pragma coverage-skip ###', '### istanbul ignore next ###'].forEach (skipPragma) ->
+                {instrumentor, result} = run """
+                    class Foo
+                        #{skipPragma}
+                        a: ->
+                            console.log "foo"
+                """, counts: {f: 2, s: 2, b: {}}
+
+                expect(instrumentor.statementMap[0].skip, "s0").to.not.exist
+                expect(instrumentor.statementMap[1].skip, "s2").to.be.true
+
+                expect(instrumentor.fnMap[0].loc.skip).to.not.exist
+                expect(instrumentor.fnMap[1].loc.skip).to.be.true
 
         it "should throw an error when a pragma is at the end of a block or file", ->
             expect ->
@@ -551,7 +577,7 @@ describe "Istanbul tests", ->
                         console.log "foo"
                         ### !pragma coverage-skip ###
                 """
-            .to.throw "Pragma '!pragma coverage-skip' at (3:5) has no next statement"
+            .to.throw "Pragma '!pragma coverage-skip' at #{FILENAME} (3:5) has no next statement"
 
             expect ->
                 run """
@@ -559,7 +585,7 @@ describe "Istanbul tests", ->
                         console.log "foo"
                     ### !pragma coverage-skip-if ###
                 """
-            .to.throw "Pragma '!pragma coverage-skip-if' at (3:1) has no next statement"
+            .to.throw "Pragma '!pragma coverage-skip-if' at #{FILENAME} (3:1) has no next statement"
 
         it "should throw an error when an 'if' pragma isn't before an 'if'", ->
             expect ->
@@ -568,4 +594,4 @@ describe "Istanbul tests", ->
                     myFunc = ->
                         console.log "foo"
                 """
-            .to.throw "Statement after pragma \'!pragma coverage-skip-if\' at (1:1) is not of type If"
+            .to.throw "Statement after pragma \'!pragma coverage-skip-if\' at #{FILENAME} (1:1) is not of type If"
