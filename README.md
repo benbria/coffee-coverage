@@ -45,6 +45,7 @@ Tutorials:
 * [Mocha and Istanbul Guide](./docs/HOWTO-istanbul.md)
 * [Mocha and JSCoverage Guide](./docs/HOWTO-jscoverage.md)
 * [Codeship and Coveralls](./docs/HOWTO-codeship-and-coveralls.md)
+* [Travis-CI and Coveralls](./docs/HOWTO-travisci-and-coveralls.md)
 * [Ignoring code with Pragmas](./docs/pragmas.md)
 
 Have coffee-coverage working in a setup not described above?
