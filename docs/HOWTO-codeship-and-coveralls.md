@@ -23,7 +23,7 @@ Save your mocha options in `./test/mocha.opts`:
 In `package.json`, add:
 
     "scripts": {
-        "test": "mocha && report text-summary lcov"
+        "test": "mocha && istanbul report text-summary lcov"
     }
 
 Add this line to your .gitignore:
