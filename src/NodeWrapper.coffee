@@ -64,12 +64,19 @@ module.exports = class NodeWrapper
                 index++
 
     # Mark this node and all descendants with the given flag.
-    markAll: (varName, value) ->
+    markAll: (varName, value=true) ->
         markCoffeeNode = (coffeeNode) ->
             coffeeNode.coffeeCoverage ?= {}
             coffeeNode.coffeeCoverage[varName] = value
             coffeeNode.eachChild markCoffeeNode
         markCoffeeNode @node
+
+    # Mark a node with a flag.
+    mark: (varName, value=true) ->
+        @node.coffeeCoverage ?= {}
+        @node.coffeeCoverage[varName] = value
+
+    isMarked: (varName, value=true) -> @node.coffeeCoverage?[varName] is value
 
     # Returns a NodeWrapper for the given child.  This only works if the child is not an array
     # (e.g. `Block.expressions`)

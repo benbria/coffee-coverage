@@ -68,7 +68,7 @@ nodeToLocation = (node) ->
         end:
             line:   node.locationData.last_line + 1
             column: node.locationData.last_column
-    if node.coffeeCoverage?.skip or node.node?.coffeeCoverage?.skip
+    if node.coffeeCoverage?.skip or node.isMarked?('skip')
         answer.skip = true
     return answer
 
@@ -133,6 +133,7 @@ module.exports = class Istanbul
 
         @_prefix = "#{@coverageVar}[#{@quotedFileName}]"
 
+    ### !pragma coverage-skip-next ###
     _warn: (message, options={}) ->
         str = message
         str += "\n    file:  #{@fileName}"
@@ -141,14 +142,6 @@ module.exports = class Istanbul
         if options.line
             str += "\n    source: #{@sourceLines[options.line - 1]}"
         @log?.warn str
-
-
-    visitComment: (node) ->
-        # TODO: Respect 'istanbul ignore if', 'istanbul ignore else', and 'istanbul ignore next'?
-        # or maybe use 'pragma coverage-skip', 'pragma coverage-skip-if', 'pragma coverage-skip-else'?
-        # or both!
-        commentData = node.node.comment?.trim() ? ''
-
 
     # Called on each non-comment statement within a Block.  If a `visitXXX` exists for the
     # specific node type, it will also be called after `visitStatement`.
@@ -169,7 +162,7 @@ module.exports = class Istanbul
         assert ifNode.type is 'If'
         elseBody = ifNode.child 'elseBody'
 
-        if ifNode.node.isChain or ifNode.node.coffeeCoverage?.wasChain
+        if ifNode.node.isChain or ifNode.isMarked 'wasChain'
             assert elseBody?
             elseChild = elseBody.child 'expressions', 0
             assert elseChild.type is 'If'
@@ -195,8 +188,8 @@ module.exports = class Istanbul
         # be `skip` already.
         if !ifLocation.skip
             elseLocation = _.clone ifLocation
-            if node.node.coffeeCoverage?.skipIf then ifLocation.skip = true
-            if node.node.coffeeCoverage?.skipElse then elseLocation.skip = true
+            if node.isMarked('skipIf') then ifLocation.skip = true
+            if node.isMarked('skipElse') then elseLocation.skip = true
 
         @branchMap.push {
             line: ifLocation.start.line
@@ -212,8 +205,7 @@ module.exports = class Istanbul
             #
             @log?.debug? "  Disabling chaining for if statement"
             node.node.isChain = false
-            node.node.coffeeCoverage ?= {}
-            node.node.coffeeCoverage.wasChain = true
+            node.mark 'wasChain', true
 
         if !node.isStatement
             # Add 'undefined's for any missing bodies.
@@ -233,19 +225,21 @@ module.exports = class Istanbul
                 .map( (condition) -> nodeToLocation(condition).start )
             )
 
+            blockLocation = nodeToLocation(block)
+
             # start.column is the start of the condition, but we want the start of the
             # `when`.
-            ### !pragma coverage-skip-else ###
             if (startColumn = @sourceLines[start.line-1]?.indexOf('when')) > -1
                 start.column = startColumn
             else
+                ### !pragma coverage-skip-block ###
                 @_warn "Couldn't find 'when'", {node, line: start.line}
                 # Intelligent guess
                 start.column -= 5
                 if start.column < 0 then start.column = 0
 
-            answer = {start, end: nodeToLocation(block).end}
-            if node.node.coffeeCoverage?.skip then answer.skip = true
+            answer = {start, end: blockLocation.end}
+            if node.isMarked('skip') or blockLocation.skip then answer.skip = true
 
             return answer
 
@@ -296,11 +290,11 @@ module.exports = class Istanbul
                 end: nodeToLocation(node).end
             }
 
-            ### !pragma coverage-skip-else ###
             if endOfFn
                 end = endOfFn
                 end.column += 1
             else
+                ### !pragma coverage-skip-block ###
                 @_warn "Couldn't find '->' or '=>'", {node, line: start.line}
                 # Educated guess
                 end.column += 4

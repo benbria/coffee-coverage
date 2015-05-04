@@ -8,48 +8,64 @@ NodeWrapper = require './NodeWrapper'
 PRAGMA_PREFIX = '!pragma'
 
 PRAGMAS = [
-    # '!pragma coverage-skip'
+    # '!pragma coverage-skip-next', 'istanbul ignore next'
     #
     # Mark the next node and all descendants as `skip`.
     {
-        regex: /^!pragma\s+coverage-skip$/
+        regex: /^!pragma\s+coverage-skip-next$/
         istanbulRegex: /^istanbul\s+ignore\s+next$/
         fn: (self, node, match, options={}) ->
             next = self._getNext(node, match)
             next.markAll 'skip', true
     }
 
-    # '!pragma coverage-skip-if'
+    # '!pragma coverage-skip-block'
+    {
+        regex: /^!pragma\s+coverage-skip-block$/
+        fn: (self, node, match, options={}) ->
+            parent = node.parent
+            parent.markAll 'skip', true
+
+            if parent.type isnt 'Block'
+                ### !pragma coverage-skip-block ###
+                throw new Error "Pragma '#{match[0]}' at #{@_toLocString node} is not " +
+                    "child of a Block (how did you even do this!?)"
+
+            if parent.parent?.type is 'If'
+                ifBody = parent
+                ifNode = parent.parent
+                if ifBody.childName is 'body'
+                    ifNode.mark 'skipIf', true
+                else
+                    ifNode.mark 'skipElse', true
+    }
+
+    # 'istanbul ignore if'
     #
     # Must be before an `If` statement.  Mark the `If` as `skipIf`, and mark all children in
     # the `body` as `skip`.
     {
-        regex: /^!pragma\s+coverage-skip-if$/
         istanbulRegex: /^istanbul\s+ignore\s+if$/
         fn: (self, node, match, options={}) ->
+            console.log "Found pragma"
             ifNode = self._getNext(node, match, 'If')
-            ifNode.node.coffeeCoverage ?= {}
-            ifNode.node.coffeeCoverage.skipIf = true
+            ifNode.mark 'skipIf', true
             ifNode.child('body')?.markAll 'skip', true
     }
 
-    # '!pragma coverage-skip-else'
+    # 'istanbul ignore next'
     #
     # Must be before an `If` statement.  Mark the `If` as `skipElse`, and mark all children in
     # the `elseBody` as `skip`.
     {
-        regex: /^!pragma\s+coverage-skip-else$/
         istanbulRegex: /^istanbul\s+ignore\s+else$/
         fn: (self, node, match, options={}) ->
             ifNode = self._getNext(node, match, 'If')
-            ifNode.node.coffeeCoverage ?= {}
-            ifNode.node.coffeeCoverage.skipElse = true
+            ifNode.mark 'skipElse', true
             ifNode.child('elseBody')?.markAll 'skip', true
     }
 
-    # TODO: How do we deal with skipping cases in a `switch`?
 ]
-
 
 
 module.exports = class SkipVisitor
@@ -59,11 +75,15 @@ module.exports = class SkipVisitor
         comment = node.node.comment?.trim().toLowerCase() ? ''
         found = false
         if _.startsWith(comment, PRAGMA_PREFIX)
-            PRAGMAS.forEach (pragma) =>
+            PRAGMAS
+            .filter (pragma) -> pragma.regex?
+            .forEach (pragma) =>
                 if match = comment.match(pragma.regex)
                     pragma.fn this, node, match, @options
         else if _.startsWith(comment, 'istanbul')
-            PRAGMAS.forEach (pragma) =>
+            PRAGMAS
+            .filter (pragma) -> pragma.istanbulRegex?
+            .forEach (pragma) =>
                 if match = comment.match(pragma.istanbulRegex)
                     pragma.fn this, node, match, @options
 

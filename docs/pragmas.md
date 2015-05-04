@@ -18,45 +18,53 @@ code coverage and skip it:
 
     class LinkedList
         push: (value) ->
-            ### !pragma coverage-skip ###
+            ### !pragma coverage-skip-next ###
             if !@head then throw new Error "I keep losing my head"
             @head = {next: @head, value}
 
 Note that pragmas MUST be in a block comment, by itself:
 
-    ### !pragma coverage-skip ###
+    ### !pragma coverage-skip-next ###
     console.log "This line will be ignored for coverage purposes."
-    # !pragma coverage-skip
+    # !pragma coverage-skip-next
     console.log "This line will be counted as normal for coverage purposes."
     ###
     # Blah blah blah
-    # !pragma coverage-skip
+    # !pragma coverage-skip-next
     ###
     console.log "This line will be counted as normal, too."
 
 Reference
 =========
 
-### ### !pragma coverage-skip ###
+### ### !pragma coverage-skip-next ###
 
 Skips the next statement in the current block, and all children of that statement (for example,
-a `### !pragma coverage-skip ###` before a `while` statement will make coffee-coverage ignore
+a `### !pragma coverage-skip-next ###` before a `while` statement will make coffee-coverage ignore
 the `while` statement itself, as well as all the statements inside the `while` block.)
 
-### ### !pragma coverage-skip-if ###
+### ### !pragma coverage-skip-block ###
 
-Used before an `if` statement, this will ignore the 'if' branch for coverage purposes in Istanbul,
-and will also ignore all of the statements inside the 'if' branch.
+Skips the enclosing block.  For example:
 
-    ### !pragma coverage-skip-if ###
     if process.env.NODE_ENV is 'production'
+        ### !pragma coverage-skip-block ###
+        console.log "Starting in prod mode!"
         server.listen 80
     else
         server.listen 8080
 
-### ### !pragma coverage-skip-else ###
+Or in a switch statement:
 
-Similar to `### !pragma coverage-skip-if ###`, this ignores the contents of the 'else' branch.
+    port = switch NODE_ENV
+        when 'production'
+            ### !pragma coverage-skip-block ###
+            80
+        else
+            8080
+
+Everything in the `if` case will be skipped.  Note you can skip a whole file by putting a
+'coverage-skip-block' pragma at the top level of the file.
 
 ### Istanbul Pragmas
 

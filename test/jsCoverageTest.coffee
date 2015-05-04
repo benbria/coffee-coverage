@@ -139,10 +139,10 @@ describe "JSCoverage tests", ->
         expect(firstIndexOf).to.not.equal -1
         expect(firstIndexOf is lastIndexOf).to.be.true
 
-    it "should not instrument statements with '!pragma coverage-skip' pragmas", ->
+    it "should not instrument statements with '!pragma coverage-skip-next' pragmas", ->
         {instrumentor, result} = run """
             console.log "hello"
-            ### !pragma coverage-skip ###
+            ### !pragma coverage-skip-next ###
             console.log "world"
             console.log "!"
         """, {l: 1, 4}
