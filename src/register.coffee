@@ -25,25 +25,34 @@ class StringStream
 # * `options.instrumentor` is the name of the instrumentor to use (see `INSTURMENTORS`.)
 #   All options passed in will be passed along to the instrumentor implementation, so
 #   instrumentor-specific options may be added to `options` as well.
+#
 # * `options.coverageVar` gives the name of the global variable to use to store
 #   coverage data in. The default coverage variable depends on the `options.instrumentor` used.
+#
 # * `options.exclude` is an array of files and directories to ignore.  For example, ['/test'] would
 #   ignore all files in the test folder.  Defaults to [].
+#
 # * `options.basePath` the root folder for your project.  If provided, then all excludes will be
 #   evaluated relative to this base path. For example, if `options.exclude` is `['/a/b']`, and
 #   `options.basePath` is "/Users/jwalton/myproject", then this will prevent
 #   coffeeCoverage from traversing "/Users/jwalton/myproject/a/b".  Some instrumentor
 #   implementations may strip the `basePath` for readability.
-# * `options.initFileStream` is a stream to which all global initialization will be
-#   written to via `initFileStream.write(data)`.
+#
 # * `options.initAll` - If true, then coffeeCoverage will recursively walk through all
 #   subdirectories of `options.basePath` and gather line number information for all CoffeeScript
 #   files found.  This way even files which are not `require`d at any point during your test will
 #   still be instrumented and reported on.
+#
 # * `options.writeOnExit` - A file to write a JSON coverage file to on completion.  This will
-#   stringify `options.coverageVar`.
-# * `options.streamlinejs` - Enable experimental support for streamlinejs.  This option may
-#   be removed in a future version of coffeeCoverage.
+#   stringify the variable set in `options.coverageVar` and write it to disk.
+#
+# * `options.streamlinejs` - Enable support for streamlinejs.  You can either pass `true`
+#   here, or a set of options to pass on to
+#   [transform](https://github.com/Sage/streamlinejs/blob/master/lib/callbacks/transform.md).
+#
+# * `options.cachePath` - A folder to write instrumented code to.  Subsequent runs will load
+#   instrumented code from the cache if the source files haven't changed.  This is recommended
+#   when using `options.streamlinejs`.
 #
 # e.g. `coffeeCoverage.register {path: 'abbr', basePath: "#{__dirname}/.." }`
 #
@@ -69,23 +78,16 @@ module.exports = (options={}) ->
         defaults = instrumentorClass.getDefaultOptions()
         options = _.defaults options, defaults
 
-    if options.basePath
-        options.basePath = path.resolve options.basePath
+    if options.basePath then options.basePath = path.resolve options.basePath
+    if options.cachePath then options.cachePath = path.resolve options.cachePath
 
-        if options.initAll
-            # Recursively instrument everything in the base path to
-            # generate intialization data.
-            options.initFileStream = new StringStream()
-
-    if options.cachePath
-        options.cachePath = path.resolve options.cachePath
     compiledCache = new CompiledCache(options.basePath, options.cachePath)
-
     coverage = new coffeeCoverage.CoverageInstrumentor options
     module = require('module');
 
     if options.basePath and options.initAll
         # Recursively instrument everything in the base path to generate intialization data.
+        options.initFileStream = new StringStream()
         coverage.instrumentDirectory options.basePath, null
         eval options.initFileStream.data
 
@@ -117,7 +119,6 @@ module.exports = (options={}) ->
 
             transformed = compiledCache.get fileName, ->
                 compiled = instrumentFile fileName
-                compiledCache.put fileName, compiled, {ext: '._js'}
                 streamlineOptions = if _.isObject options.streamlinejs then options.streamlinejs else {}
                 streamlineOptions = _.assign {}, streamlineOptions, {sourceName: fileName}
                 transformed = streamlineTransform.transform(compiled, streamlineOptions)

@@ -1,5 +1,10 @@
 # coffee-coverage Changelog
 
+### v0.5.2
+  - Fix weird corner case if statement.
+  - Better streamline support.
+  - Add support for caching files between runs.
+
 ### v0.5.1
   - Fix for istanbul instrumentation for `if` expressions that are implicit returns and are missing
     an `else`.

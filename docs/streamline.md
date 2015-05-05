@@ -2,11 +2,14 @@ Using with Streamline
 =====================
 
 CoffeeCoverage supports [streamline](https://github.com/Sage/streamlinejs)'d coffee files.
-The easiest way to enable streamline support is by writing a custom loader.  Write the
-following to a file called 'registerCoffeeCoverage.js' in your project's root folder:
+The easiest way to enable streamline support is by writing a custom loader.  First, install
+streamline:
 
-    // If you're using with streamline, you *must* register streamline first:
-    require('streamline').register({});
+    npm install --save streamline
+
+Write the following to a file called 'registerCoffeeCoverage.js' in your project's root folder:
+
+    path = require('path');
 
     require('coffee-coverage').register({
         basePath: process.cwd(),
@@ -14,6 +17,8 @@ following to a file called 'registerCoffeeCoverage.js' in your project's root fo
         instrumentor: 'istanbul',
         coverageVar: '_$coffeeIstanbul',
         writeOnExit: 'coverage/coverage-coffee.json',
+        streamlinejs: true,
+        cachePath: path.join process.cwd(), 'build/coffee-coverage-cache'
         initAll: true
     });
 
@@ -21,6 +26,9 @@ Then, run your tests:
 
     mocha --require ./registerCoffeeCoverage --reporter html-cov ...
 
-Note that streamline support is "experimental" right now (i.e. it might break at any moment
-because we're using undocumented features in streamlinejs) so to turn it on, you have to
-explicitly pass 'streamlinejs: true' as an option.
+You can also set `streamlinejs` to a set of options to pass to streamline.  Any option you can
+pass to [transform](https://github.com/Sage/streamlinejs/blob/master/lib/callbacks/transform.md)
+is supported.
+
+It is highly recommended to pass the `cachePath` option when using streamline, as the streamline
+compiler can be a bit slow.
