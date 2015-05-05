@@ -30,7 +30,13 @@ Add this line to your .gitignore:
 
     /coverage
 
-In Codeship, in your project settings, in the "Test" tab, set your "Test Pipeline" to:
+In Codeship, in your project settings, in the "Environment" tab, set up your Coveralls
+credentials:
+
+   COVERALLS_SERVICE_NAME = codeship
+   COVERALLS_REPO_TOKEN = [your secret token here]
+
+In the "Test" tab, set your "Test Pipeline" to:
 
     # Build project.  Set this to whatever you use to build:
     npm run prepublish
@@ -39,9 +45,5 @@ In Codeship, in your project settings, in the "Test" tab, set your "Test Pipelin
     npm test
 
     # Upload results to coveralls.io
-    export COVERALLS_SERVICE_NAME=codeship
     export COVERALLS_SERVICE_JOB_ID=${CI_BUILD_NUMBER}
-    export COVERALLS_REPO_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     cat ./coverage/lcov.info | ./node_modules/.bin/coveralls
-
-(be sure to set COVERALLS_REPO_TOKEN to your secret token, above.)
