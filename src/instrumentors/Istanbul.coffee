@@ -138,8 +138,12 @@ module.exports = class Istanbul
         str += "\n    file:  #{@fileName}"
         if options.node
             str += "\n    node:  #{options.node.toString()}"
-        if options.line
-            str += "\n    source: #{@sourceLines[options.line - 1]}"
+        if options.line? or options.node
+            lineNumber = if options.line?
+                options.line
+            else
+                options.node.locationData.first_line + 1
+            str += "\n    source: #{@sourceLines[lineNumber - 1]}"
         @log?.warn str
 
     # Called on each non-comment statement within a Block.  If a `visitXXX` exists for the
@@ -190,12 +194,6 @@ module.exports = class Istanbul
             if node.isMarked('skipIf') then ifLocation.skip = true
             if node.isMarked('skipElse') then elseLocation.skip = true
 
-        @branchMap.push {
-            line: ifLocation.start.line
-            type: 'if'
-            locations: [ifLocation, elseLocation]
-        }
-
         if node.node.isChain
             # Chaining is where coffee compiles something into `... else if ...`
             # instead of '... else {if ...}`.  Chaining produces nicer looking coder
@@ -206,21 +204,74 @@ module.exports = class Istanbul
             node.node.isChain = false
             node.mark 'wasChain', true
 
-        # Add 'undefined's for any missing bodies.  Could do this only when !node.isStatement,
-        # but our `isStatement` is slightly naive, and doesn't take into account the case where
-        # an `if` is the last statement in a function, in which case it will be turned into an
-        # expression, and then the extra `undefined`/`void 0` is very important.  This doesn't
-        # hurt in the regular case, though, so here we are.
         body = node.child('body')
         elseBody = node.child('elseBody')
-        if !body or body.node.expressions.length is 0
-            node.insertAtStart 'body', "undefined"
-        if !elseBody or elseBody.node.expressions.length is 0
-            node.insertAtStart 'elseBody', "undefined"
+        bodyPresent = body and body.node.expressions.length > 0
+        elseBodyPresent = elseBody and elseBody.node.expressions.length > 0
 
-        node.insertAtStart 'body', "#{@_prefix}.b[#{branchId}][0]++"
-        node.insertAtStart 'elseBody', "#{@_prefix}.b[#{branchId}][1]++"
-        @instrumentedLineCount += 2
+        if node.parent.type is 'Return' and (!bodyPresent or !elseBodyPresent)
+            if bodyPresent and !elseBodyPresent
+                # This is kind of a weird case:
+                #
+                #     fn = (x) ->
+                #         return if x then 10
+                #         return 20
+                #
+                # You might think that second `return` statement was unreachable, but it will actually
+                # be hit if `x` is fasley.  We can't add anything to the `elseBody` here, though
+                # without making the the second return statement unreachable.  The solution is
+                # to add the instrumentation for the "else" case after the `return`.
+                #
+                node.insertAtStart 'body', "#{@_prefix}.b[#{branchId}][0]++"
+                node.parent.insertAfter "#{@_prefix}.b[#{branchId}][1]++"
+                @instrumentedLineCount += 2
+
+            else if elseBodyPresent and !bodyPresent
+                # This is the even weirder case:
+                #
+                #     fn = (x) ->
+                #         return if x then else 10
+                #         return 20
+                #
+                node.insertAtStart 'elseBody', "#{@_prefix}.b[#{branchId}][1]++"
+                node.parent.insertAfter "#{@_prefix}.b[#{branchId}][0]++"
+                @instrumentedLineCount += 2
+
+            else if !elseBodyPresent and !bodyPresent
+                # Yes, you can do this:
+                #
+                #    fn = (x) ->
+                #        return if x then else
+                #        return 20
+                #
+                # but it's a bit stupid, so if you do it, we're just going to ignore this
+                # statement.
+                #
+                @_warn "If statement could not be instrumented", {node}
+                ifLocation.skip = true
+                elseLocation.skip = true
+
+        else
+            # Add 'undefined's for any missing bodies.  Could do this only when !node.isStatement,
+            # but our `isStatement` is slightly naive, and doesn't take into account the case where
+            # an `if` is the last statement in a function, in which case it will be turned into an
+            # expression, and then the extra `undefined`/`void 0` is very important.  This doesn't
+            # hurt in the regular case, though, so here we are.
+            if !bodyPresent
+                node.insertAtStart 'body', "undefined"
+            if !elseBodyPresent
+                node.insertAtStart 'elseBody', "undefined"
+
+            node.insertAtStart 'body', "#{@_prefix}.b[#{branchId}][0]++"
+            node.insertAtStart 'elseBody', "#{@_prefix}.b[#{branchId}][1]++"
+            @instrumentedLineCount += 2
+
+        @branchMap.push {
+            line: ifLocation.start.line
+            type: 'if'
+            locations: [ifLocation, elseLocation]
+        }
+
 
     visitSwitch: (node) ->
         branchId = @branchMap.length + 1

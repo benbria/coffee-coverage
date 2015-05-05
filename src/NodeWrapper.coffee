@@ -56,11 +56,8 @@ module.exports = class NodeWrapper
             while index < childNodes.length
                 child = childNodes[index]
                 if child.constructor.name?
-                    fn new NodeWrapper(child, this, childName, index, @depth + 1)
-
-                # Bump index up in case we inserted nodes
-                # TODO: Guard against incrementing forever?
-                index++ while (child != childNodes[index])
+                    wrappedChild = new NodeWrapper(child, this, childName, index, @depth + 1)
+                    fn wrappedChild
                 index++
 
     # Mark this node and all descendants with the given flag.
@@ -114,6 +111,11 @@ module.exports = class NodeWrapper
         else
             new NodeWrapper nextNode, @parent, @childName, @childIndex + 1, @depth
 
+    _insertBeforeIndex: (childName, index, csSource) ->
+        assert _.isArray(@node[childName]), "#{@toString()} -> #{childName}"
+        compiled = compile csSource, @node
+        @node[childName].splice index, 0, compiled
+
     # Insert a new node before this node (only works if this node is in an array-based attribute,
     # like `Block.expressions`.)
     #
@@ -121,11 +123,12 @@ module.exports = class NodeWrapper
     # and will be skipped when instrumenting code.
     #
     insertBefore: (csSource) ->
-        assert _.isArray @parent.node[@childName]
-
-        compiled = compile csSource, @node
         @_fixChildIndex()
-        @parent.node[@childName].splice(@childIndex, 0, compiled)
+        @parent._insertBeforeIndex @childName, @childIndex, csSource
+
+    insertAfter: (csSource) ->
+        @_fixChildIndex()
+        @parent._insertBeforeIndex @childName, @childIndex + 1, csSource
 
     # Insert a chunk of code at the start of a child of this node.  E.g. if this is a Block,
     # then `insertAtStart('expressions', 'console.log "foo"'')` would add a `console.log`
