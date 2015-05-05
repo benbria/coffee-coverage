@@ -1,5 +1,9 @@
 # coffee-coverage Changelog
 
+### v0.5.1
+  - Fix for istanbul instrumentation for `if` expressions that are implicit returns and are missing
+    an `else`.
+
 ### v0.5.0
   - Added support for [Istanbul](./docs/HOWTO-istanbul.md). (thanks to
     [Carsten Klein](https://github.com/silkentrance) for some help and suggestions.)
