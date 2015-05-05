@@ -3,6 +3,7 @@ fs             = require 'fs'
 _              = require 'lodash'
 
 coffeeCoverage = require './coffeeCoverage'
+CompiledCache  = require './CompiledCache'
 
 class StringStream
     constructor: () ->
@@ -11,7 +12,7 @@ class StringStream
     write: (data) ->
         @data += data
 
-{mkdirs, excludeFile} = require './utils/helpers'
+{mkdirs, excludeFile, getRelativeFilename} = require './utils/helpers'
 
 # Register coffeeCoverage to automatically process '.coffee', '.litcoffee', '.coffee.md' and '._coffee' files.
 #
@@ -56,6 +57,7 @@ module.exports = (options={}) ->
         initAll: false
         writeOnExit: null
         streamlinejs: false
+        cachePath: null
     }
 
     # Add default options from the instrumentor.
@@ -75,6 +77,10 @@ module.exports = (options={}) ->
             # generate intialization data.
             options.initFileStream = new StringStream()
 
+    if options.cachePath
+        options.cachePath = path.resolve options.cachePath
+    compiledCache = new CompiledCache(options.basePath, options.cachePath)
+
     coverage = new coffeeCoverage.CoverageInstrumentor options
     module = require('module');
 
@@ -93,25 +99,31 @@ module.exports = (options={}) ->
         require.extensions[extension] = (module, fileName) ->
             if excludeFile fileName, options
                 return origCoffeeHandler.call this, module, fileName
-            module._compile instrumentFile(fileName), fileName
+
+            compiled = compiledCache.get fileName, -> instrumentFile(fileName)
+            module._compile compiled, fileName
+
     replaceHandler ".coffee"
     replaceHandler ".litcoffee"
     replaceHandler ".coffee.md"
 
     if options.streamlinejs
-        # TODO: This is pretty fragile, as we rely on some undocumented parts of streamline_js.
-        # Would be better to do this via some programatic interface to streamline.  Need to make a
-        # pull request.
-        streamline_js = require.extensions["._js"]
-        if streamline_js
-            origStreamineCoffeeHandler = require.extensions["._coffee"]
-            require.extensions["._coffee"] = (module, fileName) ->
-                if excludeFile fileName, options
-                    return origStreamineCoffeeHandler.call this, module, fileName
+        streamlineTransform = require 'streamline/lib/callbacks/transform'
+        origStreamineCoffeeHandler = require.extensions["._coffee"]
 
+        require.extensions["._coffee"] = (module, fileName) ->
+            if excludeFile fileName, options
+                return origStreamineCoffeeHandler.call this, module, fileName
+
+            transformed = compiledCache.get fileName, ->
                 compiled = instrumentFile fileName
-                # TODO: Pass a sourcemap here?
-                streamline_js module, fileName, compiled, null
+                compiledCache.put fileName, compiled, {ext: '._js'}
+                streamlineOptions = if _.isObject options.streamlinejs then options.streamlinejs else {}
+                streamlineOptions = _.assign {}, streamlineOptions, {sourceName: fileName}
+                transformed = streamlineTransform.transform(compiled, streamlineOptions)
+                return transformed
+
+            module._compile transformed, fileName
 
     if options.writeOnExit
         process.on 'exit', ->
