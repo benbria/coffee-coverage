@@ -439,3 +439,4 @@ describe "Istanbul tests", ->
             delete global[oldCoverageVar]
 
     require('./pragmaTests')(run)
+    require('./evalTests')()
