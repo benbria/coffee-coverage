@@ -89,7 +89,6 @@ describe "Coverage tests", ->
         expect(z).to.equal 10
 
     it "should work with debug logging", ->
-        # From https://github.com/benbria/coffee-coverage/pull/37
         instrumentor = new coffeeCoverage.CoverageInstrumentor({
             coverageVar: COVERAGE_VAR
             log: {
@@ -111,9 +110,40 @@ describe "Coverage tests", ->
 
         code = instrumentor.instrumentCoffee("example.coffee", source).js
 
+    it "should correctly compile an 'if' without an explicit return", ->
+        instrumentor = new coffeeCoverage.CoverageInstrumentor({
+            coverageVar: COVERAGE_VAR
+            instrumentor: 'istanbul'
+        })
+        source = """
+            f = (x) ->
+                if x?.foo then 1
+
+            return f({})
+        """
+        result = instrumentor.instrumentCoffee("example.coffee", source)
+        eval result.init
+        z = eval result.js
+        expect(z).to.not.exist
+
+    it "should correctly compile list comprehensions", ->
+        instrumentor = new coffeeCoverage.CoverageInstrumentor({
+            coverageVar: COVERAGE_VAR
+            log: log
+            instrumentor: 'istanbul'
+        })
+        source = """
+            a = [1,2,3,4]
+            inc = (x) -> x + 1
+            a = (inc x for x in a)
+            return a
+        """
+        result = instrumentor.instrumentCoffee("example.coffee", source)
+        eval result.init
+        z = eval result.js
+        expect(z).to.eql [2,3,4,5]
 
     it "should throw an error if input can't be compiled", ->
-        # From https://github.com/benbria/coffee-coverage/pull/37
         instrumentor = new coffeeCoverage.CoverageInstrumentor({
             coverageVar: COVERAGE_VAR
             log: log
@@ -127,7 +157,6 @@ describe "Coverage tests", ->
         ).to.throw(/^Could not parse example.coffee.*/)
 
     it "should throw an error if an invalid instrumentor is specified", ->
-        # From https://github.com/benbria/coffee-coverage/pull/37
         expect( ->
             instrumentor = new coffeeCoverage.CoverageInstrumentor({
                 coverageVar: COVERAGE_VAR

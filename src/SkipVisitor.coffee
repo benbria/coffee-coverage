@@ -47,7 +47,6 @@ PRAGMAS = [
     {
         istanbulRegex: /^istanbul\s+ignore\s+if$/
         fn: (self, node, match, options={}) ->
-            console.log "Found pragma"
             ifNode = self._getNext(node, match, 'If')
             ifNode.mark 'skipIf', true
             ifNode.child('body')?.markAll 'skip', true

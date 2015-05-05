@@ -206,14 +206,17 @@ module.exports = class Istanbul
             node.node.isChain = false
             node.mark 'wasChain', true
 
-        if !node.isStatement
-            # Add 'undefined's for any missing bodies.
-            body = node.child('body')
-            elseBody = node.child('elseBody')
-            if !body or body.node.expressions.length is 0
-                node.insertAtStart 'body', "undefined"
-            if !elseBody or elseBody.node.expressions.length is 0
-                node.insertAtStart 'elseBody', "undefined"
+        # Add 'undefined's for any missing bodies.  Could do this only when !node.isStatement,
+        # but our `isStatement` is slightly naive, and doesn't take into account the case where
+        # an `if` is the last statement in a function, in which case it will be turned into an
+        # expression, and then the extra `undefined`/`void 0` is very important.  This doesn't
+        # hurt in the regular case, though, so here we are.
+        body = node.child('body')
+        elseBody = node.child('elseBody')
+        if !body or body.node.expressions.length is 0
+            node.insertAtStart 'body', "undefined"
+        if !elseBody or elseBody.node.expressions.length is 0
+            node.insertAtStart 'elseBody', "undefined"
 
         node.insertAtStart 'body', "#{@_prefix}.b[#{branchId}][0]++"
         node.insertAtStart 'elseBody', "#{@_prefix}.b[#{branchId}][1]++"
