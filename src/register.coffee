@@ -88,7 +88,7 @@ module.exports = (options={}) ->
     if options.basePath and options.initAll
         # Recursively instrument everything in the base path to generate intialization data.
         options.initFileStream = new StringStream()
-        coverage.instrumentDirectory options.basePath, null
+        coverage.instrumentDirectory options.basePath, null, options
         eval options.initFileStream.data
 
     instrumentFile = (fileName) ->
