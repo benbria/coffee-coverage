@@ -89,9 +89,13 @@ module.exports = class SkipVisitor
     _toLocString: (node) ->
         return "#{@fileName} (#{node.locationData.first_line + 1}:#{node.locationData.first_column + 1})"
 
-    # Verify the given node has a `next`.
+    # Get the next non-comment statement.
     _getNext: (node, match, type=null) ->
         next = node.next()
+
+        # Skip over any comments
+        next = next.next() while next?.type is 'Comment'
+
         if !next?
             throw new Error "Pragma '#{match[0]}' at #{@_toLocString node} has no next statement"
         if type? and next.type isnt type

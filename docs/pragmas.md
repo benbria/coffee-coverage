@@ -34,6 +34,18 @@ Note that pragmas MUST be in a block comment, by itself:
     ###
     console.log "This line will be counted as normal, too."
 
+Pragmas will ignore other comment lines, so you can still use JSDoc-like libraries:
+
+    ### !pragma coverage-skip-next ###
+    ###
+    Create a book.
+    @param {string} title - The title of the book.
+    @param {string} author - The author of the book.
+    ###
+    book(title, author) -> ...
+
+Here the pragma will skip the `book` function, and not the comment.
+
 Reference
 =========
 
