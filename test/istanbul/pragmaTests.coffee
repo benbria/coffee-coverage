@@ -16,6 +16,20 @@ module.exports = (run) ->
                 expect(instrumentor.statementMap[1].skip).to.be.true
                 expect(instrumentor.statementMap[2].skip).to.not.exist
 
+        it "should skip statements, even if there's a comment after the pragma", ->
+            ['### !pragma coverage-skip-next ###', '### istanbul ignore next ###'].forEach (skipPragma) ->
+                {instrumentor, result} = run """
+                    console.log "hello"
+                    #{skipPragma}
+                    ### Comment! ###
+                    console.log "world"
+                    console.log "!"
+                """, counts: {f: 0, s: 3, b: {}}
+
+                expect(instrumentor.statementMap[0].skip).to.not.exist
+                expect(instrumentor.statementMap[1].skip).to.be.true
+                expect(instrumentor.statementMap[2].skip).to.not.exist
+
         it "should skip if", ->
             pragmaStyle = """
                 console.log "hello"
