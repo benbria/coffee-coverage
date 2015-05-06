@@ -54,7 +54,7 @@ Skips the enclosing block.  For example:
     else
         server.listen 8080
 
-Or in a switch statement:
+Everything in the `if` case will be skipped.  Or in a switch statement:
 
     port = switch NODE_ENV
         when 'production'
@@ -63,7 +63,7 @@ Or in a switch statement:
         else
             8080
 
-Everything in the `if` case will be skipped.  Note you can skip a whole file by putting a
+Here everything in the `when 'production'` block will be skipped.  Note you can skip a whole file by putting a
 'coverage-skip-block' pragma at the top level of the file.
 
 ### Istanbul Pragmas
