@@ -37,13 +37,13 @@ Note that pragmas MUST be in a block comment, by itself:
 Reference
 =========
 
-### ### !pragma coverage-skip-next ###
+### ### !pragma coverage-skip-next ### ###
 
 Skips the next statement in the current block, and all children of that statement (for example,
 a `### !pragma coverage-skip-next ###` before a `while` statement will make coffee-coverage ignore
 the `while` statement itself, as well as all the statements inside the `while` block.)
 
-### ### !pragma coverage-skip-block ###
+### ### !pragma coverage-skip-block ### ###
 
 Skips the enclosing block.  For example:
 
