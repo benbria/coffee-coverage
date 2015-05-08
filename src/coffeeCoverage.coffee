@@ -15,6 +15,7 @@ coffeeScript = require 'coffee-script'
 _            = require 'lodash'
 
 NodeWrapper                     = require './NodeWrapper'
+{pragmaToHereComment}           = require './utils/codeUtils'
 {mkdirs, statFile, excludeFile} = require './utils/helpers'
 {EXTENSIONS}                    = require './constants'
 SkipVisitor                     = require './SkipVisitor'
@@ -300,6 +301,7 @@ exports._runInstrumentor = (instrumentor, fileName, source, options={}) ->
             literate: /\.(litcoffee|coffee\.md)$/.test(fileName)
         }
 
+        source = pragmaToHereComment source
         tokens = coffeeScript.tokens source, coffeeOptions
 
         # collect referenced variables
