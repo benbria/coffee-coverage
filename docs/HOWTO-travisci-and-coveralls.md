@@ -36,7 +36,7 @@ Create a `.travis.yml` file:
     after_success:
       - 'cat ./coverage/lcov.info | ./node_modules/.bin/coveralls'
 
-Add this line to your .gitignore:
+Add this line to your .gitignore and .npmignore:
 
     /coverage
 

@@ -26,7 +26,7 @@ In `package.json`, add:
         "test": "mocha && istanbul report text-summary lcov"
     }
 
-Add this line to your .gitignore:
+Add this line to your .gitignore and .npmignore:
 
     /coverage
 

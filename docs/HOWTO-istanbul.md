@@ -69,7 +69,7 @@ Save your mocha options in `/test/mocha.opts`:
 In package.json, add:
 
     "scripts": {
-        "test": "mocha && istanbul report"
+        "test": "mocha && istanbul report text-summary lcov"
     }
 
 now you can run `npm test` to run your tests and generate a coverage report.
