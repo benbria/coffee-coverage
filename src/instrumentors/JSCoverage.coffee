@@ -28,11 +28,11 @@ module.exports = class JSCoverage
     # Return default options for this instrumentor.
     @getDefaultOptions: -> {
         path: 'bare'
-        usedFileNames: []
+        usedFileNameMap: {}
         coverageVar: '_$jscoverage'
     }
 
-    # `options` is a `{log, coverageVar, basePath, path, usedFileNames}` object.
+    # `options` is a `{log, coverageVar, basePath, path, usedFileNameMap}` object.
     #
     # * `options.path` should be one of:
     #     * 'relative' - file names will have the `basePath` stripped from them.
@@ -40,9 +40,9 @@ module.exports = class JSCoverage
     #        replaced by the first character in its name.
     #     * 'bare' (default) - Path names will be omitted.  Only the base file name will be used.
     #
-    # * If `options.usedFileNames` is present, it must be an array.  This method will add the
-    #   name of the file to usedFileNames.  If the name of the file is already in usedFileNames
-    #   then this method will generate a unique name.
+    # * If `options.usedFileNameMap` is present, it must be an object.  This method will add a
+    #   mapping from the absolute file path to the short filename in usedFileNameMap. If the name
+    #   of the file is already in usedFileNameMap then this method will generate a unique name.
     #
     constructor: (@fileName, @source, options={}) ->
         {@log, @coverageVar} = options
@@ -53,16 +53,20 @@ module.exports = class JSCoverage
 
         relativeFileName = getRelativeFilename options.basePath, @fileName
 
-        @shortFileName = switch options.path
-            when 'relative' then stripLeadingDotOrSlash relativeFileName
-            when 'abbr' then @_abbreviatedPath stripLeadingDotOrSlash relativeFileName
-            else path.basename relativeFileName
+        @shortFileName = options.usedFileNameMap?[@fileName] || do =>
+            shortFileName = switch options.path
+                when 'relative' then stripLeadingDotOrSlash relativeFileName
+                when 'abbr' then @_abbreviatedPath stripLeadingDotOrSlash relativeFileName
+                else path.basename relativeFileName
 
-        # Generate a unique fileName if required.
-        if options.usedFileNames?
-            if @shortFileName in options.usedFileNames
-                @shortFileName = generateUniqueName options.usedFileNames, @shortFileName
-            options.usedFileNames.push @shortFileName
+            # Generate a unique fileName if required.
+            if options.usedFileNameMap?
+                usedFileNames = _.values options.usedFileNameMap
+                if shortFileName in usedFileNames
+                    shortFileName = generateUniqueName usedFileNames, shortFileName
+                options.usedFileNameMap[@fileName] = shortFileName
+
+            shortFileName
 
         @quotedFileName = toQuotedString @shortFileName
 
