@@ -117,8 +117,7 @@ module.exports = class Istanbul
     constructor: (@fileName, @source, options={}) ->
         {@log, @coverageVar} = options
 
-        # FIXME: Should use sensible default coverageVar
-        assert @coverageVar
+        options = _.defaults {}, options, Istanbul.getDefaultOptions()
 
         @sourceLines = fileToLines @source
 
