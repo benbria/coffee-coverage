@@ -3,7 +3,7 @@ Istanbul and JSCoverage-style instrumentation for CoffeeScript files.
 Benbria CoffeeCoverage
 ======================
 
-[![Codeship Build Status](https://codeship.com/projects/015eb880-d22c-0132-7a3a-16c1124d299d/status?branch=master)](https://www.codeship.io/projects/28495)
+[![Build Status](https://travis-ci.org/benbria/coffee-coverage.svg?branch=master)](https://travis-ci.org/benbria/coffee-coverage)
 [![Coverage Status](https://coveralls.io/repos/benbria/coffee-coverage/badge.svg?branch=master)](https://coveralls.io/r/benbria/coffee-coverage?branch=master)
 [![Dependency Status](https://david-dm.org/benbria/coffee-coverage.svg)](https://david-dm.org/benbria/coffee-coverage)
 [![devDependency Status](https://david-dm.org/benbria/coffee-coverage/dev-status.svg)](https://david-dm.org/benbria/coffee-coverage#info=devDependencies)
