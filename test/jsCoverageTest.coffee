@@ -103,14 +103,14 @@ describe "JSCoverage tests", ->
 
         expect(instrumentor.shortFileName).to.equal 'foo.coffee'
 
-
     it "should generate unique file names", ->
-        usedFileNames = []
+        usedFileNameMap = {}
 
         results = [
             '/foo/bar/baz/foo.coffee'
             '/foo/bar/bak/foo.coffee'
             '/foo/bar/bam/foo.coffee'
+            '/foo/bar/baz/foo.coffee'
         ].map (filename) ->
             run """
                 say "hello world"
@@ -118,7 +118,7 @@ describe "JSCoverage tests", ->
                 l: 1
                 filename,
                 coverageOptions: {
-                    usedFileNames,
+                    usedFileNameMap: usedFileNameMap,
                     basePath: '/foo',
                     path: 'abbr'
                 }
@@ -127,6 +127,7 @@ describe "JSCoverage tests", ->
         expect(results[0].instrumentor.shortFileName).to.equal 'b/b/foo.coffee'
         expect(results[1].instrumentor.shortFileName).to.equal 'b/b/foo.coffee (1)'
         expect(results[2].instrumentor.shortFileName).to.equal 'b/b/foo.coffee (2)'
+        expect(results[3].instrumentor.shortFileName).to.equal 'b/b/foo.coffee'
 
     it "should never instrument the same line twice", ->
         {instrumentor, result} = run """
