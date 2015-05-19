@@ -43,6 +43,7 @@ module.exports = class JSCoverage
     # * If `options.usedFileNameMap` is present, it must be an object.  This method will add a
     #   mapping from the absolute file path to the short filename in usedFileNameMap. If the name
     #   of the file is already in usedFileNameMap then this method will generate a unique name.
+    #   `options.usedFileNames` is the deprecated array version of `usedFileNameMap`.
     #
     constructor: (@fileName, @source, options={}) ->
         {@log, @coverageVar} = options
@@ -60,7 +61,13 @@ module.exports = class JSCoverage
                 else path.basename relativeFileName
 
             # Generate a unique fileName if required.
-            if options.usedFileNameMap?
+            if options.usedFileNames?
+                # `usedFileNames` is deprecated, but prefer it over `userFileNameMap`, since
+                # `usedFileNameMap` will always be present thanks to the defaults.
+                if shortFileName in options.usedFileNames
+                    shortFileName = generateUniqueName options.usedFileNames, shortFileName
+                options.usedFileNames.push shortFileName
+            else if options.usedFileNameMap?
                 usedFileNames = _.values options.usedFileNameMap
                 if shortFileName in usedFileNames
                     shortFileName = generateUniqueName usedFileNames, shortFileName

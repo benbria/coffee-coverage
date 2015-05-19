@@ -156,7 +156,6 @@ class exports.CoverageInstrumentor extends events.EventEmitter
 
         effectiveOptions = getEffectiveOptions options, @defaultOptions
 
-        effectiveOptions.usedFileNameMap = effectiveOptions.usedFileNameMap || {}
         effectiveOptions.basePath = if effectiveOptions.basePath
             path.resolve effectiveOptions.basePath
         else
@@ -258,6 +257,8 @@ class exports.CoverageInstrumentor extends events.EventEmitter
     # * If `options.usedFileNameMap` is present, it must be an object.  This method will add a
     #   mapping from the absolute file path to the short filename in usedFileNameMap. If the name
     #   of the file is already in usedFileNameMap then this method will generate a unique name.
+    #   If `options.usedFileNames` is present, it must be an array - this is the deprecated version
+    #   of `usedFileNameMap`.
     #
     # * If `options.initFileStream` is present, then all global initialization will be written
     #   to `initFileStream.write()`, in addition to being returned.
