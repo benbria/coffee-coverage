@@ -4,6 +4,8 @@ node_js:
   - '0.10'
   - '0.12'
   - 'iojs'
+before_install:
+  - "npm install -g npm@'>=1.4.3'"
 script: ./bin/citest.sh
 after_success:
   - 'cat ./coverage/lcov.info | ./node_modules/.bin/coveralls'

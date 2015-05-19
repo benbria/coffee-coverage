@@ -43,12 +43,12 @@
   },
   "dependencies": {
     "argparse": "^0.1.16",
-    "chai": "^2.3.0",
     "coffee-script": ">=1.6.2",
     "lodash": "^3.7.0",
     "pkginfo": ">=0.2.3"
   },
   "devDependencies": {
+    "chai": "^2.3.0",
     "coveralls": "^2.11.2",
     "istanbul": "^0.3.13",
     "mocha": "^2.1.0",
