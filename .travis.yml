@@ -4,6 +4,8 @@ node_js:
   - '0.10'
   - '0.12'
   - 'iojs'
+# Install latest npm, because node v0.8 comes with npm v1.2.30, which doesn't like `^`s in
+# package.json.
 before_install:
   - "npm install -g npm@'>=1.4.3'"
 script: ./bin/citest.sh
