@@ -148,6 +148,9 @@ module.exports = class Istanbul
     # Called on each non-comment statement within a Block.  If a `visitXXX` exists for the
     # specific node type, it will also be called after `visitStatement`.
     visitStatement: (node) ->
+        # Ignore nodes marked 'noCoverage'
+        return if node.isMarked('noCoverage')
+
         statementId = @statementMap.length + 1
 
         location = nodeToLocation(node)
@@ -177,6 +180,9 @@ module.exports = class Istanbul
             return nodeToLocation(ifNode).end
 
     visitIf: (node) ->
+        # Ignore nodes marked 'noCoverage'
+        return if node.isMarked('noCoverage')
+
         branchId = @branchMap.length + 1
 
         # Make a 0-length `Location` object.
@@ -273,6 +279,9 @@ module.exports = class Istanbul
 
 
     visitSwitch: (node) ->
+        # Ignore nodes marked 'noCoverage'
+        return if node.isMarked('noCoverage')
+
         branchId = @branchMap.length + 1
         locations = []
         locations = node.node.cases.map ([conditions, block]) =>
@@ -319,6 +328,9 @@ module.exports = class Istanbul
             otherwise.insertAtStart 'expressions', "#{@_prefix}.b[#{branchId}][#{index}]++"
 
     visitCode: (node) ->
+        # Ignore nodes marked 'noCoverage'
+        return if node.isMarked('noCoverage')
+
         functionId = @fnMap.length + 1
         paramCount = node.node.params?.length ? 0
         isAssign = node.parent.type is 'Assign' and node.parent.node.variable?.base?.value?
@@ -368,6 +380,9 @@ module.exports = class Istanbul
         node.insertAtStart 'body', "#{@_prefix}.f[#{functionId}]++"
 
     visitClass: (node) ->
+        # Ignore nodes marked 'noCoverage'
+        return if node.isMarked('noCoverage')
+
         functionId = @fnMap.length + 1
 
         if node.node.variable?
