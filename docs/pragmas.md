@@ -78,6 +78,14 @@ Everything in the `if` case will be skipped.  Or in a switch statement:
 Here everything in the `when 'production'` block will be skipped.  Note you can skip a whole file by putting a
 'coverage-skip-block' pragma at the top level of the file.
 
+### ### !pragma no-coverage-next ### ###
+
+This is similar to `coverage-skip-next`, except the affected lines will not only be ignored by
+Istanbul for coverage, the lines will not be instrumented at all.  This is handy when you're
+calling something like [MongoDB's `mapReduce()`](http://docs.mongodb.org/manual/reference/method/db.collection.mapReduce/#mapreduce-reduce-mtd),
+which serializes the function and runs it in some other context, where the global variables used
+for instrumentation do not exist.
+
 ### Istanbul Pragmas
 
 coffee-coverage will respect [Istanbul style pragmas](https://github.com/gotwarlost/istanbul#ignoring-code-for-coverage).
