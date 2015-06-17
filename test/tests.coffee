@@ -97,7 +97,7 @@ describe "Coverage tests", ->
 
         expect( ->
             instrumentor.instrumentCoffee("example.coffee", source).js
-        ).to.throw(/^Could not parse example.coffee.*/)
+        ).to.throw(/Could not parse example.coffee.*/)
 
     it "should throw an error if an invalid instrumentor is specified", ->
         expect( ->
