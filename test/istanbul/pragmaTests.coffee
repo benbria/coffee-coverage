@@ -16,6 +16,17 @@ module.exports = (run) ->
                 expect(instrumentor.statementMap[1].skip).to.be.true
                 expect(instrumentor.statementMap[2].skip).to.not.exist
 
+        it "should not instrument statements", ->
+            {instrumentor, result} = run """
+                console.log "hello"
+                ### !pragma no-coverage-next ###
+                console.log "world"
+                console.log "!"
+            """, counts: {f: 0, s: 2, b: {}}
+
+            expect(instrumentor.statementMap[0].skip).to.not.exist
+            expect(instrumentor.statementMap[1].skip).to.not.exist
+
         it "should skip statements, even if there's a comment after the pragma", ->
             ['### !pragma coverage-skip-next ###', '### istanbul ignore next ###'].forEach (skipPragma) ->
                 {instrumentor, result} = run """
@@ -94,6 +105,20 @@ module.exports = (run) ->
                 expect(instrumentor.branchMap[0].locations[0].skip, "#{name}-b0").to.not.exist
                 expect(instrumentor.branchMap[0].locations[1].skip, "#{name}-b1").to.be.true
 
+        it "should not instrument if", ->
+            {instrumentor, result} = run """
+                console.log "hello"
+                ### !pragma no-coverage-next ###
+                if x
+                    console.log "world"
+                else
+                    console.log "bar"
+                console.log "!"
+            """, counts: {f: 0, s: 2, b: {}}
+
+            expect(instrumentor.statementMap[0].skip).to.not.exist
+            expect(instrumentor.statementMap[1].skip).to.not.exist
+
         it "should skip branches and contents of an `if` when the whole `if` is skipped", ->
             ['### !pragma coverage-skip-next ###', '### istanbul ignore next ###'].forEach (skipPragma) ->
                 {instrumentor, result} = run """
@@ -148,6 +173,20 @@ module.exports = (run) ->
                 instrumentor.branchMap[0].locations.forEach (l, i) ->
                     expect(l.skip, "b0l#{i}").to.be.true
 
+        it "should not instrument switch", ->
+            {instrumentor, result} = run """
+                console.log "hello"
+                ### !pragma no-coverage-next ###
+                switch x
+                    when 0 then console.log "world"
+                    when 1 then console.log "shazam"
+                    else console.log "boom"
+                console.log "!"
+            """, counts: {f: 0, s: 2, b: {}}
+
+            expect(instrumentor.statementMap[0].skip).to.not.exist
+            expect(instrumentor.statementMap[1].skip).to.not.exist
+
         it "should skip a function correctly", ->
             ['### !pragma coverage-skip-next ###', '### istanbul ignore next ###'].forEach (skipPragma) ->
                 {instrumentor, result} = run """
@@ -161,6 +200,18 @@ module.exports = (run) ->
                 instrumentor.statementMap[1..2].forEach (s, i) -> expect(s.skip, "s#{i+1}").to.be.true
 
                 expect(instrumentor.fnMap[0].skip).to.be.true
+
+        it "should not instrument a function", ->
+            {instrumentor, result} = run """
+                console.log "hello"
+                ### !pragma no-coverage-next ###
+                a = ->
+                    console.log "foo"
+                console.log "!"
+            """, counts: {f: 0, s: 2, b: {}}
+
+            expect(instrumentor.statementMap[0].skip).to.not.exist
+            expect(instrumentor.statementMap[1].skip).to.not.exist
 
         it "should skip a branch in a switch statement", ->
             {instrumentor, result} = run """
@@ -201,6 +252,19 @@ module.exports = (run) ->
 
                 expect(instrumentor.fnMap[0].skip).to.not.exist
                 expect(instrumentor.fnMap[1].skip).to.be.true
+
+        it "should not instrument a function", ->
+            {instrumentor, result} = run """
+                console.log "hello"
+                ### !pragma no-coverage-next ###
+                class Foo
+                    a: ->
+                        console.log "foo"
+                console.log "!"
+            """, counts: {f: 0, s: 2, b: {}}
+
+            expect(instrumentor.statementMap[0].skip).to.not.exist
+            expect(instrumentor.statementMap[1].skip).to.not.exist
 
         it "should throw an error when a pragma is at the end of a block or file", ->
             expect ->

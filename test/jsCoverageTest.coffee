@@ -9,6 +9,7 @@ coffeeCoverage      = require "../src/coffeeCoverage"
 FILENAME = "example.coffee"
 
 checkLinesAreCovered = (code, lineNumbers, filename) ->
+    if !_.isArray(lineNumbers) then lineNumbers = [lineNumbers]
     lineNumbers.forEach (l) ->
         expect(code, "line #{l} should be instrumented")
         .to.contain "#{COVERAGE_VAR}[\"#{filename}\"][#{l}]++;"
@@ -19,8 +20,8 @@ run = (source, options={}) ->
     instrumentor = new JSCoverage(filename, source, coverageOptions)
     result = coffeeCoverage._runInstrumentor instrumentor, filename, source, {log}
 
-    if options.counts?.l
-        checkLinesAreCovered result.js, options.counts.l, instrumentor.shortFileName
+    if options.l
+        checkLinesAreCovered result.js, options.l, instrumentor.shortFileName
 
     return {instrumentor, result}
 
@@ -171,7 +172,18 @@ describe "JSCoverage tests", ->
             ### !pragma coverage-skip-next ###
             console.log "world"
             console.log "!"
-        """, {l: 1, 4}
+        """, {l: [1, 4]}
+
+        expect(result.js, "line 3 should not be instrumented")
+        .to.not.contain "#{COVERAGE_VAR}[\"#{FILENAME}\"][3]++;"
+
+    it "should not instrument statements with '!pragma no-coverage-next' pragmas", ->
+        {instrumentor, result} = run """
+            console.log "hello"
+            ### !pragma no-coverage-next ###
+            console.log "world"
+            console.log "!"
+        """, {l: [1, 4]}
 
         expect(result.js, "line 3 should not be instrumented")
         .to.not.contain "#{COVERAGE_VAR}[\"#{FILENAME}\"][3]++;"

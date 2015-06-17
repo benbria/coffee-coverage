@@ -40,6 +40,16 @@ PRAGMAS = [
                     ifNode.mark 'skipElse', true
     }
 
+    # '!pragma no-coverage-next'
+    #
+    # Mark the next node and all descendants as `noCoverage`.
+    {
+        regex: /^!pragma\s+no-coverage-next$/
+        fn: (self, node, match, options={}) ->
+            next = self._getNext(node, match)
+            next.markAll 'noCoverage', true
+    }
+
     # 'istanbul ignore if'
     #
     # Must be before an `If` statement.  Mark the `If` as `skipIf`, and mark all children in
@@ -65,7 +75,6 @@ PRAGMAS = [
     }
 
 ]
-
 
 module.exports = class SkipVisitor
     constructor: (@fileName) ->

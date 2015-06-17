@@ -112,7 +112,7 @@ module.exports = class JSCoverage
     # specific node type, it will also be called after `visitStatement`.
     visitStatement: (node) ->
         # Don't instrument skipped lines.
-        return if node.node.coffeeCoverage?.skip
+        return if node.isMarked('skip') or node.isMarked('noCoverage')
 
         line = node.locationData.first_line + 1
 
