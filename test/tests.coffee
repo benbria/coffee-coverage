@@ -99,6 +99,23 @@ describe "Coverage tests", ->
             instrumentor.instrumentCoffee("example.coffee", source).js
         ).to.throw(/Could not parse example.coffee.*/)
 
+    it "should throw an error if source folder does not exist", ->
+        instrumentor = new coffeeCoverage.CoverageInstrumentor({
+            coverageVar: COVERAGE_VAR
+            log: log
+        })
+        source = """
+            waka { waka
+        """
+
+        expect( ->
+            instrumentor.instrument("./i.do.not.exist", "/tmp/t", {})
+        ).to.throw(/Source file .*i\.do\.not\.exist does not exist/)
+
+        expect( ->
+            instrumentor.instrumentCoffee("example.coffee", source).js
+        ).to.throw(/Could not parse example.coffee.*/)
+
     it "should throw an error if an invalid instrumentor is specified", ->
         expect( ->
             instrumentor = new coffeeCoverage.CoverageInstrumentor({

@@ -127,10 +127,12 @@ exports.main = (args) ->
         options.basePath = path.resolve options.basePath
 
         result = coverageInstrumentor.instrument options.src, options.dest, options
-
         options.initFileStream?.end()
 
-        console.log "Instrumented #{result.lines} lines."
+        if !result
+            console.error "#{options.src} does not exist."
+        else
+            console.log "Instrumented #{result.lines} lines."
 
     catch err
         if err.constructor.name == "CoverageError"

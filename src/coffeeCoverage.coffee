@@ -75,6 +75,8 @@ class exports.CoverageInstrumentor extends events.EventEmitter
             if sourceStat.isDirectory() and outStat.isFile()
                 throw new CoverageError("Refusing to overwrite file #{out} with directory.")
 
+        return {sourceStat, outStat}
+
     #### Instrument a file or directory.
     #
     # This calls @instrumentFile or @instrumentDirectory, depending on whether "source" is
@@ -105,8 +107,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
     #
     # Throws CoverageError if there is a problem with the `source` or `out` parameters.
     instrument: (source, out, options = {}) ->
-        validateSrcDest source, out
-        sourceStat = statFile source
+        {sourceStat} = validateSrcDest source, out
         if sourceStat.isFile()
             return @instrumentFile source, out, options
         else if sourceStat.isDirectory()
@@ -148,9 +149,13 @@ class exports.CoverageInstrumentor extends events.EventEmitter
     # Returns an object consisting of:
     #  - `lines` - the total number of instrumented lines.
     #
+    # Returns null if `sourceDirectory` does not exist.
+    #
     instrumentDirectory: (sourceDirectory, outDirectory, options={}) ->
         # Turn the source directory into an absolute path
         sourceDirectory = path.resolve sourceDirectory
+        sourceDirectoryStat = statFile sourceDirectory
+        if !sourceDirectoryStat then return null
 
         @emit "instrumentingDirectory", sourceDirectory, outDirectory
 
@@ -168,7 +173,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
         # Make sure the directory names end in "/"
         if !_.endsWith sourceDirectory, path.sep
             sourceDirectory += path.sep
-        sourceDirectoryMode = (statFile sourceDirectory).mode
+        sourceDirectoryMode = sourceDirectoryStat.mode
 
         if outDirectory
             if !_.endsWith outDirectory, path.sep
@@ -186,13 +191,17 @@ class exports.CoverageInstrumentor extends events.EventEmitter
                 @emit "skip", sourceDirectory + file
                 continue
 
-            outFile = if outDirectory then outDirectory + file else null
-
             sourceStat = statFile sourceFile
+            if !sourceStat
+                # Can happen if file or folder is deleted while we're instrumenting.
+                # Also, see https://github.com/benbria/coffee-coverage/issues/54.
+                continue
+
+            outFile = if outDirectory then outDirectory + file else null
 
             if effectiveOptions.recursive and sourceStat.isDirectory()
                 inst = @instrumentDirectory sourceFile, outFile, effectiveOptions
-                answer.lines += inst.lines
+                answer.lines += inst?.lines ? 0
             else
                 processed = false
                 for coffee_extension of EXTENSIONS
@@ -208,7 +217,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
                         # Replace the ".(lit)coffee(.md)" extension with a ".js" extension
                         outFile = @getOutputFileName outFile
                         inst = @instrumentFile sourceFile, outFile, effectiveOptions
-                        answer.lines += inst.lines
+                        answer.lines += inst?.lines ? 0
                         processed = true
                         break
 
