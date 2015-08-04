@@ -46,6 +46,7 @@ Tutorials:
 
 * [Mocha and Istanbul Guide](./docs/HOWTO-istanbul.md)
 * [Mocha and JSCoverage Guide](./docs/HOWTO-jscoverage.md)
+* [Istanbul and Tape Guide](./docs/HOWTO-tape-not-mocha.md) courtesy [@jessaustin](https://github.com/jessaustin).
 * [Codeship and Coveralls](./docs/HOWTO-codeship-and-coveralls.md)
 * [Travis-CI and Coveralls](./docs/HOWTO-travisci-and-coveralls.md)
 * [Ignoring code with Pragmas](./docs/pragmas.md)
