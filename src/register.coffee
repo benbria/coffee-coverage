@@ -46,9 +46,14 @@ class StringStream
 # * `options.writeOnExit` - A file to write a JSON coverage file to on completion.  This will
 #   stringify the variable set in `options.coverageVar` and write it to disk.
 #
-# * `options.streamlinejs` - Enable support for streamlinejs.  You can either pass `true`
+# * `options.streamlinejs` - (deprecated) Enable support for streamlinejs < 1.x.  You can either pass `true`
 #   here, or a set of options to pass on to
-#   [transform](https://github.com/Sage/streamlinejs/blob/master/lib/callbacks/transform.md).
+#   [transform](https://github.com/Sage/streamlinejs/blob/e10906d6cd/lib/callbacks/transform.md).
+#
+# * `options.postProcessors` - New way of compiling source after it has been coffee compiled and instrumented. Can apply
+#   something like the streamline compiler. This puts all the power in the consumer's hands and allows for more
+#   flexibility. Pass an array of objects of the form `{ext: '._coffee', fn: (compiled, fileName) -> }`. The `fn` will
+#   be passed the coffee compiled/instrumented source, and the full path to the file.
 #
 # * `options.cachePath` - A folder to write instrumented code to.  Subsequent runs will load
 #   instrumented code from the cache if the source files haven't changed.  This is recommended
@@ -65,7 +70,8 @@ module.exports = (options={}) ->
         initFileStream: null
         initAll: false
         writeOnExit: null
-        streamlinejs: false
+        streamlinejs: false # deprecated
+        postProcessors: []
         cachePath: null
     }
 
@@ -109,8 +115,15 @@ module.exports = (options={}) ->
     replaceHandler ".litcoffee"
     replaceHandler ".coffee.md"
 
+    # legacy option for `streamlinejs` < 1.x.
+    # NOTE: deprecated. Use `options.postProcessors` instead.
     if options.streamlinejs
-        streamlineTransform = require 'streamline/lib/callbacks/transform'
+        console.warn "\noptions.streamlinejs is deprecated. Please use options.postProcessors\n"
+        try
+            streamlineTransform = require 'streamline/lib/callbacks/transform'
+        catch err
+            throw new Error "Could not load streamline transformer < 1.x"
+
         origStreamineCoffeeHandler = require.extensions["._coffee"]
 
         require.extensions["._coffee"] = (module, fileName) ->
@@ -125,6 +138,27 @@ module.exports = (options={}) ->
                 return transformed
 
             module._compile transformed, fileName
+
+    # setup any custom post processors
+    if _.isArray(options.postProcessors) and options.postProcessors.length
+        options.postProcessors.forEach (processorOpts={}) ->
+            {ext, fn} = processorOpts
+            if !(_.isString(ext) and _.isFunction(fn))
+                return
+            else if "._coffee" is ext and options.streamlinejs
+                return
+
+            originalHandler = require.extensions[ext]
+
+            require.extensions[ext] = (module, fileName) ->
+                if excludeFile fileName, options
+                    return originalHandler.call this, module, fileName
+
+                processed = compiledCache.get fileName, ->
+                    compiled = instrumentFile fileName
+                    fn(compiled, fileName)
+
+                module._compile processed, fileName
 
     if options.writeOnExit
         process.on 'exit', ->
