@@ -1,5 +1,8 @@
 # coffee-coverage Changelog
 
+### v0.7.0
+  - [#64: Add `postProcessors` option to `register()`](https://github.com/benbria/coffee-coverage/pull/64) and deprecate `streamlinejs` option.
+
 ### v0.5.3
   - [#42: Fix the 0% coverage for files that are never loaded](https://github.com/benbria/coffee-coverage/pull/42)
 
