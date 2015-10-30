@@ -1,6 +1,8 @@
-path = require 'path'
-assert = require 'assert'
-{expect} = require 'chai'
+path        = require 'path'
+assert      = require 'assert'
+{expect}    = require 'chai'
+sinon       = require 'sinon'
+
 coffeeCoverage = require("../src/index")
 
 dummyJsFile = path.resolve __dirname, "../testFixtures/testWithConfig/dummy.js"
@@ -124,3 +126,45 @@ describe "Coverage tests", ->
                 instrumentor: 'foo'
             })
         ).to.throw()
+
+    it "should process a streamline file < 1.x", ->
+        sinon.spy console, 'warn'
+        haveOldStreamline = try require 'streamline/lib/callbacks/transform'
+
+        if !haveOldStreamline
+            console.warn "Can only run old streamline test if old streamline is installed"
+            return
+
+        coffeeCoverage.register(
+            path: "relative"
+            basePath: path.resolve __dirname, '../testFixtures/streamlineFiles'
+            coverageVar: COVERAGE_VAR
+            log: log
+            streamlinejs: true
+        )
+
+        require '../testFixtures/streamlineFiles/foo._coffee'
+
+        expect(global[COVERAGE_VAR]['foo._coffee']).to.exist
+        sinon.assert.callCount(console.warn, 1)
+        console.warn.restore()
+
+    it "should post process a file", ->
+        postProcessors = [{
+            ext: '._fake'
+            fn: sinon.spy (compiled, fileName) ->
+                compiled += "exports.baz = function() {return 5;}"
+        }]
+
+        coffeeCoverage.register(
+            path: "relative"
+            basePath: path.resolve __dirname, '../testFixtures/streamlineFiles'
+            coverageVar: COVERAGE_VAR
+            log: log
+            postProcessors: postProcessors
+        )
+
+        bar = require '../testFixtures/streamlineFiles/bar._fake'
+
+        sinon.assert.callCount(postProcessors[0].fn, 1)
+        expect(bar.baz()).to.eq 5
