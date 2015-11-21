@@ -29,13 +29,14 @@ Quick Start
 Assuming you have a folder named "test" full of mocha tests, which directly loads your .coffee
 files, then from your project's folder, run:
 
-    npm install --save-dev coffee-coverage
-    npm install --save-dev istanbul
-    mocha --recursive \
-          --compilers coffee:coffee-script/register \
-          --require coffee-coverage/register-istanbul \
-          test
-    ./node_modules/.bin/istanbul report
+```bash
+
+$ npm install --save-dev coffee-coverage
+$ npm install --save-dev istanbul
+$ mocha --recursive --compilers coffee:coffee-script/register --require coffee-coverage/register-istanbul test
+
+$ ./node_modules/.bin/istanbul report
+```
 
 You should now have an Istanbul coverage report in ./coverage/lcov-report/index.html.
 
