@@ -85,8 +85,8 @@ describe "Coverage tests", ->
         require '../testFixtures/testWithExcludes/b/bar.coffee'
 
         expect(global[COVERAGE_VAR], "Code should have been instrumented").to.exist
-        expect(global[COVERAGE_VAR]['a/foo.coffee'], "Should instrument a/foo.coffee").to.exist
-        expect(global[COVERAGE_VAR]['b/bar.coffee'], "Should not instrument b/bar.coffee").to.not.exist
+        expect(global[COVERAGE_VAR][pn 'a/foo.coffee'], "Should instrument a/foo.coffee").to.exist
+        expect(global[COVERAGE_VAR][pn 'b/bar.coffee'], "Should not instrument b/bar.coffee").to.not.exist
 
     it "should handle nested recursion correctly", ->
         # From https://github.com/benbria/coffee-coverage/pull/37
