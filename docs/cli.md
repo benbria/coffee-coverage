@@ -62,6 +62,10 @@ with:
 
     coffeeCoverage --exclude 'node_modules,.git,test' ...
 
+You can also use globs. If you have your specs next to your code you might e.g. use:
+
+    coffeeCoverage --exclude 'node_modules,.git,**/*.spec.coffee'
+
 #### --path
 
 Only used when `--inst jscoverage` is specified.  Path can be given one of three different
