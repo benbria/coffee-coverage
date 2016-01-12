@@ -3,7 +3,7 @@ assert      = require 'assert'
 {expect}    = require 'chai'
 sinon       = require 'sinon'
 
-pn = path.normalize
+pn = (pth) -> pth.split('/').join(path.sep)
 
 coffeeCoverage = require("../src/index")
 

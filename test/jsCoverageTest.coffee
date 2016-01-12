@@ -8,7 +8,7 @@ coffeeCoverage      = require "../src/coffeeCoverage"
 
 FILENAME = "example.coffee"
 
-pn = path.normalize
+pn = (pth) -> pth.split('/').join(path.sep)
 
 checkLinesAreCovered = (code, lineNumbers, filename) ->
     normalizedFilename = filename.replace /\\/g, "\\\\"
