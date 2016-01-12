@@ -45,6 +45,7 @@
     "argparse": "^1.0.2",
     "coffee-script": ">=1.6.2",
     "lodash": "^3.7.0",
+    "glob": "^6.0.4",
     "pkginfo": ">=0.2.3"
   },
   "devDependencies": {
