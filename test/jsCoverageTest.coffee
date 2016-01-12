@@ -8,11 +8,15 @@ coffeeCoverage      = require "../src/coffeeCoverage"
 
 FILENAME = "example.coffee"
 
+pn = path.normalize
+
 checkLinesAreCovered = (code, lineNumbers, filename) ->
+    normalizedFilename = filename.replace /\\/g, "\\\\"
+
     if !_.isArray(lineNumbers) then lineNumbers = [lineNumbers]
     lineNumbers.forEach (l) ->
         expect(code, "line #{l} should be instrumented")
-        .to.contain "#{COVERAGE_VAR}[\"#{filename}\"][#{l}]++;"
+        .to.contain "#{COVERAGE_VAR}[\"#{normalizedFilename}\"][#{l}]++;"
 
 run = (source, options={}) ->
     filename = options.filename ? FILENAME
@@ -75,7 +79,7 @@ describe "JSCoverage tests", ->
             }
         }
 
-        expect(instrumentor.shortFileName).to.equal 'b/b/foo.coffee'
+        expect(instrumentor.shortFileName).to.equal pn 'b/b/foo.coffee'
 
     it "should generate relative file names", ->
         {instrumentor, result} = run """
@@ -89,7 +93,7 @@ describe "JSCoverage tests", ->
             }
         }
 
-        expect(instrumentor.shortFileName).to.equal 'bar/baz/foo.coffee'
+        expect(instrumentor.shortFileName).to.equal pn 'bar/baz/foo.coffee'
 
     it "should generate bare file names", ->
         {instrumentor, result} = run """
@@ -124,9 +128,9 @@ describe "JSCoverage tests", ->
                 }
             }
 
-        expect(results[0].instrumentor.shortFileName).to.equal 'b/b/foo.coffee'
-        expect(results[1].instrumentor.shortFileName).to.equal 'b/b/foo.coffee (1)'
-        expect(results[2].instrumentor.shortFileName).to.equal 'b/b/foo.coffee (2)'
+        expect(results[0].instrumentor.shortFileName).to.equal pn 'b/b/foo.coffee'
+        expect(results[1].instrumentor.shortFileName).to.equal pn 'b/b/foo.coffee (1)'
+        expect(results[2].instrumentor.shortFileName).to.equal pn 'b/b/foo.coffee (2)'
 
 
     it "should generate unique file names (usedFileNameMap)", ->
@@ -150,10 +154,10 @@ describe "JSCoverage tests", ->
                 }
             }
 
-        expect(results[0].instrumentor.shortFileName).to.equal 'b/b/foo.coffee'
-        expect(results[1].instrumentor.shortFileName).to.equal 'b/b/foo.coffee (1)'
-        expect(results[2].instrumentor.shortFileName).to.equal 'b/b/foo.coffee (2)'
-        expect(results[3].instrumentor.shortFileName).to.equal 'b/b/foo.coffee'
+        expect(results[0].instrumentor.shortFileName).to.equal pn 'b/b/foo.coffee'
+        expect(results[1].instrumentor.shortFileName).to.equal pn 'b/b/foo.coffee (1)'
+        expect(results[2].instrumentor.shortFileName).to.equal pn 'b/b/foo.coffee (2)'
+        expect(results[3].instrumentor.shortFileName).to.equal pn 'b/b/foo.coffee'
 
     it "should never instrument the same line twice", ->
         {instrumentor, result} = run """
@@ -192,18 +196,18 @@ describe "JSCoverage tests", ->
         testInstance = new JSCoverage("test.coffee", "")
 
         it 'should work for files', ->
-            expect(testInstance._abbreviatedPath('foo/bar/baz.coffee')).to.equal 'f/b/baz.coffee'
+            expect(testInstance._abbreviatedPath(pn 'foo/bar/baz.coffee')).to.equal pn 'f/b/baz.coffee'
 
         it 'should work for directories', ->
-            expect(testInstance._abbreviatedPath('foo/bar/baz/')).to.equal 'f/b/baz/'
+            expect(testInstance._abbreviatedPath(pn 'foo/bar/baz/')).to.equal pn 'f/b/baz/'
 
         it 'should work for absolute paths', ->
-            expect(testInstance._abbreviatedPath('/foo/bar/baz.coffee')).to.equal '/f/b/baz.coffee'
+            expect(testInstance._abbreviatedPath(pn '/foo/bar/baz.coffee')).to.equal pn '/f/b/baz.coffee'
 
         it 'should work for paths containing "." and ".."', ->
             # Is this really desired behavior?
-            expect(testInstance._abbreviatedPath('/foo/bar/../qux/baz.coffee')).to.equal '/f/b/../q/baz.coffee'
-            expect(testInstance._abbreviatedPath('/foo/bar/./qux/baz.coffee')).to.equal '/f/b/./q/baz.coffee'
+            expect(testInstance._abbreviatedPath(pn '/foo/bar/../qux/baz.coffee')).to.equal pn '/f/b/../q/baz.coffee'
+            expect(testInstance._abbreviatedPath(pn '/foo/bar/./qux/baz.coffee')).to.equal pn '/f/b/./q/baz.coffee'
 
         it 'should work for unix-style hidden folders', ->
-            expect(testInstance._abbreviatedPath('/foo/bar/.bat/baz.coffee')).to.equal '/f/b/.b/baz.coffee'
+            expect(testInstance._abbreviatedPath(pn '/foo/bar/.bat/baz.coffee')).to.equal pn '/f/b/.b/baz.coffee'
