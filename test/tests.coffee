@@ -42,7 +42,7 @@ describe "Coverage tests", ->
         coffeeCoverage.register(
             path: "relative"
             basePath: path.resolve __dirname, '../testFixtures/testWithExcludes'
-            exclude: ["/b"]
+            exclude: ["/b/*"]
             coverageVar: COVERAGE_VAR
             log: log
         )
@@ -59,7 +59,7 @@ describe "Coverage tests", ->
         coffeeCoverage.register(
             path: "relative"
             basePath: path.resolve __dirname, '../testFixtures/testWithExcludes'
-            exclude: ["b"]
+            exclude: ["b/*"]
             coverageVar: COVERAGE_VAR
             log: log
         )

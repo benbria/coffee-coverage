@@ -8,7 +8,7 @@ _ = require 'lodash'
 
 {CoverageInstrumentor, version} = require './index'
 {INSTRUMENTORS} = require './coffeeCoverage'
-{stripLeadingDotOrSlash, mkdirs} = require './utils/helpers'
+{stripLeadingDotOrSlash, mkdirs, deglob} = require './utils/helpers'
 
 DEFAULT_INSTRUMENTOR = 'jscoverage'
 
@@ -89,7 +89,7 @@ parseArgs = (args) ->
 
     # Split exclude into an array.
     if options.exclude
-        options.exclude = options.exclude.split ","
+        options.exclude = options.exclude.split(",")
     else
         options.exclude = []
 
@@ -125,6 +125,7 @@ exports.main = (args) ->
 
         options.basePath ?= process.cwd()
         options.basePath = path.resolve options.basePath
+        options.exclude = deglob options.exclude, options.basePath
 
         result = coverageInstrumentor.instrument options.src, options.dest, options
         options.initFileStream?.end()
