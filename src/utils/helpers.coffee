@@ -70,6 +70,7 @@ exports.excludeFile = (fileName, options) ->
             glob.sync pattern,
                 dot: true
                 cwd: basePath
+                root: basePath
             .forEach (file) ->
                 if relativeFilename is path.normalize file
                     excluded = true
