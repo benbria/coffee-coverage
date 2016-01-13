@@ -75,7 +75,14 @@ exports.deglob = (globs, basePath) ->
 exports.excludeFile = (fileName, options) ->
     resolvedFileName = path.resolve fileName
     assert resolvedFileName is fileName
-    return fileName in (options.exclude or [])
+    excluded = fileName in (options.exclude or [])
+
+    # If the file is in a folder which is excluded, then exclude the file.
+    if !excluded
+        options.exclude.forEach (exclude) ->
+            if _.startsWith fileName, "#{exclude}/" then excluded = true
+
+    return excluded
 
 # Takes in a string, and returns a quoted string with any \s and "s in the string escaped to be
 # JS friendly.
