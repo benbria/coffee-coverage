@@ -12,7 +12,7 @@
     "jscoverage",
     "coveralls"
   ],
-  "version": "0.7.0",
+  "version": "1.0.0",
   "author": "Benbria (http://www.benbria.com/)",
   "contributors": [
     "Jason Walton <dev@lucid.thedreaming.org> (https://github.com/jwalton)",
