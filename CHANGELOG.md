@@ -1,5 +1,11 @@
 # coffee-coverage Changelog
 
+### v1.0.0
+  - [#71: Accept globs as excludes](https://github.com/benbria/coffee-coverage/pull/71) Many thanks to
+    [dbartholomae](https://github.com/dbartholomae) for this much requested feature.  Note that excludes will still
+    match if they are prefixes (so you can still use /node_modules to eliminate everything in the /node_modules
+    folder), but you can also use globs here.
+
 ### v0.7.0
   - [#64: Add `postProcessors` option to `register()`](https://github.com/benbria/coffee-coverage/pull/64) and deprecate `streamlinejs` option.
 
@@ -107,6 +113,3 @@ Breaking changes:
  - Added '-i' option to specify an 'init' file.
  - Changed return value of CoverageInstrumentor.instrumentCoffee - now returns an
    "init" and a "js" which must be concatenated to get fully instrumented source.
-
-
-
