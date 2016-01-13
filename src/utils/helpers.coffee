@@ -3,6 +3,7 @@ fs           = require 'fs'
 path         = require 'path'
 _            = require 'lodash'
 {EXTENSIONS} = require '../constants'
+glob         = require 'glob'
 
 exports.stripLeadingDotOrSlash = (pathName) -> pathName.replace(/^\//, "").replace(/^\.\//, "")
 
@@ -63,6 +64,15 @@ exports.excludeFile = (fileName, options) ->
         if relativeFilename == fileName
             # Only instrument files that are inside the project.
             excluded = true
+
+        # For each exclude value try to use it as a pattern to exclude files
+        exclude.map (pattern) ->
+            glob.sync pattern,
+                dot: true
+                cwd: basePath
+            .forEach (file) ->
+                if relativeFilename is path.normalize file
+                    excluded = true
 
         components = relativeFilename.split path.sep
         for component in components
