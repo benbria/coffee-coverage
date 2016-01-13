@@ -4,9 +4,10 @@ _              = require 'lodash'
 
 coffeeCoverage = require './coffeeCoverage'
 CompiledCache  = require './CompiledCache'
+{deglob}       = require './utils/helpers'
 
 class StringStream
-    constructor: () ->
+    constructor: ->
         @data = ""
 
     write: (data) ->
@@ -30,7 +31,9 @@ class StringStream
 #   coverage data in. The default coverage variable depends on the `options.instrumentor` used.
 #
 # * `options.exclude` is an array of files and directories to ignore.  For example, ['/test'] would
-#   ignore all files in the test folder.  Defaults to [].
+#   ignore all files in the test folder.  Defaults to [].  You may include glob patterns in
+#   this list of options.  If `options.basePath` is provided, then excludes are evaluated relative to
+#   the basePath, otherwise to the current working directory.
 #
 # * `options.basePath` the root folder for your project.  If provided, then all excludes will be
 #   evaluated relative to this base path. For example, if `options.exclude` is `['/a/b']`, and
@@ -87,9 +90,12 @@ module.exports = (options={}) ->
     if options.basePath then options.basePath = path.resolve options.basePath
     if options.cachePath then options.cachePath = path.resolve options.cachePath
 
+    # Do glob processing here.
+    options.exclude = deglob options.exclude, options.basePath
+
     compiledCache = new CompiledCache(options.basePath, options.cachePath)
     coverage = new coffeeCoverage.CoverageInstrumentor options
-    module = require('module');
+    module = require('module')
 
     if options.basePath and options.initAll
         # Recursively instrument everything in the base path to generate intialization data.

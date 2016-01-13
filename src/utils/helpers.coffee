@@ -45,53 +45,42 @@ exports.getRelativeFilename = (basePath, fileName) ->
         fileName = path.relative basePath, fileName
     return fileName
 
+# Given an array of globs, returns an array of files which match any glob.  Returned list will be fully resolved paths.
+exports.deglob = (globs, basePath) ->
+    cwd = basePath ? process.cwd()
+    globOptions = {
+        cwd: cwd
+        # Set `root` here, because this makes it work the way it did pre-glob.  This is also consistent
+        # with the behavior of .npmingore and .gitignore.
+        root: cwd
+        dot: true
+    }
+
+    result = globs.map (pattern) ->
+        glob.sync(pattern, globOptions)
+        .map (val) ->
+            # If someone provides a path like "/test" then glob will resolve it for us, but if someone
+            # provides a path like "test" then glob will leave it as a relative path.  Resolve everything
+            # to canonical paths here.
+            path.resolve cwd, val
+
+    result = _.flatten result
+    return _.unique result
+
 # Return true if we should exclude a file.
 #
 # `fileName` should be a resolved path (e.g. /users/jwalton/projects/foo/src/blah.coffee)
+# `options.exclude` should be an array of resolved paths to exclude.
 #
 exports.excludeFile = (fileName, options) ->
-    basePath = options.basePath
-    exclude = options.exclude
-
     resolvedFileName = path.resolve fileName
     assert resolvedFileName is fileName
+    excluded = fileName in (options.exclude or [])
 
-    return if !exclude
-
-    excluded = false
-    if basePath
-        relativeFilename = exports.getRelativeFilename basePath, fileName
-        if relativeFilename == fileName
-            # Only instrument files that are inside the project.
-            excluded = true
-
-        # For each exclude value try to use it as a pattern to exclude files
-        exclude.map (pattern) ->
-            glob.sync pattern,
-                dot: true
-                cwd: basePath
-            .forEach (file) ->
-                if relativeFilename is path.normalize file
-                    excluded = true
-
-        components = relativeFilename.split path.sep
-        for component in components
-            if component in exclude
-                excluded = true
-
-        if !excluded
-            for excludePath in exclude
-                # Allow `exlude` paths to start with /s or not.
-                if _.startsWith("/#{relativeFilename}", excludePath) or _.startsWith(relativeFilename, excludePath)
-                    excluded = true
-
-    if !excluded and (not path.extname(fileName) in Object.keys(EXTENSIONS))
-        excluded = true
-
+    # If the file is in a folder which is excluded, then exclude the file.
     if !excluded
-        for excludePath in exclude
-            if _.startsWith fileName, excludePath
-                excluded = true
+        options.exclude.forEach (exclude) ->
+            if _.startsWith fileName, "#{exclude}/" then excluded = true
 
     return excluded
 
