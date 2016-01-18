@@ -3,11 +3,29 @@ fs                  = require 'fs'
 {expect}            = require 'chai'
 sinon               = require 'sinon'
 _                   = require 'lodash'
+Benchmark           = require 'benchmark'
 
 helpers             = require "../../src/utils/helpers"
 testUtils           = require '../utils'
 
 describe 'helpers', ->
+    before ->
+        Benchmark.options.maxTime = 1
+
+    it "should exclude files quickly", (done) ->
+        @timeout 20000
+        fileName = path.resolve __dirname, '../../node_modules/mocha/index.js'
+        options =
+            basePath: path.resolve __dirname, '../../'
+            exclude: ['node_modules/**/*']
+
+        new Benchmark.Suite()
+        .add -> helpers.excludeFile(fileName, options)
+        .on 'complete', (result) ->
+            expect(result.currentTarget[0].stats.mean).to.be.below 0.00004
+            done()
+        .run()
+
     testUtils.when(fs.existsSync '/tmp')
     .describe 'statFile', ->
         it 'should find /tmp', ->
