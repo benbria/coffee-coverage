@@ -22,7 +22,7 @@ describe 'helpers', ->
         new Benchmark.Suite()
         .add -> helpers.excludeFile(fileName, options)
         .on 'complete', (result) ->
-            expect(result.currentTarget[0].stats.mean).to.be.below 0.00004
+            expect(result.currentTarget[0].stats.mean).to.be.below 0.0001
             done()
         .run()
 
