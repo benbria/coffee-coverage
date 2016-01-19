@@ -45,7 +45,7 @@
     "argparse": "^1.0.2",
     "coffee-script": ">=1.6.2",
     "lodash": "^3.7.0",
-    "glob": "^6.0.4",
+    "minimatch": "^3.0.0",
     "pkginfo": ">=0.2.3"
   },
   "devDependencies": {
@@ -54,6 +54,7 @@
     "istanbul": "^0.3.13",
     "mocha": "^2.1.0",
     "sinon": "^1.14.1",
+    "benchmark": "^2.0.0",
     "streamline": "^0.12.1"
   },
   "scripts": {

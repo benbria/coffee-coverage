@@ -3,7 +3,7 @@ fs           = require 'fs'
 path         = require 'path'
 _            = require 'lodash'
 {EXTENSIONS} = require '../constants'
-glob         = require 'glob'
+minimatch    = require 'minimatch'
 
 exports.stripLeadingDotOrSlash = (pathName) -> pathName.replace(/^\//, "").replace(/^\.\//, "")
 
@@ -67,13 +67,8 @@ exports.excludeFile = (fileName, options) ->
 
         # For each exclude value try to use it as a pattern to exclude files
         exclude.map (pattern) ->
-            glob.sync pattern,
-                dot: true
-                cwd: basePath
-                root: basePath
-            .forEach (file) ->
-                if relativeFilename is path.normalize file
-                    excluded = true
+            if minimatch relativeFilename, pattern
+                excluded = true
 
         components = relativeFilename.split path.sep
         for component in components
