@@ -1,5 +1,8 @@
 # coffee-coverage Changelog
 
+### v1.0.2
+  - [#78: Update dependencies; Walk Arrays of case statements](https://github.com/benbria/coffee-coverage/pull/78)
+
 ### v1.0.0
   - [#71: Accept globs as excludes](https://github.com/benbria/coffee-coverage/pull/71) Many thanks to
     [dbartholomae](https://github.com/dbartholomae) for this much requested feature.  Note that excludes will still
