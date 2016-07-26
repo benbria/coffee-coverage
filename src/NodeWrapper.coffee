@@ -38,6 +38,8 @@ module.exports = class NodeWrapper
         if @isStatement and @type is 'Value' and @parent.parent?.type is 'Class'
             @isStatement = false
 
+        @isSwitchCases = @childName is 'cases' and @type is 'Array'
+
 
     # Run `fn(node)` for each child of this node.  Child nodes will be automatically wrapped in a
     # `NodeWrapper`.
