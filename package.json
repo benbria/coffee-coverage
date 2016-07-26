@@ -24,12 +24,7 @@
     "Dmitry Petrov (https://github.com/can3p)",
     "Devon Govett (https://github.com/devongovett)"
   ],
-  "licenses": [
-    {
-      "type": "MIT",
-      "url": "https://raw.github.com/benbria/coffee-coverage/master/LICENSE"
-    }
-  ],
+  "license": "MIT",
   "main": "./lib/index",
   "repository": {
     "type": "git",
