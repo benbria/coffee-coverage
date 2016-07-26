@@ -161,6 +161,7 @@ module.exports = class NodeWrapper
         if @childName then answer += "#{@childName}[#{@childIndex}]:"
         answer += @type
         if @node.locationData? then answer += " (#{@node.locationData?.first_line + 1}:#{@node.locationData.first_column + 1})"
+        answer
 
 forNodeAndChildren = (node, fn) ->
     fn node
