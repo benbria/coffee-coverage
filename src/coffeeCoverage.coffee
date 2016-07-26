@@ -334,6 +334,10 @@ exports._runInstrumentor = (instrumentor, fileName, source, options={}) ->
         # Call block-specific visitor function.
         visitor["visit#{nodeWrapper.type}"]?(nodeWrapper)
 
+        if nodeWrapper.isSwitchCases then for __, i in nodeWrapper.node
+            nodeWrapper.forEachChildOfType i, (child) ->
+                runVisitor(visitor, child)
+
         # Recurse into child nodes
         nodeWrapper.forEachChild (child) ->
             runVisitor(visitor, child)
