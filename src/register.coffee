@@ -104,6 +104,9 @@ module.exports = (options={}) ->
 
     replaceHandler = (extension) ->
         origCoffeeHandler = require.extensions[extension]
+        # just expose needed API in some hideous way....
+        fs.instrumentFile ||= (fileName) ->
+          compiledCache.get(fileName, -> instrumentFile(fileName))
         require.extensions[extension] = (module, fileName) ->
             if excludeFile fileName, options
                 return origCoffeeHandler.call this, module, fileName
