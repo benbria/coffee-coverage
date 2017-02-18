@@ -12,7 +12,10 @@ fs           = require 'fs'
 util         = require 'util'
 path         = require 'path'
 coffeeScript = require 'coffee-script'
+coffeeReact  = require 'coffee-react'
+transform    = require('coffee-react-transform');
 _            = require 'lodash'
+
 
 NodeWrapper                     = require './NodeWrapper'
 {mkdirs, statFile, excludeFile} = require './utils/helpers'
@@ -309,14 +312,23 @@ exports._runInstrumentor = (instrumentor, fileName, source, options={}) ->
             bare: options.bare ? false
             literate: /\.(litcoffee|coffee\.md)$/.test(fileName)
         }
-
-        tokens = coffeeScript.tokens source, coffeeOptions
+        
+        if /\.cjsx$/.test(fileName) 
+          options.log?.debug? 'Using coffeeReact compiler'
+          compiler = coffeeReact 
+          source = transform(source)
+        else 
+          compiler = coffeeScript
+        
+        options.log?.debug? 'Getting tokens'
+        tokens = compiler.tokens source, coffeeOptions
 
         # collect referenced variables
         coffeeOptions.referencedVars = (token[1] for token in tokens when token.variable)
 
+        options.log?.debug? 'Getting nodes'
         # convert tokens to ast
-        ast = coffeeScript.nodes(tokens)
+        ast = compiler.nodes(tokens)
     catch err
         throw new CoverageError("Could not parse #{fileName}: #{err.stack}")
 

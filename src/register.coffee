@@ -74,7 +74,7 @@ module.exports = (options={}) ->
         postProcessors: []
         cachePath: null
     }
-
+    
     # Add default options from the instrumentor.
     instrumentorClass = coffeeCoverage.INSTRUMENTORS[options.instrumentor]
     if !instrumentorClass
@@ -112,6 +112,7 @@ module.exports = (options={}) ->
             module._compile compiled, fileName
 
     replaceHandler ".coffee"
+    replaceHandler ".cjsx"
     replaceHandler ".litcoffee"
     replaceHandler ".coffee.md"
 

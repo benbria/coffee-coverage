@@ -410,6 +410,27 @@ describe "Istanbul tests", ->
             # Not sure these column counts are at all correct, but good enough...
             loc: {start: {line: 1, column: 4}, end: {line: 1, column: 4}}
         }
+        
+    it "should instrument CJSX", ->
+        {instrumentor, result} = run """
+            render = ->
+                testVar = "a string"
+                <h1>{testVar}</h1>
+        """, counts: {f: 1, s: 4, b: {}}, filename: "testFile.cjsx"
+
+        expect(instrumentor.statementMap[0], "first statement").to.eql {
+            start: {line: 1, column: 0}, end: {line: 3, column: 45}
+        }
+        expect(instrumentor.statementMap[1], "second statement").to.eql {
+            start: {line: 2, column: 4}, end: {line: 2, column: 23}
+        }
+
+        expect(instrumentor.fnMap[0]).to.eql {
+            name: 'render'
+            line: 1
+            loc: {start: {line: 1, column: 0}, end: {line: 1, column: 10}}
+        }
+      
 
     findIstanbulVariableNow = Date.now()
     currentCoverageVar = "$$cov_#{findIstanbulVariableNow}$$"
