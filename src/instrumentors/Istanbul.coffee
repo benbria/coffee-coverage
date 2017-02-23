@@ -92,7 +92,7 @@ module.exports = class Istanbul
 
     # Return default options for this instrumentor.
     @getDefaultOptions: -> {
-        coverageVar: module.exports.findIstanbulVariable() ? '_$coffeeIstanbul'
+        coverageVar: module.exports.findIstanbulVariable() ? '__coverage__'
     }
 
     # Find the runtime Istanbul variable, if it exists.  Otherwise, fall back to a sensible default.
@@ -273,6 +273,7 @@ module.exports = class Istanbul
 
         @branchMap.push {
             line: ifLocation.start.line
+            loc: ifLocation
             type: 'if'
             locations: [ifLocation, elseLocation]
         }
@@ -311,8 +312,10 @@ module.exports = class Istanbul
         if node.node.otherwise?
             locations.push nodeToLocation node.node.otherwise
 
+        loc = nodeToLocation(node)
         @branchMap.push {
-            line: nodeToLocation(node).start.line
+            line: loc.start.line
+            loc,
             type: 'switch'
             locations
         }
@@ -371,9 +374,12 @@ module.exports = class Istanbul
             # Fix off-by-one error
             end.column++
 
-
-        loc = {start, end}
-        fnMapEntry = {name, line: start.line, loc}
+        fnMapEntry = {
+            name,
+            line: start.line,
+            loc: nodeToLocation(node),
+            decl: {start, end}
+        }
         if node.node.coffeeCoverage?.skip then fnMapEntry.skip = true
 
         @fnMap.push fnMapEntry
@@ -394,12 +400,13 @@ module.exports = class Istanbul
         @fnMap.push {
             name: node.node.determineName() ? '(anonymousClass)'
             line: loc.start.line
-            loc
+            loc: nodeToLocation(node)
+            decl: loc
         }
 
         node.insertAtStart 'body', "#{@_prefix}.f[#{functionId}]++"
 
-    getInitString: () ->
+    getInitString: ->
         initData = {
             path: @fileName
             s: {}
@@ -410,15 +417,15 @@ module.exports = class Istanbul
             branchMap: {}
         }
 
-        @statementMap.forEach (statement, id) =>
+        @statementMap.forEach (statement, id) ->
             initData.s[id + 1] = 0
             initData.statementMap[id + 1] = statement
 
-        @branchMap.forEach (branch, id) =>
+        @branchMap.forEach (branch, id) ->
             initData.b[id + 1] = (0 for [0...branch.locations.length])
             initData.branchMap[id + 1] = branch
 
-        @fnMap.forEach (fn, id) =>
+        @fnMap.forEach (fn, id) ->
             initData.f[id + 1] = 0
             initData.fnMap[id + 1] = fn
 
@@ -433,4 +440,3 @@ module.exports = class Istanbul
         """
 
     getInstrumentedLineCount: -> @instrumentedLineCount
-

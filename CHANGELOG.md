@@ -1,5 +1,8 @@
 # coffee-coverage Changelog
 
+### v2.0.0
+  - Add support for [nyc](https://github.com/istanbuljs/nyc).
+
 ### v1.0.2
   - [#78: Update dependencies; Walk Arrays of case statements](https://github.com/benbria/coffee-coverage/pull/78)
 

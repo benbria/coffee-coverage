@@ -17,6 +17,7 @@ Features
 
 * Native coffee-script instrumentation - [not based on source maps](./docs/comparison-to-ibrik.md)
 * Conditional instrumentation with [pragmas](./docs/pragmas.md)
+* Support for [nyc](./docs/HOWTO-nyc.md) style instrumentation
 * Support for [Istanbul](./docs/HOWTO-istanbul.md) style instrumentation
 * Support for [JSCoverage](./docs/HOWTO-jscoverage.md) style instrumentation
 * Support for [Streamline compiler](./docs/streamline.md) style instrumentation

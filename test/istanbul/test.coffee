@@ -82,6 +82,7 @@ describe "Istanbul tests", ->
 
         expect(instrumentor.branchMap[0]).to.eql {
             line: 1
+            loc: {start: {line: 1, column: 0}, end: {line: 1, column: 0}}
             type: 'if'
             locations: [
                 {start: {line: 1, column: 0}, end: {line: 1, column: 0}}
@@ -99,6 +100,7 @@ describe "Istanbul tests", ->
 
         expect(instrumentor.branchMap[0]).to.eql {
             line: 1
+            loc: {start: {line: 1, column: 0}, end: {line: 1, column: 0}}
             type: 'if'
             locations: [
                 {start: {line: 1, column: 0}, end: {line: 1, column: 0}}
@@ -134,6 +136,7 @@ describe "Istanbul tests", ->
 
         expect(instrumentor.branchMap[0]).to.eql {
             line: 1
+            loc: {start: {line: 1, column: 0}, end: {line: 1, column: 0}}
             type: 'if'
             locations: [
                 {start: {line: 1, column: 0}, end: {line: 1, column: 0}}
@@ -142,6 +145,7 @@ describe "Istanbul tests", ->
         }
         expect(instrumentor.branchMap[1]).to.eql {
             line: 3
+            loc: {start: {line: 3, column: 5}, end: {line: 3, column: 5}}
             type: 'if'
             locations: [
                 {start: {line: 3, column: 5}, end: {line: 3, column: 5}}
@@ -165,6 +169,7 @@ describe "Istanbul tests", ->
 
         expect(instrumentor.branchMap[0]).to.eql {
             line: 1
+            loc: {start: {line: 1, column: 0}, end: {line: 1, column: 0}}
             type: 'if'
             locations: [
                 {start: {line: 1, column: 0}, end: {line: 1, column: 0}}
@@ -229,6 +234,7 @@ describe "Istanbul tests", ->
 
         expect(instrumentor.branchMap[0]).to.eql {
             line: 1
+            loc: {start: {line: 1, column: 0}, end: {line: 6, column: 23}}
             type: 'switch'
             locations: [
                 {start: {line: 2, column: 4}, end: {line: 3, column: 22}}
@@ -249,6 +255,7 @@ describe "Istanbul tests", ->
 
         expect(instrumentor.branchMap[0]).to.eql {
             line: 1
+            loc: {start: {line: 1, column: 0}, end: {line: 5, column: 23}}
             type: 'switch'
             locations: [
                 {start: {line: 2, column: 4}, end: {line: 3, column: 22}}
@@ -273,7 +280,8 @@ describe "Istanbul tests", ->
         expect(instrumentor.fnMap[0]).to.eql {
             name: 'myFunc'
             line: 1
-            loc: {start: {line: 1, column: 0}, end: {line: 1, column: 10}}
+            loc: {start: {line: 1, column: 9}, end: {line: 2, column: 23}}
+            decl: {start: {line: 1, column: 0}, end: {line: 1, column: 10}}
         }
 
     it "should find functions with parameters", ->
@@ -285,7 +293,8 @@ describe "Istanbul tests", ->
         expect(instrumentor.fnMap[0]).to.eql {
             name: 'myFunc'
             line: 1
-            loc: {start: {line: 1, column: 0}, end: {line: 1, column: 18}}
+            loc: {start: {line: 1, column: 9}, end: {line: 2, column: 23}}
+            decl: {start: {line: 1, column: 0}, end: {line: 1, column: 18}}
         }
 
     it "should correctly find the end of functions with extra whitespace", ->
@@ -298,7 +307,8 @@ describe "Istanbul tests", ->
             expect(instrumentor.fnMap[0]).to.eql {
                 name: 'myFunc'
                 line: 1
-                loc: {start: {line: 1, column: 0}, end: {line: 1, column: 20}}
+                loc: {start: {line: 1, column: 9}, end: {line: 2, column: 23}}
+                decl: {start: {line: 1, column: 0}, end: {line: 1, column: 20}}
             }
 
     it "should find multi-line functions", ->
@@ -322,7 +332,8 @@ describe "Istanbul tests", ->
         expect(instrumentor.fnMap[0]).to.eql {
             name: 'myFunc'
             line: 1
-            loc: {start: {line: 1, column: 0}, end: {line: 5, column: 3}}
+            loc: {start: {line: 1, column: 9}, end: {line: 6, column: 23}}
+            decl: {start: {line: 1, column: 0}, end: {line: 5, column: 3}}
         }
 
     it "should find anonymous functions", ->
@@ -333,7 +344,8 @@ describe "Istanbul tests", ->
         expect(instrumentor.fnMap[0]).to.eql {
             name: '(anonymous_1)'
             line: 1
-            loc: {start: {line: 1, column: 16}, end: {line: 1, column: 17}}
+            loc: {start: {line: 1, column: 16}, end: {line: 1, column: 33}}
+            decl: {start: {line: 1, column: 16}, end: {line: 1, column: 17}}
         }
 
     it "should find anonymous functions with parameters", ->
@@ -344,7 +356,8 @@ describe "Istanbul tests", ->
         expect(instrumentor.fnMap[0]).to.eql {
             name: '(anonymous_1)'
             line: 1
-            loc: {start: {line: 1, column: 16}, end: {line: 1, column: 23}}
+            loc: {start: {line: 1, column: 16}, end: {line: 1, column: 39}}
+            decl: {start: {line: 1, column: 16}, end: {line: 1, column: 23}}
         }
 
     it "should use right-most name for funciton with multiple names", ->
@@ -377,14 +390,15 @@ describe "Istanbul tests", ->
         expect(instrumentor.fnMap[0], "class fn").to.eql {
             name: 'Foo'
             line: 1
-            # Should really start at column 0, we're dropping the 'class ' at the start.
-            loc: {start: {line: 1, column: 6}, end: {line: 1, column: 8}}
+            loc: {start: {line: 1, column: 0}, end: {line: 4, column: 11}}
+            decl: {start: {line: 1, column: 6}, end: {line: 1, column: 8}}
         }
         expect(instrumentor.fnMap[1], "constructor fn").to.eql {
             # TODO: Should this be 'Foo.constructor'?  That would be slick.
             name: 'constructor'
             line: 2
-            loc: {start: {line: 2, column: 4}, end: {line: 2, column: 18}}
+            loc: {start: {line: 2, column: 17}, end: {line: 4, column: 3}}
+            decl: {start: {line: 2, column: 4}, end: {line: 2, column: 18}}
         }
 
     it "should find statements in a class", ->
@@ -408,7 +422,8 @@ describe "Istanbul tests", ->
             name: '(anonymousClass)' # Should be X?
             line: 1
             # Not sure these column counts are at all correct, but good enough...
-            loc: {start: {line: 1, column: 4}, end: {line: 1, column: 4}}
+            loc: {start: {line: 1, column: 4}, end: {line: 3, column: 28}}
+            decl: {start: {line: 1, column: 4}, end: {line: 1, column: 4}}
         }
 
     findIstanbulVariableNow = Date.now()
