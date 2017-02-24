@@ -291,3 +291,20 @@ module.exports = (run) ->
                         console.log "foo"
                 """
             .to.throw "Statement after pragma \'istanbul ignore if\' at #{FILENAME} (1:1) is not of type If"
+
+        it "should replace single line comments which represent pragmas by here comments", ->
+
+            ['# !pragma coverage-skip-next', '# istanbul ignore next'].forEach (skipPragma) ->
+                {instrumentor, result} = run """
+                    class FooBar
+                        #{skipPragma}
+                        a: ->
+                            console.log "foo"
+                """, counts: {f: 2, s: 2, b: {}}
+
+                expect(instrumentor.statementMap[0].skip, "s0").to.not.exist
+                expect(instrumentor.statementMap[1].skip, "s2").to.be.true
+
+                expect(instrumentor.fnMap[0].skip).to.not.exist
+                expect(instrumentor.fnMap[1].skip).to.be.true
+

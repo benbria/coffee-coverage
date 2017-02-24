@@ -20,3 +20,26 @@ exports.minLocation = (locations) ->
     locations.forEach (loc) ->
         if exports.compareLocations(loc, min) < 0 then min = loc
     return min
+
+# Given a coffee-script source string, returns the string with all single line comments representing
+# pragmas replaced into herecomments, so that they will be preserved when building the AST.
+exports.pragmaToHereComment = (source) ->
+    if !source or source.length is 0 then return ''
+
+    result = []
+    re = /^(\s*)#\s*(!pragma.+|istanbul\s+ignore.+)\s*$/
+
+    for line in source.split '\n'
+ 
+        match = re.exec(line)
+
+        if match
+
+            result.push match[1] + '### ' + match[2] + ' ###'
+
+        else
+
+            result.push line
+
+    return result.join '\n'
+
