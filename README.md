@@ -1,5 +1,6 @@
 Istanbul and JSCoverage-style instrumentation for CoffeeScript files.
 
+
 Benbria CoffeeCoverage
 ======================
 
