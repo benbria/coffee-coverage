@@ -398,7 +398,7 @@ module.exports = class Istanbul
             loc.end = loc.start
 
         @fnMap.push {
-            name: node.node.determineName() ? '(anonymousClass)'
+            name: node.node.determineName() ? '_Class'
             line: loc.start.line
             loc: nodeToLocation(node)
             decl: loc

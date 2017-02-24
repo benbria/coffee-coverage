@@ -313,14 +313,14 @@ exports._runInstrumentor = (instrumentor, fileName, source, options={}) ->
         tokens = coffeeScript.tokens source, coffeeOptions
 
         # collect referenced variables
-        coffeeOptions.referencedVars = (token[1] for token in tokens when token.variable)
+        coffeeOptions.referencedVars = _.uniq(token[1] for token in tokens when token[0] == 'IDENTIFIER')
 
         # convert tokens to ast
         ast = coffeeScript.nodes(tokens)
     catch err
         throw new CoverageError("Could not parse #{fileName}: #{err.stack}")
 
-    runVisitor = (visitor, nodeWrapper) =>
+    runVisitor = (visitor, nodeWrapper) ->
         # Ignore code that we generated.
         return if nodeWrapper.node.coffeeCoverage?.generated
 

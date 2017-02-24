@@ -161,7 +161,7 @@ describe "Istanbul tests", ->
 
         expect(instrumentor.statementMap[0], "first statement").to.eql {
             # Wha?  Why do these end on different columns?
-            start: {line: 1, column: 0}, end: {line: 2, column: 30}
+            start: {line: 1, column: 0}, end: {line: 2, column: 29}
         }
         expect(instrumentor.statementMap[1], "second statement").to.eql {
             start: {line: 2, column: 4}, end: {line: 2, column: 29}
@@ -220,7 +220,7 @@ describe "Istanbul tests", ->
 
         expect(instrumentor.statementMap[0], "first statement").to.eql {
             # Should really end on col 22?
-            start: {line: 1, column: 0}, end: {line: 6, column: 23}
+            start: {line: 1, column: 0}, end: {line: 6, column: 22}
         }
         expect(instrumentor.statementMap[1], "second statement").to.eql {
             start: {line: 3, column: 8}, end: {line: 3, column: 22}
@@ -234,7 +234,7 @@ describe "Istanbul tests", ->
 
         expect(instrumentor.branchMap[0]).to.eql {
             line: 1
-            loc: {start: {line: 1, column: 0}, end: {line: 6, column: 23}}
+            loc: {start: {line: 1, column: 0}, end: {line: 6, column: 22}}
             type: 'switch'
             locations: [
                 {start: {line: 2, column: 4}, end: {line: 3, column: 22}}
@@ -255,7 +255,7 @@ describe "Istanbul tests", ->
 
         expect(instrumentor.branchMap[0]).to.eql {
             line: 1
-            loc: {start: {line: 1, column: 0}, end: {line: 5, column: 23}}
+            loc: {start: {line: 1, column: 0}, end: {line: 5, column: 22}}
             type: 'switch'
             locations: [
                 {start: {line: 2, column: 4}, end: {line: 3, column: 22}}
@@ -271,7 +271,7 @@ describe "Istanbul tests", ->
 
         expect(instrumentor.statementMap[0], "first statement").to.eql {
             # Should end on 22?
-            start: {line: 1, column: 0}, end: {line: 2, column: 23}
+            start: {line: 1, column: 0}, end: {line: 2, column: 22}
         }
         expect(instrumentor.statementMap[1], "second statement").to.eql {
             start: {line: 2, column: 4}, end: {line: 2, column: 22}
@@ -280,7 +280,7 @@ describe "Istanbul tests", ->
         expect(instrumentor.fnMap[0]).to.eql {
             name: 'myFunc'
             line: 1
-            loc: {start: {line: 1, column: 9}, end: {line: 2, column: 23}}
+            loc: {start: {line: 1, column: 9}, end: {line: 2, column: 22}}
             decl: {start: {line: 1, column: 0}, end: {line: 1, column: 10}}
         }
 
@@ -293,7 +293,7 @@ describe "Istanbul tests", ->
         expect(instrumentor.fnMap[0]).to.eql {
             name: 'myFunc'
             line: 1
-            loc: {start: {line: 1, column: 9}, end: {line: 2, column: 23}}
+            loc: {start: {line: 1, column: 9}, end: {line: 2, column: 22}}
             decl: {start: {line: 1, column: 0}, end: {line: 1, column: 18}}
         }
 
@@ -307,7 +307,7 @@ describe "Istanbul tests", ->
             expect(instrumentor.fnMap[0]).to.eql {
                 name: 'myFunc'
                 line: 1
-                loc: {start: {line: 1, column: 9}, end: {line: 2, column: 23}}
+                loc: {start: {line: 1, column: 9}, end: {line: 2, column: 22}}
                 decl: {start: {line: 1, column: 0}, end: {line: 1, column: 20}}
             }
 
@@ -323,7 +323,7 @@ describe "Istanbul tests", ->
 
         expect(instrumentor.statementMap[0], "first statement").to.eql {
             # Should end on 22?
-            start: {line: 1, column: 0}, end: {line: 6, column: 23}
+            start: {line: 1, column: 0}, end: {line: 6, column: 22}
         }
         expect(instrumentor.statementMap[1], "second statement").to.eql {
             start: {line: 6, column: 4}, end: {line: 6, column: 22}
@@ -332,7 +332,7 @@ describe "Istanbul tests", ->
         expect(instrumentor.fnMap[0]).to.eql {
             name: 'myFunc'
             line: 1
-            loc: {start: {line: 1, column: 9}, end: {line: 6, column: 23}}
+            loc: {start: {line: 1, column: 9}, end: {line: 6, column: 22}}
             decl: {start: {line: 1, column: 0}, end: {line: 5, column: 3}}
         }
 
@@ -378,7 +378,7 @@ describe "Istanbul tests", ->
 
         expect(instrumentor.statementMap[0], "class statement").to.eql {
             # Should end on column 10?
-            start: {line: 1, column: 0}, end: {line: 4, column: 11}
+            start: {line: 1, column: 0}, end: {line: 4, column: 10}
         }
         expect(instrumentor.statementMap[1], "constructor body").to.eql {
             start: {line: 3, column: 8}, end: {line: 3, column: 27}
@@ -390,14 +390,14 @@ describe "Istanbul tests", ->
         expect(instrumentor.fnMap[0], "class fn").to.eql {
             name: 'Foo'
             line: 1
-            loc: {start: {line: 1, column: 0}, end: {line: 4, column: 11}}
+            loc: {start: {line: 1, column: 0}, end: {line: 4, column: 10}}
             decl: {start: {line: 1, column: 6}, end: {line: 1, column: 8}}
         }
         expect(instrumentor.fnMap[1], "constructor fn").to.eql {
             # TODO: Should this be 'Foo.constructor'?  That would be slick.
             name: 'constructor'
             line: 2
-            loc: {start: {line: 2, column: 17}, end: {line: 4, column: 3}}
+            loc: {start: {line: 2, column: 17}, end: {line: 3, column: 27}}
             decl: {start: {line: 2, column: 4}, end: {line: 2, column: 18}}
         }
 
@@ -419,12 +419,20 @@ describe "Istanbul tests", ->
         """, counts: {f: 2, s: 2, b: {}}
 
         expect(instrumentor.fnMap[0], "class fn").to.eql {
-            name: '(anonymousClass)' # Should be X?
+            name: '_Class'
             line: 1
             # Not sure these column counts are at all correct, but good enough...
-            loc: {start: {line: 1, column: 4}, end: {line: 3, column: 28}}
+            loc: {start: {line: 1, column: 4}, end: {line: 3, column: 27}}
             decl: {start: {line: 1, column: 4}, end: {line: 1, column: 4}}
         }
+
+    it.skip "should handle import and export statements", ->
+        {instrumentor, result} = run """
+            import _ from "lodash"
+            export default -> 7
+        """, {f: 0, s: 3, b: {1:2}}
+
+        console.log result
 
     findIstanbulVariableNow = Date.now()
     currentCoverageVar = "$$cov_#{findIstanbulVariableNow}$$"
