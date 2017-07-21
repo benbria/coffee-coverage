@@ -48,16 +48,27 @@
     "benchmark": "^2.0.0",
     "chai": "^3.0.0",
     "coveralls": "^2.11.2",
+    "electron": "1.6.11",
+    "electron-mocha": "4.0.0",
     "istanbul": "^0.4.4",
     "mocha": "^3.2.0",
+    "nyc": "11.0.3",
     "sinon": "^1.14.1"
   },
   "scripts": {
     "prepublish": "npm run build && mocha",
-    "test": "npm run build && mocha && istanbul report",
-    "coverage-report": "istanbul report text-summary lcov",
+    "test": "npm run build && nyc mocha --growl",
+    "test:electron": "npm run build && nyc electron-mocha --renderer",
     "build": "coffee -c -o lib src",
-    "clean": "rm -rf lib coverage",
+    "clean": "rm -rf lib coverage .nyc_output",
     "distclean": "npm run clean && rm -rf node_modules"
+  },
+  "nyc": {
+    "reporter": ["text-summary", "lcov"],
+    "instrument": false,
+    "sourceMap": false
+  },
+  "engines": {
+    "node": ">=0.8.0"
   }
 }
