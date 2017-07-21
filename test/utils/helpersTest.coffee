@@ -9,10 +9,13 @@ helpers             = require "../../src/utils/helpers"
 testUtils           = require '../utils'
 
 describe 'helpers', ->
+
     before ->
         Benchmark.options.maxTime = 1
 
     it "should exclude files quickly", (done) ->
+        # Can't run benchmark on electron-mocha
+        return @skip() if global.window?
         @timeout 20000
         fileName = path.resolve __dirname, '../../node_modules/mocha/index.js'
         options =

@@ -58,7 +58,7 @@
   "scripts": {
     "prepublish": "npm run build && mocha",
     "test": "npm run build && nyc mocha --growl",
-    "test:electron": "npm run build && nyc electron-mocha --renderer",
+    "test:electron": "npm run build && nyc electron-mocha --renderer test/**/*.coffee",
     "build": "coffee -c -o lib src",
     "clean": "rm -rf lib coverage .nyc_output",
     "distclean": "npm run clean && rm -rf node_modules"
