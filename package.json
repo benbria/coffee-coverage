@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "argparse": "^1.0.2",
-    "coffee-script": ">=1.6.2",
+    "coffeescript": ">=1.6.2",
     "lodash": "^4.14.0",
     "minimatch": "^3.0.2",
     "pkginfo": ">=0.2.3"
@@ -52,7 +52,7 @@
     "sinon": "^1.14.1"
   },
   "scripts": {
-    "prepublish": "npm run build && mocha",
+    "prepublish": "npm run build",
     "test": "npm run build && mocha && istanbul report",
     "coverage-report": "istanbul report text-summary lcov",
     "build": "coffee -c -o lib src",

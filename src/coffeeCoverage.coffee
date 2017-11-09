@@ -11,7 +11,7 @@ events       = require 'events'
 fs           = require 'fs'
 util         = require 'util'
 path         = require 'path'
-coffeeScript = require 'coffee-script'
+coffeeScript = require 'coffeescript'
 _            = require 'lodash'
 
 NodeWrapper                     = require './NodeWrapper'
@@ -26,8 +26,8 @@ exports.INSTRUMENTORS = INSTRUMENTORS = {
 
 class CoverageError extends Error
     constructor: (@message) ->
+        super message
         @name = "CoverageError"
-        Error.call this
         Error.captureStackTrace this, arguments.callee
 
 # Default options.
@@ -53,6 +53,8 @@ class exports.CoverageInstrumentor extends events.EventEmitter
     # For a list of available options see `@instrument`.
     #
     constructor: (options = {}) ->
+        super()
+
         @defaultOptions = _.defaults {}, options, factoryDefaults
         _.defaults @defaultOptions, getInstrumentorClass(@defaultOptions.instrumentor).getDefaultOptions()
 
@@ -296,7 +298,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
 # * `instrumentor` an instance of an instrumentor class to run on.
 # * `fileName` the absolute path of the source file.
 # * `source` a string containing the sourcecode the instrument.
-# * `options.bare` true if we should compile bare coffee-script (no enclosing function).
+# * `options.bare` true if we should compile bare coffeescript (no enclosing function).
 # * `options.log` log object.
 #
 exports._runInstrumentor = (instrumentor, fileName, source, options={}) ->

@@ -15,7 +15,7 @@ Instruments CoffeeScript files for code coverage.  Compiles .coffee files to .js
 Features
 --------
 
-* Native coffee-script instrumentation - [not based on source maps](./docs/comparison-to-ibrik.md)
+* Native coffeescript instrumentation - [not based on source maps](./docs/comparison-to-ibrik.md)
 * Conditional instrumentation with [pragmas](./docs/pragmas.md)
 * Support for [nyc](./docs/HOWTO-nyc.md) style instrumentation
 * Support for [Istanbul](./docs/HOWTO-istanbul.md) style instrumentation
@@ -34,7 +34,7 @@ files, then from your project's folder, run:
 
 $ npm install --save-dev coffee-coverage
 $ npm install --save-dev istanbul
-$ mocha --recursive --compilers coffee:coffee-script/register --require coffee-coverage/register-istanbul test
+$ mocha --recursive --compilers coffee:coffeescript/register --require coffee-coverage/register-istanbul test
 
 $ ./node_modules/.bin/istanbul report
 ```

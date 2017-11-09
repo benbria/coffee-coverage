@@ -41,7 +41,7 @@ Breaking changes:
     probably continue to work, even if you pass a relative path, though.
 
 ### v0.4.5
-  - Compatibility fix for coffee-script 1.9.1 (thanks [technogeek00](https://github.com/technogeek00))
+  - Compatibility fix for coffeescript 1.9.1 (thanks [technogeek00](https://github.com/technogeek00))
 
 ### v0.4.4
 
@@ -72,8 +72,8 @@ Breaking changes:
 
 ### v0.2.0
 
-  - Force coffee-script to disable chaining of if/else if statements during compile.  This
-    fix is required for coffee-script 1.6.3 and higher.
+  - Force coffeescript to disable chaining of if/else if statements during compile.  This
+    fix is required for coffeescript 1.6.3 and higher.
 
 ### v0.1.4
 

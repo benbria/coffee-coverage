@@ -1,4 +1,4 @@
-# Visitor which looks for pragma directives for skipping coverage, and marks coffee-script nodes
+# Visitor which looks for pragma directives for skipping coverage, and marks coffeescript nodes
 # to be skipped.
 #
 

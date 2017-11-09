@@ -45,7 +45,7 @@
 #
 # An `### istanbul ignore next ###` before a `when` in a `switch` should cause the appropriate
 # entry in the `branchMap` to be marked skip, and all statements inside the `when`.
-# (coffee-script doesn't allow block comments at top scope inside a switch.  Might not be
+# (coffeescript doesn't allow block comments at top scope inside a switch.  Might not be
 # able to do this.)
 #
 # An `### istanbul ignore next ###` before a function declaration should cause the function (not
@@ -160,7 +160,7 @@ module.exports = class Istanbul
         node.insertBefore "#{@_prefix}.s[#{statementId}]++"
         @instrumentedLineCount++
 
-    # coffee-script will put the end of an 'If' statement as being right before the start of
+    # coffeescript will put the end of an 'If' statement as being right before the start of
     # the 'else' (which is probably a bug.)  Istanbul expects the end to be the end of the last
     # line in the else (and for chained ifs, Istanbul expects the end of the very last else.)
     _findEndOfIf: (ifNode) ->
