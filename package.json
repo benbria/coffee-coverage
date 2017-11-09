@@ -1,5 +1,5 @@
 {
-  "name": "coffee-coverage",
+  "name": "coffee-coverage-v2",
   "description": "Istanbul and JSCoverage-style instrumentation for CoffeeScript files.",
   "keywords": [
     "javascript",
@@ -12,7 +12,7 @@
     "jscoverage",
     "coveralls"
   ],
-  "version": "2.0.1",
+  "version": "2.0.2",
   "author": "Benbria (http://www.benbria.com/)",
   "contributors": [
     "Jason Walton <dev@lucid.thedreaming.org> (https://github.com/jwalton)",
@@ -52,7 +52,7 @@
     "sinon": "^1.14.1"
   },
   "scripts": {
-    "prepublish": "npm run build",
+    "prepublish": "npm run build && mocha",
     "test": "npm run build && mocha && istanbul report",
     "coverage-report": "istanbul report text-summary lcov",
     "build": "coffee -c -o lib src",
@@ -60,6 +60,6 @@
     "distclean": "npm run clean && rm -rf node_modules"
   },
   "engines": {
-    "node": ">=0.8.0"
+    "node": ">=8.9.0"
   }
 }

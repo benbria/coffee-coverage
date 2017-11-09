@@ -25,8 +25,9 @@ exports.INSTRUMENTORS = INSTRUMENTORS = {
 }
 
 class CoverageError extends Error
-    constructor: (@message) ->
-        super message
+    constructor: (message) ->
+        super()
+        @message = message
         @name = "CoverageError"
         Error.captureStackTrace this, arguments.callee
 
