@@ -1,5 +1,8 @@
 # coffee-coverage Changelog
 
+### v3.0.0
+  - This version works with CoffeeScript v2
+
 ### v2.0.0
   - Add support for [nyc](https://github.com/istanbuljs/nyc).
 
@@ -41,7 +44,7 @@ Breaking changes:
     probably continue to work, even if you pass a relative path, though.
 
 ### v0.4.5
-  - Compatibility fix for coffeescript 1.9.1 (thanks [technogeek00](https://github.com/technogeek00))
+  - Compatibility fix for coffee-script 1.9.1 (thanks [technogeek00](https://github.com/technogeek00))
 
 ### v0.4.4
 
@@ -73,7 +76,7 @@ Breaking changes:
 ### v0.2.0
 
   - Force coffeescript to disable chaining of if/else if statements during compile.  This
-    fix is required for coffeescript 1.6.3 and higher.
+    fix is required for coffee-script 1.6.3 and higher.
 
 ### v0.1.4
 
