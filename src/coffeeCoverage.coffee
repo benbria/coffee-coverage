@@ -358,6 +358,7 @@ exports._runInstrumentor = (instrumentor, fileName, source, options={}) ->
     # Compile the instrumented CoffeeScript and write it to the JS file.
     try
         js = ast.compile coffeeOptions
+        console.log js
     catch err
         ### !pragma coverage-skip-block ###
         throw new CoverageError("Could not compile #{fileName} after instrumenting: #{err.stack}")

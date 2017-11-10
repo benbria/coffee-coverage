@@ -17,7 +17,7 @@ PRAGMAS = [
         fn: (self, node, match, options={}) ->
             origNode = node
             if node.type is "Value"
-                if node.parent.type is "Assign" or node.parent.type is "Switch"
+                if node.parent.type is "Assign" or node.parent.type is "Switch" or node.parent.type is "Class"
                     node = node.parent
                 else
                     node = node.parent.parent
@@ -54,7 +54,7 @@ PRAGMAS = [
         regex: /^!pragma\s+no-coverage-next$/
         fn: (self, node, match, options={}) ->
             if node.type is "Value"
-                if node.parent.type is "Assign" or node.parent.type is "Switch"
+                if node.parent.type is "Assign" or node.parent.type is "Switch" or node.parent.type is "Class"
                     node = node.parent
                 else
                     node = node.parent.parent
