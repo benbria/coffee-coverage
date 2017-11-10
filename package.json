@@ -12,7 +12,7 @@
     "jscoverage",
     "coveralls"
   ],
-  "version": "2.0.2",
+  "version": "2.0.3",
   "author": "Benbria (http://www.benbria.com/)",
   "contributors": [
     "Jason Walton <dev@lucid.thedreaming.org> (https://github.com/jwalton)",
@@ -22,7 +22,8 @@
     "David Dahl (https://github.com/effata)",
     "David Kirstein (https://github.com/frozenice-)",
     "Dmitry Petrov (https://github.com/can3p)",
-    "Devon Govett (https://github.com/devongovett)"
+    "Devon Govett (https://github.com/devongovett)",
+    "Emanuele Tamponi (https://glitch.com/@etamponi)"
   ],
   "license": "MIT",
   "main": "./lib/index",
