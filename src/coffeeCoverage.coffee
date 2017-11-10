@@ -331,6 +331,9 @@ exports._runInstrumentor = (instrumentor, fileName, source, options={}) ->
             indent = ("  " for i in [0...nodeWrapper.depth]).join ''
             options.log.debug "#{indent}Examining #{nodeWrapper.toString()}"
 
+        if nodeWrapper.node.comments
+            visitor["visitComment"]?(nodeWrapper)
+
         if nodeWrapper.isStatement
             visitor["visitStatement"]?(nodeWrapper)
 
