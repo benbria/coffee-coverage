@@ -60,8 +60,5 @@
     "build": "coffee -c -o lib src",
     "clean": "rm -rf lib coverage",
     "distclean": "npm run clean && rm -rf node_modules"
-  },
-  "engines": {
-    "node": ">=8.9.0"
   }
 }
