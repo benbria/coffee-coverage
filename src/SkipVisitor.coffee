@@ -75,7 +75,7 @@ PRAGMAS = [
             if node.type is "Value" and node.node.base.constructor?.name is "PassthroughLiteral"
                 throw new Error "Pragma '#{match[0]}' at #{self._toLocString node} has no next statement"
 
-            ifNode = self.checkType node, match, "If"
+            ifNode = self.getIfNode node, match
             ifNode.mark 'skipIf', true
             ifNode.child('body')?.markAll 'skip', true
     }
@@ -89,8 +89,10 @@ PRAGMAS = [
         fn: (self, node, match, options={}) ->
             if node.type is "IdentifierLiteral"
                 return
+            if node.type is "Value" and node.node.base.constructor?.name is "PassthroughLiteral"
+                throw new Error "Pragma '#{match[0]}' at #{self._toLocString node} has no next statement"
 
-            ifNode = self.checkType node, match, "If"
+            ifNode = self.getIfNode node, match
             ifNode.mark 'skipElse', true
             ifNode.child('elseBody')?.markAll 'skip', true
     }
@@ -123,9 +125,12 @@ module.exports = class SkipVisitor
     _toLocString: (node) ->
         return "#{@fileName} (#{node.locationData.first_line + 1}:#{node.locationData.first_column + 1})"
 
-    # Get the next non-comment statement.
-    checkType: (node, match, type=null) ->
-        if type? and node.type isnt type
-            throw new Error "Statement after pragma '#{match[0]}' at #{@_toLocString node} is not of type #{type}"
-        node
+    getIfNode: (node, match) ->
+        if node.type is "If"
+            return node
+        if node.parent?.parent?.type is "If"
+            return node.parent.parent
+        if node.parent?.parent?.parent?.type is "If"
+            return node.parent.parent.parent
 
+        throw new Error "Statement after pragma '#{match[0]}' at #{@_toLocString node} is not of type If"

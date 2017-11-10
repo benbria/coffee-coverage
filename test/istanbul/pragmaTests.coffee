@@ -85,7 +85,7 @@ module.exports = (run) ->
             istanbulStyle = """
                 console.log "hello"
                 ### istanbul ignore else ###
-                if x
+                if x is true
                     console.log "world"
                 else
                     console.log "earth"
@@ -109,7 +109,7 @@ module.exports = (run) ->
             {instrumentor, result} = run """
                 console.log "hello"
                 ### !pragma no-coverage-next ###
-                if x
+                if x is true
                     console.log "world"
                 else
                     console.log "bar"
@@ -124,7 +124,7 @@ module.exports = (run) ->
                 {instrumentor, result} = run """
                     console.log "hello"
                     #{skipPragma}
-                    if x
+                    if x is true
                         console.log "world"
                     else
                         console.log "earth"
@@ -143,7 +143,7 @@ module.exports = (run) ->
                 {instrumentor, result} = run """
                     console.log "hello"
                     #{skipPragma}
-                    if x
+                    if x is true
                         console.log "world"
                 """, counts: {f: 0, s: 3, b: {1:2}}
 
