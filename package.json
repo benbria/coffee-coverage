@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "argparse": "^1.0.2",
-    "coffeescript": ">=1.6.2",
+    "coffeescript": "^2.0.2",
     "lodash": "^4.14.0",
     "minimatch": "^3.0.2",
     "pkginfo": ">=0.2.3"
