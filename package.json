@@ -54,7 +54,6 @@
   },
   "scripts": {
     "prepublish": "npm run build && mocha",
-    "preinstall": "npm run build",
     "test": "npm run build && mocha && istanbul report",
     "coverage-report": "istanbul report text-summary lcov",
     "build": "coffee -c -o lib src",
