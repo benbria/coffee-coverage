@@ -11,7 +11,7 @@ events       = require 'events'
 fs           = require 'fs'
 util         = require 'util'
 path         = require 'path'
-coffeeScript = require 'coffee-script'
+coffeeScript = require 'coffeescript'
 _            = require 'lodash'
 
 NodeWrapper                     = require './NodeWrapper'
@@ -25,10 +25,11 @@ exports.INSTRUMENTORS = INSTRUMENTORS = {
 }
 
 class CoverageError extends Error
-    constructor: (@message) ->
+    constructor: (message) ->
+        super()
+        @message = message
         @name = "CoverageError"
-        Error.call this
-        Error.captureStackTrace this, arguments.callee
+        Error.captureStackTrace this, CoverageError
 
 # Default options.
 factoryDefaults =
@@ -53,6 +54,8 @@ class exports.CoverageInstrumentor extends events.EventEmitter
     # For a list of available options see `@instrument`.
     #
     constructor: (options = {}) ->
+        super()
+
         @defaultOptions = _.defaults {}, options, factoryDefaults
         _.defaults @defaultOptions, getInstrumentorClass(@defaultOptions.instrumentor).getDefaultOptions()
 
@@ -296,7 +299,7 @@ class exports.CoverageInstrumentor extends events.EventEmitter
 # * `instrumentor` an instance of an instrumentor class to run on.
 # * `fileName` the absolute path of the source file.
 # * `source` a string containing the sourcecode the instrument.
-# * `options.bare` true if we should compile bare coffee-script (no enclosing function).
+# * `options.bare` true if we should compile bare coffeescript (no enclosing function).
 # * `options.log` log object.
 #
 exports._runInstrumentor = (instrumentor, fileName, source, options={}) ->
@@ -327,6 +330,9 @@ exports._runInstrumentor = (instrumentor, fileName, source, options={}) ->
         if options.log?.debug?
             indent = ("  " for i in [0...nodeWrapper.depth]).join ''
             options.log.debug "#{indent}Examining #{nodeWrapper.toString()}"
+
+        if nodeWrapper.node.comments
+            visitor["visitComment"]?(nodeWrapper)
 
         if nodeWrapper.isStatement
             visitor["visitStatement"]?(nodeWrapper)

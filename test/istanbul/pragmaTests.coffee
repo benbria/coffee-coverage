@@ -85,7 +85,7 @@ module.exports = (run) ->
             istanbulStyle = """
                 console.log "hello"
                 ### istanbul ignore else ###
-                if x
+                if x is true
                     console.log "world"
                 else
                     console.log "earth"
@@ -109,7 +109,7 @@ module.exports = (run) ->
             {instrumentor, result} = run """
                 console.log "hello"
                 ### !pragma no-coverage-next ###
-                if x
+                if x is true
                     console.log "world"
                 else
                     console.log "bar"
@@ -124,7 +124,7 @@ module.exports = (run) ->
                 {instrumentor, result} = run """
                     console.log "hello"
                     #{skipPragma}
-                    if x
+                    if x is true
                         console.log "world"
                     else
                         console.log "earth"
@@ -143,7 +143,7 @@ module.exports = (run) ->
                 {instrumentor, result} = run """
                     console.log "hello"
                     #{skipPragma}
-                    if x
+                    if x is true
                         console.log "world"
                 """, counts: {f: 0, s: 3, b: {1:2}}
 
@@ -253,7 +253,7 @@ module.exports = (run) ->
                 expect(instrumentor.fnMap[0].skip).to.not.exist
                 expect(instrumentor.fnMap[1].skip).to.be.true
 
-        it "should not instrument a function", ->
+        it "should not instrument a class", ->
             {instrumentor, result} = run """
                 console.log "hello"
                 ### !pragma no-coverage-next ###
@@ -273,7 +273,7 @@ module.exports = (run) ->
                         console.log "foo"
                         ### !pragma coverage-skip-next ###
                 """
-            .to.throw "Pragma '!pragma coverage-skip-next' at #{FILENAME} (3:5) has no next statement"
+            .to.throw "Pragma '!pragma coverage-skip-next' at #{FILENAME} (3:39) has no next statement"
 
             expect ->
                 run """
@@ -281,7 +281,7 @@ module.exports = (run) ->
                         console.log "foo"
                     ### istanbul ignore if ###
                 """
-            .to.throw "Pragma 'istanbul ignore if' at #{FILENAME} (3:1) has no next statement"
+            .to.throw "Pragma 'istanbul ignore if' at #{FILENAME} (3:27) has no next statement"
 
         it "should throw an error when an 'if' pragma isn't before an 'if'", ->
             expect ->

@@ -1,13 +1,13 @@
 assert = require 'assert'
-coffeeScript = require 'coffee-script'
+coffeeScript = require 'coffeescript'
 _ = require 'lodash'
 
-# Wraps a `node` returned from coffee-script's `nodes()` method.
+# Wraps a `node` returned from coffeescript's `nodes()` method.
 #
 # Properties:
-# * `node` - The original coffee-script node.
-# * `parent` - A `NodeWrapper` object for the parent of the coffee-script node.
-# * `childName` - A coffee-script node has multiple named children.  This is the name of the
+# * `node` - The original coffeescript node.
+# * `parent` - A `NodeWrapper` object for the parent of the coffeescript node.
+# * `childName` - A coffeescript node has multiple named children.  This is the name of the
 #   attribute which contains this node in `@parent.node`.  Note that `@parent.node[childName]`
 #   may be a single Node or it may be an array of nodes, depending on the implementation of the
 #   specific node type.
@@ -25,18 +25,17 @@ module.exports = class NodeWrapper
         @locationData = @node.locationData
         @type = @node.constructor?.name or null
 
-        # TODO: Is this too naive?  coffee-script nodes have a `isStatement(o)` function, which
+        # TODO: Is this too naive?  coffeescript nodes have a `isStatement(o)` function, which
         # really only cares about `o.level`.  Should we be working out the level and calling
         # this function instead of trying to figure this out ourselves?
-        @isStatement = @parent? and @type isnt 'Comment' and
-            @parent.type is 'Block' and @childName is 'expressions'
+        @isStatement = @parent? and @parent.type is 'Block' and @childName is 'expressions'
 
         # Note we exclude 'Value' nodes.  When you parse a Class, you'll get Value nodes wrapping
         # each contiguous block of function assignments, and we don't want to treat these as
         # statements.  I can't think of another case where you have a Value as a direct child
         # of an expression.
         if @isStatement and @type is 'Value' and @parent.parent?.type is 'Class'
-            @isStatement = false
+            @isStatement = @node.base.constructor?.name is "Call"
 
         @isSwitchCases = @childName is 'cases' and @type is 'Array'
 

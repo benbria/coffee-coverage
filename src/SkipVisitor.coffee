@@ -1,4 +1,4 @@
-# Visitor which looks for pragma directives for skipping coverage, and marks coffee-script nodes
+# Visitor which looks for pragma directives for skipping coverage, and marks coffeescript nodes
 # to be skipped.
 #
 
@@ -15,23 +15,30 @@ PRAGMAS = [
         regex: /^!pragma\s+coverage-skip-next$/
         istanbulRegex: /^istanbul\s+ignore\s+next$/
         fn: (self, node, match, options={}) ->
-            next = self._getNext(node, match)
-            next.markAll 'skip', true
+            origNode = node
+            if node.type is "Value"
+                if node.parent.type is "Assign" or node.parent.type is "Switch" or node.parent.type is "Class"
+                    node = node.parent
+                else
+                    node = node.parent.parent
+            else if node.type isnt "If"
+                node = node.parent
+
+            unless node
+                throw new Error "Pragma '#{match[0]}' at #{self._toLocString origNode} has no next statement"
+
+            node.markAll 'skip', true
     }
 
     # '!pragma coverage-skip-block'
     {
         regex: /^!pragma\s+coverage-skip-block$/
         fn: (self, node, match, options={}) ->
-            parent = node.parent
+            parent = node.parent.parent.parent
+
             parent.markAll 'skip', true
 
-            if parent.type isnt 'Block'
-                ### !pragma coverage-skip-block ###
-                throw new Error "Pragma '#{match[0]}' at #{@_toLocString node} is not " +
-                    "child of a Block (how did you even do this!?)"
-
-            if parent.parent?.type is 'If'
+            if parent.parent.type is 'If'
                 ifBody = parent
                 ifNode = parent.parent
                 if ifBody.childName is 'body'
@@ -46,8 +53,14 @@ PRAGMAS = [
     {
         regex: /^!pragma\s+no-coverage-next$/
         fn: (self, node, match, options={}) ->
-            next = self._getNext(node, match)
-            next.markAll 'noCoverage', true
+            if node.type is "Value"
+                if node.parent.type is "Assign" or node.parent.type is "Switch" or node.parent.type is "Class"
+                    node = node.parent
+                else
+                    node = node.parent.parent
+            else if node.type isnt "If"
+                node = node.parent
+            node.markAll 'noCoverage', true
     }
 
     # 'istanbul ignore if'
@@ -57,7 +70,12 @@ PRAGMAS = [
     {
         istanbulRegex: /^istanbul\s+ignore\s+if$/
         fn: (self, node, match, options={}) ->
-            ifNode = self._getNext(node, match, 'If')
+            if node.type is "IdentifierLiteral"
+                return
+            if node.type is "Value" and node.node.base.constructor?.name is "PassthroughLiteral"
+                throw new Error "Pragma '#{match[0]}' at #{self._toLocString node} has no next statement"
+
+            ifNode = self.getIfNode node, match
             ifNode.mark 'skipIf', true
             ifNode.child('body')?.markAll 'skip', true
     }
@@ -69,7 +87,12 @@ PRAGMAS = [
     {
         istanbulRegex: /^istanbul\s+ignore\s+else$/
         fn: (self, node, match, options={}) ->
-            ifNode = self._getNext(node, match, 'If')
+            if node.type is "IdentifierLiteral"
+                return
+            if node.type is "Value" and node.node.base.constructor?.name is "PassthroughLiteral"
+                throw new Error "Pragma '#{match[0]}' at #{self._toLocString node} has no next statement"
+
+            ifNode = self.getIfNode node, match
             ifNode.mark 'skipElse', true
             ifNode.child('elseBody')?.markAll 'skip', true
     }
@@ -80,8 +103,10 @@ module.exports = class SkipVisitor
     constructor: (@fileName) ->
 
     visitComment: (node) ->
-        comment = node.node.comment?.trim().toLowerCase() ? ''
-        found = false
+        if node.node.comments.visited
+            return
+
+        comment = node.node.comments[0].content.trim().toLowerCase() ? ''
         if _.startsWith(comment, PRAGMA_PREFIX)
             PRAGMAS
             .filter (pragma) -> pragma.regex?
@@ -95,19 +120,17 @@ module.exports = class SkipVisitor
                 if match = comment.match(pragma.istanbulRegex)
                     pragma.fn this, node, match, @options
 
+        node.node.comments.visited = true
+
     _toLocString: (node) ->
         return "#{@fileName} (#{node.locationData.first_line + 1}:#{node.locationData.first_column + 1})"
 
-    # Get the next non-comment statement.
-    _getNext: (node, match, type=null) ->
-        next = node.next()
+    getIfNode: (node, match) ->
+        if node.type is "If"
+            return node
+        if node.parent?.parent?.type is "If"
+            return node.parent.parent
+        if node.parent?.parent?.parent?.type is "If"
+            return node.parent.parent.parent
 
-        # Skip over any comments
-        next = next.next() while next?.type is 'Comment'
-
-        if !next?
-            throw new Error "Pragma '#{match[0]}' at #{@_toLocString node} has no next statement"
-        if type? and next.type isnt type
-            throw new Error "Statement after pragma '#{match[0]}' at #{@_toLocString node} is not of type #{type}"
-        next
-
+        throw new Error "Statement after pragma '#{match[0]}' at #{@_toLocString node} is not of type If"

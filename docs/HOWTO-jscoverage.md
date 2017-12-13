@@ -13,7 +13,7 @@ Contents
 Quick Start with Mocha
 ----------------------
 
-Assuming you have a coffee-script project with tests cases stored in /test, and you are using
+Assuming you have a coffeescript project with tests cases stored in /test, and you are using
 mocha to run your unit tests, `cd` to your project and run:
 
     npm install --save-dev coffee-coverage
@@ -41,7 +41,7 @@ Run with NPM
 
 Save your mocha options in `/test/mocha.opts`:
 
-    --compilers coffee:coffee-script/register
+    --compilers coffee:coffeescript/register
     --recursive
 
 In package.json, add:
@@ -76,7 +76,7 @@ Alternatively, you can use coffeeCoverage to statically compile your code with i
 
     # Compile everything except the test directory with coffeeCoverage
     coffeeCoverage --initfile ./lib/init.js --exclude test --path abbr ./src ./lib
-    # Compile the test directory with regular coffee-script
+    # Compile the test directory with regular coffeescript
     coffee -o ./lib/test ./src/test
 
 This also writes an "lib/init.js" which initializes all the execution counts to 0.  This is handy,

@@ -12,12 +12,12 @@ Contents
 Quick Start with Mocha
 ----------------------
 
-Assuming you have a coffee-script project with tests cases stored in /test, and you are using
+Assuming you have a coffeescript project with tests cases stored in /test, and you are using
 mocha to run your unit tests, `cd` to your project and run:
 
     npm install --save-dev coffee-coverage istanbul
     mocha --recursive \
-          --compilers coffee:coffee-script/register \
+          --compilers coffee:coffeescript/register \
           --require coffee-coverage/register-istanbul \
           test
     ./node_modules/.bin/istanbul report
@@ -49,7 +49,7 @@ and your tests are set up to load code from /src, then run:
     npm install --save-dev coffee-coverage
     npm install --save-dev istanbul
     ./node_modules/.bin/istanbul cover -x 'lib/**' ./node_modules/.bin/_mocha -- \
-        --compilers coffee:coffee-script/register \
+        --compilers coffee:coffeescript/register \
         --require coffee-coverage/register-istanbul \
         --recursive \
         test
@@ -62,7 +62,7 @@ Run with NPM
 
 Save your mocha options in `/test/mocha.opts`:
 
-    --compilers coffee:coffee-script/register
+    --compilers coffee:coffeescript/register
     --require coffee-coverage/register-istanbul
     --recursive
 

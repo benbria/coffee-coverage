@@ -12,7 +12,7 @@
     "jscoverage",
     "coveralls"
   ],
-  "version": "2.0.1",
+  "version": "3.0.0",
   "author": "Benbria (http://www.benbria.com/)",
   "contributors": [
     "Jason Walton <dev@lucid.thedreaming.org> (https://github.com/jwalton)",
@@ -22,7 +22,8 @@
     "David Dahl (https://github.com/effata)",
     "David Kirstein (https://github.com/frozenice-)",
     "Dmitry Petrov (https://github.com/can3p)",
-    "Devon Govett (https://github.com/devongovett)"
+    "Devon Govett (https://github.com/devongovett)",
+    "Emanuele Tamponi (https://glitch.com/@etamponi)"
   ],
   "license": "MIT",
   "main": "./lib/index",
@@ -38,7 +39,7 @@
   },
   "dependencies": {
     "argparse": "^1.0.2",
-    "coffee-script": ">=1.6.2",
+    "coffeescript": "^2.0.2",
     "lodash": "^4.14.0",
     "minimatch": "^3.0.2",
     "pkginfo": ">=0.2.3"
@@ -58,8 +59,5 @@
     "build": "coffee -c -o lib src",
     "clean": "rm -rf lib coverage",
     "distclean": "npm run clean && rm -rf node_modules"
-  },
-  "engines": {
-    "node": ">=0.8.0"
   }
 }
