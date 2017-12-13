@@ -7,7 +7,7 @@ node_js:
 # Install latest npm, because node v0.8 comes with npm v1.2.30, which doesn't like `^`s in
 # package.json.
 before_install:
-  - "npm install -g npm@'>=1.4.3'"
+  - "npm install -g npm@'>=1.4.3' coffee-script"
 script: ./bin/citest.sh
 after_success:
   - 'cat ./coverage/lcov.info | ./node_modules/.bin/coveralls'
