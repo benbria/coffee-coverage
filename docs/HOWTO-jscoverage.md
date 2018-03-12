@@ -7,7 +7,7 @@ Contents
 * [Quick Start with Mocha](#quick-start-with-mocha)
   * [Run with NPM](#run-with-npm)
   * [Writing a Custom Loader](#writing-a-custom-loader)
-  * [Precomiled Source](#precompiled-source)
+  * [Precompiled Source](#precompiled-source)
 * [Some Weirdness with Line Numbers](#some-weirdness-with-line-numbers)
 
 Quick Start with Mocha
