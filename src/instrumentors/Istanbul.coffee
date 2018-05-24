@@ -154,6 +154,13 @@ module.exports = class Istanbul
             node.parent.parent.skipped = true
             return
 
+        if @foundLabel
+          @foundLabel = false
+          return
+
+        if node.type is 'Value' and /^[a-z_$A-Z]+[a-z_$A-Z0-9]*:\s*[\/][\/]\s*$/.test node.node.base.value
+          @foundLabel = true
+
         # Ignore nodes marked 'noCoverage'
         return if node.isMarked('noCoverage')
 
