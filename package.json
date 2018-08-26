@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "argparse": "^1.0.2",
-    "coffeescript": "^2.0.2",
+    "coffeescript": "^2.3.1",
     "lodash": "^4.14.0",
     "minimatch": "^3.0.2",
     "pkginfo": ">=0.2.3"
@@ -48,8 +48,8 @@
     "benchmark": "^2.0.0",
     "chai": "^3.0.0",
     "coveralls": "^2.11.2",
-    "electron": "1.6.11",
-    "electron-mocha": "4.0.0",
+    "electron": "^2.0.8",
+    "electron-mocha": "^6.0.4",
     "istanbul": "^0.4.4",
     "mocha": "^3.2.0",
     "nyc": "11.0.3",
@@ -65,9 +65,9 @@
     "distclean": "npm run clean && rm -rf node_modules"
   },
   "nyc": {
-    "reporter": ["text-summary", "lcov"]
-  },
-  "engines": {
-    "node": ">=0.8.0"
+    "reporter": [
+      "text-summary",
+      "lcov"
+    ]
   }
 }

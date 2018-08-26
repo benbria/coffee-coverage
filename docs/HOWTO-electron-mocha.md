@@ -27,19 +27,23 @@ Run with NPM
 
 Save your mocha options in `/test/mocha.opts`:
 
-    --compilers coffee:coffee-script/register
-    --require coffee-coverage/register-istanbul
-    --reporter spec
+```sh
+--require coffeescript/register
+--require coffee-coverage/register-istanbul
+--reporter spec
+```
 
 In package.json, add:
 
-    "scripts": {
-        "test": "nyc electron-mocha --renderer test/**/*.coffee"
-    }
-    ...
-    "nyc": {
-        "reporter": ["lcov","text"]
-    },
-    ...
+```json
+"scripts": {
+    "test": "nyc electron-mocha --renderer test/**/*.coffee"
+}
+...
+"nyc": {
+    "reporter": ["lcov","text"]
+},
+...
+``
 
 now you can run `npm test` to run your tests and generate a coverage report, both in console and in `coverage/lcov-report/index.html`

@@ -187,3 +187,24 @@ describe "Coverage tests", ->
 
         sinon.assert.callCount(postProcessors[0].fn, 1)
         expect(bar.baz()).to.eq 5
+
+    it "should support nodes without locationData", ->
+        instrumentor = new coffeeCoverage.CoverageInstrumentor({
+            coverageVar: COVERAGE_VAR
+            log: log
+        })
+
+        # used to work up to coffeescript@2.0.2, fails with 2.3.1
+        source = """
+            sum = 0
+            add = (n) => sum += n
+            basket =
+                apple: 3
+                orange: 2
+            add basket[fruit] for fruit of basket
+            return sum
+        """
+
+        result = instrumentor.instrumentCoffee("example.coffee", source)
+        z = eval result.init + result.js
+        expect(z).to.equal 5
