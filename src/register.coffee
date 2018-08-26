@@ -161,10 +161,15 @@ module.exports = (options={}) ->
                 module._compile processed, fileName
 
     if options.writeOnExit
-        process.on 'exit', ->
+        report = ->
             try
                 dirName = path.dirname options.writeOnExit
                 mkdirs dirName
                 fs.writeFileSync options.writeOnExit, JSON.stringify(global[options.coverageVar])
             catch err
                 console.error "Failed to write coverage data", err.stack ? err
+        if global.window?
+            # support electron-mocha end of run
+            window.addEventListener 'unload', report
+        else
+            process.on 'exit', report

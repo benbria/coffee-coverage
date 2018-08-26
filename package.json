@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "argparse": "^1.0.2",
-    "coffeescript": "^2.0.2",
+    "coffeescript": "^2.3.1",
     "lodash": "^4.14.0",
     "minimatch": "^3.0.2",
     "pkginfo": ">=0.2.3"
@@ -48,16 +48,26 @@
     "benchmark": "^2.0.0",
     "chai": "^3.0.0",
     "coveralls": "^2.11.2",
+    "electron": "^2.0.8",
+    "electron-mocha": "^6.0.4",
     "istanbul": "^0.4.4",
     "mocha": "^3.2.0",
+    "nyc": "11.0.3",
     "sinon": "^1.14.1"
   },
   "scripts": {
     "prepublish": "npm run build && mocha",
-    "test": "npm run build && mocha && istanbul report",
+    "test": "npm run build && nyc mocha --growl",
     "coverage-report": "istanbul report text-summary lcov",
+    "test:electron": "npm run build && nyc electron-mocha --renderer test/**/*.coffee",
     "build": "coffee -c -o lib src",
-    "clean": "rm -rf lib coverage",
+    "clean": "rm -rf lib coverage .nyc_output",
     "distclean": "npm run clean && rm -rf node_modules"
+  },
+  "nyc": {
+    "reporter": [
+      "text-summary",
+      "lcov"
+    ]
   }
 }
