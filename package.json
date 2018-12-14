@@ -45,19 +45,22 @@
     "pkginfo": ">=0.2.3"
   },
   "devDependencies": {
+    "@benbria/semantic-release-config": "^1.0.0",
     "benchmark": "^2.0.0",
     "chai": "^3.0.0",
     "coveralls": "^2.11.2",
     "istanbul": "^0.4.4",
     "mocha": "^3.2.0",
+    "semantic-release": "^15.12.3",
     "sinon": "^1.14.1"
   },
   "scripts": {
-    "prepublish": "npm run build && mocha",
+    "prepare": "npm run build",
     "test": "npm run build && mocha && istanbul report",
     "coverage-report": "istanbul report text-summary lcov",
     "build": "coffee -c -o lib src",
     "clean": "rm -rf lib coverage",
-    "distclean": "npm run clean && rm -rf node_modules"
+    "distclean": "npm run clean && rm -rf node_modules",
+    "semantic-release": "semantic-release"
   }
 }

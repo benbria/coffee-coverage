@@ -1,13 +1,28 @@
 language: node_js
 node_js:
-  - '6'
-  - '7'
+  - node
+  - '10'
   - '8'
-  - 'node'
-# Install latest npm, because node v0.8 comes with npm v1.2.30, which doesn't like `^`s in
-# package.json.
+  - '6'
 before_install:
-  - "npm install -g npm@'>=1.4.3'"
+  - npm install -g npm
 script: ./bin/citest.sh
 after_success:
-  - 'cat ./coverage/lcov.info | ./node_modules/.bin/coveralls'
+  - cat ./coverage/lcov.info | ./node_modules/.bin/coveralls
+jobs:
+  include:
+    - stage: test
+    - stage: release
+      node_js: lts/*
+      before_install:
+        - npm install -g npm
+      install:
+        - travis_retry npm install
+      before_script: skip
+      script: npm run semantic-release
+      after_success: skip
+      after_failure: skip
+      after_script: skip
+cache:
+  directories:
+    - ~/.npm
