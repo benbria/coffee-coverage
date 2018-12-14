@@ -48,10 +48,10 @@
     "@benbria/semantic-release-config": "^1.0.0",
     "benchmark": "^2.0.0",
     "chai": "^3.0.0",
-    "coveralls": "^2.11.2",
+    "coveralls": "^3.0.2",
     "istanbul": "^0.4.4",
-    "mocha": "^3.2.0",
-    "semantic-release": "^15.12.3",
+    "mocha": "^5.2.0",
+    "semantic-release": "^15.12.5",
     "sinon": "^1.14.1"
   },
   "scripts": {

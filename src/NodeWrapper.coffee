@@ -171,7 +171,11 @@ forNodeAndChildren = (node, fn) ->
 compile = (csSource, node) ->
     compiled = coffeeScript.nodes(csSource)
 
-    line = node.locationData.first_line
+    line = if !node.locationData
+        # In latest coffee-script, some blocks do not have locationData?
+        0
+    else
+        line = node.locationData.first_line
 
     forNodeAndChildren compiled, (n) ->
         # Fix up location data for each instrumented line.  Make these all 0-length,
