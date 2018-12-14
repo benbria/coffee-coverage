@@ -6,7 +6,7 @@ node_js:
   - '6'
 before_install:
   - npm install -g npm
-script: ./bin/citest.sh
+script: npm test
 after_success:
   - cat ./coverage/lcov.info | ./node_modules/.bin/coveralls
 jobs:
