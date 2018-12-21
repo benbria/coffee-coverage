@@ -426,6 +426,29 @@ describe "Istanbul tests", ->
             decl: {start: {line: 1, column: 4}, end: {line: 1, column: 4}}
         }
 
+    it "should handle labels", ->
+        {instrumentor, result} = run """
+            counter = 0
+            `_l_1: //`
+            for x in [1..10]
+                if counter == 10
+                    break
+                `_$l_2: //`
+                for y in [1..10]
+                    if y == 5 and counter < 10
+                        counter++
+                        `continue _l_1`
+                    `continue _$l_2`
+        """, {f: 0, s: 9, b: {1:2, 2:2}}
+
+        expect(instrumentor.statementMap[2], "missing line 3").to.eql {
+            start: {line: 4, column: 4}, end: {line: 5, column: 12}
+        }
+
+        expect(instrumentor.statementMap[5], "missing line 7").to.eql {
+            start: {line: 8, column: 8}, end: {line: 10, column: 26}
+        }
+
     it.skip "should handle import and export statements", ->
         {instrumentor, result} = run """
             import _ from "lodash"
