@@ -88,6 +88,23 @@ describe "Coverage tests", ->
         expect(global[COVERAGE_VAR][pn 'a/foo.coffee'], "Should instrument a/foo.coffee").to.exist
         expect(global[COVERAGE_VAR][pn 'b/bar.coffee'], "Should not instrument b/bar.coffee").to.not.exist
 
+    it "should exclude files based on globs with leading forward slash from project root when dynamically instrumenting code", ->
+
+        coffeeCoverage.register(
+            path: "relative"
+            basePath: path.resolve __dirname, '../testFixtures/testWithExcludes'
+            exclude: ["/b/*r.coffee"]
+            coverageVar: COVERAGE_VAR
+            log: log
+        )
+
+        require '../testFixtures/testWithExcludes/a/foo.coffee'
+        require '../testFixtures/testWithExcludes/b/bar.coffee'
+
+        expect(global[COVERAGE_VAR], "Code should have been instrumented").to.exist
+        expect(global[COVERAGE_VAR][pn 'a/foo.coffee'], "Should instrument a/foo.coffee").to.exist
+        expect(global[COVERAGE_VAR][pn 'b/bar.coffee'], "Should not instrument b/bar.coffee").to.not.exist
+
     it "should handle nested recursion correctly", ->
         # From https://github.com/benbria/coffee-coverage/pull/37
         instrumentor = new coffeeCoverage.CoverageInstrumentor({

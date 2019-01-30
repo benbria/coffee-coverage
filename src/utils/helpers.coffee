@@ -67,6 +67,7 @@ exports.excludeFile = (fileName, options) ->
 
         # For each exclude value try to use it as a pattern to exclude files
         exclude.map (pattern) ->
+            pattern = pattern[1..] if pattern[0] is "/"
             if minimatch relativeFilename, pattern
                 excluded = true
 
