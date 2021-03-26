@@ -40,7 +40,7 @@
   "dependencies": {
     "argparse": "^1.0.2",
     "coffeescript": "^2.0.2",
-    "lodash": "^4.14.0",
+    "lodash": "^4.17.19",
     "minimatch": "^3.0.2",
     "pkginfo": ">=0.2.3"
   },
@@ -50,8 +50,8 @@
     "chai": "^3.0.0",
     "coveralls": "^3.0.2",
     "istanbul": "^0.4.4",
-    "mocha": "^5.2.0",
-    "semantic-release": "^15.12.5",
+    "mocha": "^8.3.2",
+    "semantic-release": "^17.4.2",
     "sinon": "^1.14.1"
   },
   "scripts": {
